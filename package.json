@@ -1,22 +1,16 @@
 {
-  "name": "realstate",
-  "version": "1.0.0",
-  "main": "index.ts",
-  "dependencies": {
-    "expo": "~56.0.3",
-    "expo-status-bar": "~56.0.4",
-    "react": "19.2.3",
-    "react-native": "0.85.3"
-  },
-  "devDependencies": {
-    "@types/react": "~19.2.2",
-    "typescript": "~6.0.3"
-  },
+  "name": "realreels",
+  "version": "0.1.0",
+  "private": true,
+  "description": "RealReels — real estate reels + listings. Monorepo: mobile (RN), server (NestJS), dashboard (Next.js), shared types.",
+  "workspaces": [
+    "shared",
+    "server",
+    "dashboard"
+  ],
   "scripts": {
-    "start": "expo start",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
-    "web": "expo start --web"
-  },
-  "private": true
+    "server:dev": "npm --workspace server run start:dev",
+    "dashboard:dev": "npm --workspace dashboard run dev",
+    "shared:build": "npm --workspace shared run build"
+  }
 }
