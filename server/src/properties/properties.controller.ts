@@ -8,7 +8,7 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import {UserRole} from '@realreels/shared';
+import {UserRole} from '../shared';
 import {PropertiesService} from './properties.service';
 import {
   CreatePropertyDto,

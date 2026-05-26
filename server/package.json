@@ -24,7 +24,6 @@
     "@nestjs/platform-socket.io": "^10.4.4",
     "@nestjs/websockets": "^10.4.4",
     "@prisma/client": "^5.20.0",
-    "@realreels/shared": "*",
     "bcryptjs": "^2.4.3",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",

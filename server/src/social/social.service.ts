@@ -1,5 +1,5 @@
 import {BadRequestException, Injectable} from '@nestjs/common';
-import {NotificationType} from '@realreels/shared';
+import {NotificationType} from '../shared';
 import {PrismaService} from '../prisma/prisma.service';
 import {NotificationsService} from '../notifications/notifications.service';
 import {toPublicProfile} from '../profiles/profile.mapper';

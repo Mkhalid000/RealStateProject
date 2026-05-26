@@ -1,5 +1,5 @@
 import {Injectable} from '@nestjs/common';
-import {NotificationType} from '@realreels/shared';
+import {NotificationType} from '../shared';
 import {PrismaService} from '../prisma/prisma.service';
 import {RealtimeService} from '../realtime/realtime.service';
 

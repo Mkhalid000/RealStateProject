@@ -1,4 +1,4 @@
-import {PublicProfile, UserRole} from '@realreels/shared';
+import {PublicProfile, UserRole} from '../shared';
 import {User} from '@prisma/client';
 
 export function toPublicProfile(

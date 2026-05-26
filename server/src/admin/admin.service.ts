@@ -1,6 +1,6 @@
 import {Injectable} from '@nestjs/common';
 import {Prisma} from '@prisma/client';
-import {UserRole} from '@realreels/shared';
+import {UserRole} from '../shared';
 import {PrismaService} from '../prisma/prisma.service';
 
 @Injectable()

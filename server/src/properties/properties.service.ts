@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import {Prisma} from '@prisma/client';
-import {SubscriptionPlan} from '@realreels/shared';
+import {SubscriptionPlan} from '../shared';
 import {PrismaService} from '../prisma/prisma.service';
 import {
   CreatePropertyDto,

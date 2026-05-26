@@ -1,4 +1,4 @@
-import {Property as SharedProperty} from '@realreels/shared';
+import {Property as SharedProperty} from '../shared';
 import {Prisma, Property, User} from '@prisma/client';
 import {toPublicProfile} from '../profiles/profile.mapper';
 

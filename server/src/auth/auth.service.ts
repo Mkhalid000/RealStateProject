@@ -6,7 +6,7 @@ import {
 import {ConfigService} from '@nestjs/config';
 import {JwtService} from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
-import {AuthResponse, AuthTokens, PublicProfile, UserRole} from '@realreels/shared';
+import {AuthResponse, AuthTokens, PublicProfile, UserRole} from '../shared';
 import {PrismaService} from '../prisma/prisma.service';
 import {LoginDto, RegisterDto} from './dto/auth.dto';
 import {toPublicProfile} from '../profiles/profile.mapper';

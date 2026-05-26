@@ -1,4 +1,4 @@
-import {Reel as SharedReel} from '@realreels/shared';
+import {Reel as SharedReel} from '../shared';
 import {Reel, User, Property} from '@prisma/client';
 import {toPublicProfile} from '../profiles/profile.mapper';
 import {toProperty} from '../properties/property.mapper';

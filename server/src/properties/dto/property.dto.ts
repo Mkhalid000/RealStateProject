@@ -9,7 +9,7 @@ import {
   MaxLength,
   Min,
 } from 'class-validator';
-import {PropertyStatus, PropertyType} from '@realreels/shared';
+import {PropertyStatus, PropertyType} from '../../shared';
 
 export class CreatePropertyDto {
   @IsString()

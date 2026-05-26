@@ -1,5 +1,5 @@
 import {IsEmail, IsEnum, IsOptional, IsString, MinLength} from 'class-validator';
-import {UserRole} from '@realreels/shared';
+import {UserRole} from '../../shared';
 
 export class RegisterDto {
   @IsEmail()

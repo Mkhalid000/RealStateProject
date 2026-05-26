@@ -7,7 +7,7 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import {UserRole} from '@realreels/shared';
+import {UserRole} from '../shared';
 import {ReelsService} from './reels.service';
 import {CreateCommentDto, CreateReelDto, FeedQueryDto} from './dto/reel.dto';
 import {CurrentUser} from '../common/decorators/current-user.decorator';

@@ -1,5 +1,5 @@
 import {Body, Controller, Get, Post} from '@nestjs/common';
-import {UserRole} from '@realreels/shared';
+import {UserRole} from '../shared';
 import {BillingService} from './billing.service';
 import {ChangePlanDto, CreateBoostDto} from './dto/billing.dto';
 import {CurrentUser} from '../common/decorators/current-user.decorator';

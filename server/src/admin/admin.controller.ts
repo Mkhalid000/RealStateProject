@@ -8,7 +8,7 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import {UserRole} from '@realreels/shared';
+import {UserRole} from '../shared';
 import {AdminService} from './admin.service';
 import {BillingService} from '../billing/billing.service';
 import {Roles} from '../common/decorators/roles.decorator';

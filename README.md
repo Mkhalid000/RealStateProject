@@ -1,33 +1,30 @@
-# RealReels — Monorepo
+# RealReels — Real Estate Platform
 
-Real estate app: Instagram-style property reels + listings, with agent tools and an admin dashboard.
+A luxury public website + admin panel, a NestJS backend, and an Instagram-style reels mobile app.
 
-## Structure
+## Structure (each folder is fully standalone)
 ```
-/mobile      React Native (CLI) app — buyers & agents
-/server      NestJS REST + WebSocket API (the backend)
-/dashboard   Next.js admin dashboard
-/shared      Shared TypeScript types, enums & DTOs
+/website     Vite + React (JS) — public luxury site + admin login/panel
+/server      NestJS REST + WebSocket API (the backend)  — shared types live in server/src/shared
+/mobile      React Native (CLI, JS) app — buyers & agents
 ```
+No monorepo tooling — `website`, `server`, and `mobile` each have their own `node_modules` and are installed/run independently.
 
 ## Tech
-- **Backend:** NestJS + Prisma + PostgreSQL (Neon free), JWT auth, Socket.IO, Cloudinary
-- **Dashboard:** Next.js (Vercel free)
-- **Mobile:** React Native CLI + React Navigation + React Query
-- **Shared:** one TypeScript types package across all three
+- **Website:** Vite + React + React Router + Framer Motion (JavaScript/.jsx), luxury animated UI + admin dashboard. Deploy on Vercel (free).
+- **Backend:** NestJS + Prisma + PostgreSQL (Neon free), JWT auth, Socket.IO, Cloudinary.
+- **Mobile:** React Native CLI + React Navigation + React Query (JavaScript/.jsx).
 
 ## Quick start
-Each package has its own README/setup. Typical dev flow:
 ```
-# backend
-cd server && npm install && npm run start:dev
+# backend  (set server/.env first — see SETUP.md)
+cd server && npm install && npm run start:dev      # http://localhost:4000/api
 
-# dashboard
-cd dashboard && npm install && npm run dev
+# website  (public site + admin)
+cd website && npm install && npm run dev           # http://localhost:3000
 
 # mobile (Android)
-cd mobile && npm install && npm start
-# new terminal: cd mobile && npm run android
+cd mobile && npm install && npm start              # then: npm run android
 ```
 
 See `server/README.md` and `SETUP.md` for environment variables and hosting (Neon, Render, Vercel, Cloudinary).

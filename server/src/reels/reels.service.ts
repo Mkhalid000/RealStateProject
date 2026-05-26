@@ -3,7 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import {NotificationType} from '@realreels/shared';
+import {NotificationType} from '../shared';
 import {PrismaService} from '../prisma/prisma.service';
 import {NotificationsService} from '../notifications/notifications.service';
 import {CreateCommentDto, CreateReelDto, FeedQueryDto} from './dto/reel.dto';

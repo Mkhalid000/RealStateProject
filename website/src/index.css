@@ -1,0 +1,204 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================
+   Theme tokens — dark (default) + light. Surfaces are driven by
+   CSS variables so the dark/light toggle works site-wide.
+   Legacy aliases (--text, --border, --gold…) keep the dashboard
+   styles below working unchanged.
+   ============================================================ */
+:root {
+  /* RGB channels consumed by Tailwind (supports /opacity) — Emerald-Noir (dark) */
+  --c-bg: 8 17 14;
+  --c-surface: 14 26 21;
+  --c-surface2: 20 34 28;
+  --c-fg: 242 239 230;
+  --c-muted: 142 160 151;
+  --c-line: 31 48 40;
+
+  /* full-color vars used by the dashboard CSS */
+  --bg: #08110e;
+  --surface: #0e1a15;
+  --surface-2: #14221c;
+  --text: #f2efe6;
+  --border: #1f3028;
+  --muted: #8ea097;
+  --bg-soft: #0b1612;
+  --gold: #cba45e;
+  --gold-bright: #e7c988;
+  --danger: #e05555;
+  --success: #5bbf7a;
+  --font-serif: 'Cormorant Garamond', Georgia, serif;
+  --font-sans: 'Inter', system-ui, sans-serif;
+}
+
+.light {
+  --c-bg: 243 241 233;
+  --c-surface: 255 255 255;
+  --c-surface2: 234 232 222;
+  --c-fg: 14 26 21;
+  --c-muted: 95 110 102;
+  --c-line: 224 220 208;
+
+  --bg: #f3f1e9;
+  --surface: #ffffff;
+  --surface-2: #eae8de;
+  --text: #0e1a15;
+  --border: #e0dcd0;
+  --muted: #5f6e66;
+  --bg-soft: #eae8de;
+}
+
+/* Lenis smooth scroll */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+@layer base {
+  body {
+    @apply bg-bg text-fg font-sans font-light antialiased;
+    margin: 0;
+  }
+  h1, h2, h3, h4 {
+    @apply font-serif font-medium;
+    margin: 0;
+    line-height: 1.05;
+  }
+  ::selection {
+    background: var(--gold);
+    color: #0f0f0f;
+  }
+  /* slim luxe scrollbar */
+  ::-webkit-scrollbar {
+    width: 9px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--bg);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #3a3a42;
+    border-radius: 9px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--gold);
+  }
+}
+
+@layer components {
+  .glass {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  .light .glass {
+    background: rgba(255, 255, 255, 0.55);
+    border-color: rgba(0, 0, 0, 0.06);
+  }
+  .text-gradient-gold {
+    background: linear-gradient(120deg, #f0dca8, #cba45e 52%, #9e7c3f);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .eyebrow {
+    @apply uppercase text-xs font-medium tracking-luxe text-gold;
+  }
+}
+
+/* hide native cursor only on devices with a fine pointer (custom glow) */
+@media (hover: hover) and (pointer: fine) {
+  .cursor-none-fine,
+  .cursor-none-fine * {
+    cursor: none;
+  }
+}
+
+/* ============================================================
+   DASHBOARD (admin) styles — preserved verbatim so the admin
+   panel keeps working. The public site uses Tailwind instead.
+   ============================================================ */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 30px;
+  border-radius: 2px;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-weight: 500;
+  border: 1px solid var(--gold);
+  background: var(--gold);
+  color: #0b0b0d;
+  cursor: pointer;
+  transition: all 0.35s ease;
+}
+.btn:hover { background: transparent; color: var(--gold-bright); }
+.btn.ghost { background: transparent; color: var(--text); border-color: rgba(255,255,255,0.25); }
+.btn.ghost:hover { border-color: var(--gold); color: var(--gold-bright); }
+.btn.sm { padding: 9px 18px; font-size: 11px; }
+.btn.danger { background: transparent; border-color: rgba(224,85,85,0.5); color: var(--danger); }
+.btn.danger:hover { background: rgba(224,85,85,0.12); }
+.btn:disabled { opacity: 0.5; cursor: default; }
+
+.input {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 14px 16px;
+  font-size: 15px;
+  font-family: var(--font-sans);
+  margin-bottom: 14px;
+}
+.input:focus { outline: none; border-color: var(--gold); }
+.error { color: var(--danger); font-size: 14px; margin-bottom: 14px; }
+
+.auth-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
+.auth-card { width: 420px; max-width: 100%; background: var(--surface); border: 1px solid var(--border); padding: 48px 40px; }
+.auth-card h2 { font-size: 34px; margin-bottom: 6px; }
+
+.brand { font-family: var(--font-serif); font-size: 26px; letter-spacing: 1px; }
+.brand b { color: var(--gold); font-weight: 600; }
+.muted { color: var(--muted); }
+
+.admin { display: flex; min-height: 100vh; }
+.admin-side {
+  width: 240px; background: var(--bg-soft); border-right: 1px solid var(--border);
+  padding: 28px 16px; position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column;
+}
+.admin-side .brand { padding: 0 12px 28px; font-size: 24px; }
+.admin-side a { padding: 12px 14px; color: var(--muted); font-size: 14px; border-radius: 3px; margin-bottom: 2px; }
+.admin-side a:hover { background: var(--surface-2); color: var(--text); }
+.admin-side a.active { background: var(--gold); color: #0b0b0d; font-weight: 500; }
+.admin-main { flex: 1; padding: 40px 44px; overflow: auto; }
+.admin-main h1 { font-size: 38px; margin-bottom: 28px; }
+
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 18px; margin-bottom: 36px; }
+.card { background: var(--surface); border: 1px solid var(--border); padding: 26px; }
+.card .label { color: var(--muted); font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; }
+.card .value { font-family: var(--font-serif); font-size: 42px; color: var(--gold); margin-top: 8px; }
+
+table { width: 100%; border-collapse: collapse; background: var(--surface); border: 1px solid var(--border); }
+th, td { text-align: left; padding: 14px 16px; border-bottom: 1px solid var(--border); font-size: 14px; }
+th { color: var(--muted); font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; font-size: 12px; background: var(--bg-soft); }
+tr:last-child td { border-bottom: none; }
+
+.badge { padding: 4px 10px; font-size: 12px; border: 1px solid var(--border); }
+.badge.green { color: var(--success); border-color: rgba(91,191,122,0.4); }
+.badge.gold { color: var(--gold); border-color: rgba(201,161,74,0.4); }
+
+.toolbar { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+.field { background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 12px 16px; font-size: 14px; font-family: var(--font-sans); min-width: 150px; }
+.field::placeholder { color: var(--muted); }

@@ -1,6 +1,6 @@
 import {Type} from 'class-transformer';
 import {IsEnum, IsInt, IsString, Max, Min} from 'class-validator';
-import {SubscriptionPlan} from '@realreels/shared';
+import {SubscriptionPlan} from '../../shared';
 
 export class CreateBoostDto {
   @IsString()
