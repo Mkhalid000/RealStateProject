@@ -34,9 +34,9 @@ export function Hero3D() {
       c.width = c.height = 64;
       const ctx = c.getContext('2d');
       const g = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
-      g.addColorStop(0, 'rgba(240,220,168,1)');
-      g.addColorStop(0.35, 'rgba(203,164,94,0.7)');
-      g.addColorStop(1, 'rgba(203,164,94,0)');
+      g.addColorStop(0, 'rgba(246,185,120,1)');
+      g.addColorStop(0.35, 'rgba(242,166,90,0.7)');
+      g.addColorStop(1, 'rgba(242,166,90,0)');
       ctx.fillStyle = g;
       ctx.fillRect(0, 0, 64, 64);
       return new THREE.CanvasTexture(c);

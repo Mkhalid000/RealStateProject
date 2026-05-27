@@ -2,7 +2,6 @@ import {useEffect, useState} from 'react';
 import {apiFetch} from '../../lib/api';
 import {Reveal} from '../components/Reveal';
 import {PropertyCard} from '../components/PropertyCard';
-import {AuroraBackground} from '../components/AuroraBackground';
 
 const TYPES = ['', 'house', 'apartment', 'plot', 'commercial'];
 
@@ -37,7 +36,6 @@ export default function Properties() {
 
   return (
     <div className="relative">
-      <AuroraBackground />
       <div className="mx-auto max-w-7xl px-6 pb-28 pt-32">
       <Reveal>
         <p className="eyebrow mb-4">The Collection</p>

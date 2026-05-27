@@ -5,9 +5,13 @@ export default {
   theme: {
     extend: {
       colors: {
-        ink: '#07110D',
-        gold: {DEFAULT: '#CBA45E', light: '#E7C988', dark: '#9E7C3F'},
-        emerald: {DEFAULT: '#1E6F58', deep: '#0E1A15'},
+        ink: '#211D1D',
+        // amber is the primary accent (kept under the name `gold` so existing
+        // utility classes like text-gold/bg-gold map straight onto it)
+        gold: {DEFAULT: '#F2A65A', light: '#F6B978', dark: '#D98A3E'},
+        sage: {DEFAULT: '#6F8F72', light: '#86A589', dark: '#5A7560'},
+        cream: '#E8E2D8',
+        danger: '#E0654F',
         // Theme-aware surfaces (RGB channels in CSS vars -> supports /opacity)
         bg: 'rgb(var(--c-bg) / <alpha-value>)',
         surface: 'rgb(var(--c-surface) / <alpha-value>)',
@@ -24,7 +28,7 @@ export default {
         luxe: '0.28em',
       },
       boxShadow: {
-        glow: '0 0 50px rgba(200,169,107,0.28)',
+        glow: '0 0 50px rgba(242,166,90,0.30)',
         soft: '0 30px 80px rgba(0,0,0,0.45)',
         card: '0 20px 50px rgba(0,0,0,0.35)',
       },

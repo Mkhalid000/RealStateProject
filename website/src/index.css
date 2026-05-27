@@ -3,51 +3,51 @@
 @tailwind utilities;
 
 /* ============================================================
-   Theme tokens — dark (default) + light. Surfaces are driven by
-   CSS variables so the dark/light toggle works site-wide.
-   Legacy aliases (--text, --border, --gold…) keep the dashboard
-   styles below working unchanged.
+   Theme tokens — warm taupe (dark, default) + cream (light).
+   Palette: #454040 base · #E8E2D8 cream · #6F8F72 sage · #F2A65A amber
+   --c-* are RGB channels for Tailwind (/opacity); full-hex vars feed
+   the dashboard styles below.
    ============================================================ */
 :root {
-  /* RGB channels consumed by Tailwind (supports /opacity) — Emerald-Noir (dark) */
-  --c-bg: 8 17 14;
-  --c-surface: 14 26 21;
-  --c-surface2: 20 34 28;
-  --c-fg: 242 239 230;
-  --c-muted: 142 160 151;
-  --c-line: 31 48 40;
+  --c-bg: 33 29 29;
+  --c-surface: 45 40 40;
+  --c-surface2: 69 64 64;
+  --c-fg: 240 236 228;
+  --c-muted: 190 183 173;
+  --c-line: 74 68 68;
 
-  /* full-color vars used by the dashboard CSS */
-  --bg: #08110e;
-  --surface: #0e1a15;
-  --surface-2: #14221c;
-  --text: #f2efe6;
-  --border: #1f3028;
-  --muted: #8ea097;
-  --bg-soft: #0b1612;
-  --gold: #cba45e;
-  --gold-bright: #e7c988;
-  --danger: #e05555;
-  --success: #5bbf7a;
+  --bg: #211d1d;
+  --surface: #2d2828;
+  --surface-2: #454040;
+  --text: #f0ece4;
+  --border: #4a4444;
+  --muted: #beb7ad;
+  --bg-soft: #1b1818;
+  --gold: #f2a65a;       /* amber — primary accent */
+  --gold-bright: #f6b978;
+  --gold-deep: #d98a3e;
+  --sage: #6f8f72;       /* secondary accent */
+  --danger: #e0654f;
+  --success: #6f8f72;
   --font-serif: 'Cormorant Garamond', Georgia, serif;
   --font-sans: 'Inter', system-ui, sans-serif;
 }
 
 .light {
-  --c-bg: 243 241 233;
+  --c-bg: 232 226 216;
   --c-surface: 255 255 255;
-  --c-surface2: 234 232 222;
-  --c-fg: 14 26 21;
-  --c-muted: 95 110 102;
-  --c-line: 224 220 208;
+  --c-surface2: 243 239 232;
+  --c-fg: 23 20 19;      /* near-black text */
+  --c-muted: 71 65 59;   /* dark, clearly readable secondary text */
+  --c-line: 213 206 194;
 
-  --bg: #f3f1e9;
+  --bg: #e8e2d8;
   --surface: #ffffff;
-  --surface-2: #eae8de;
-  --text: #0e1a15;
-  --border: #e0dcd0;
-  --muted: #5f6e66;
-  --bg-soft: #eae8de;
+  --surface-2: #f3efe8;
+  --text: #171413;
+  --border: #d5cec2;
+  --muted: #47413b;
+  --bg-soft: #f0ece3;
 }
 
 /* Lenis smooth scroll */
@@ -74,9 +74,8 @@ html.lenis body {
   }
   ::selection {
     background: var(--gold);
-    color: #0f0f0f;
+    color: #211d1d;
   }
-  /* slim luxe scrollbar */
   ::-webkit-scrollbar {
     width: 9px;
   }
@@ -84,7 +83,7 @@ html.lenis body {
     background: var(--bg);
   }
   ::-webkit-scrollbar-thumb {
-    background: #3a3a42;
+    background: #4a4444;
     border-radius: 9px;
   }
   ::-webkit-scrollbar-thumb:hover {
@@ -100,11 +99,11 @@ html.lenis body {
     border: 1px solid rgba(255, 255, 255, 0.08);
   }
   .light .glass {
-    background: rgba(255, 255, 255, 0.55);
+    background: rgba(255, 255, 255, 0.6);
     border-color: rgba(0, 0, 0, 0.06);
   }
   .text-gradient-gold {
-    background: linear-gradient(120deg, #f0dca8, #cba45e 52%, #9e7c3f);
+    background: linear-gradient(120deg, #f6b978, #f2a65a 52%, #d98a3e);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
@@ -122,83 +121,169 @@ html.lenis body {
   }
 }
 
+/* ---- ambient aurora blobs (home / site background) ---- */
+@keyframes auroraA { 0%, 100% { transform: translate(0, 0) scale(1); } 50% { transform: translate(6%, 8%) scale(1.18); } }
+@keyframes auroraB { 0%, 100% { transform: translate(0, 0) scale(1); } 50% { transform: translate(-7%, -5%) scale(1.12); } }
+@keyframes auroraC { 0%, 100% { transform: translate(0, 0) scale(1); } 50% { transform: translate(4%, -6%) scale(1.22); } }
+
+/* ---- sheen micro-interaction (sweeping highlight on hover) ---- */
+.sheen { position: relative; overflow: hidden; }
+.sheen::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -150%;
+  width: 55%;
+  height: 100%;
+  background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  transform: skewX(-20deg);
+  transition: left 0.6s ease;
+  pointer-events: none;
+}
+.sheen:hover::after { left: 160%; }
+
+/* ---- soft lift utility ---- */
+.lift { transition: transform 0.3s ease, box-shadow 0.3s ease; }
+.lift:hover { transform: translateY(-3px); }
+
 /* ============================================================
-   DASHBOARD (admin) styles — preserved verbatim so the admin
-   panel keeps working. The public site uses Tailwind instead.
+   DASHBOARD (admin) — premium, professional re-skin.
+   Used by the admin pages (cards, tables, buttons, badges).
    ============================================================ */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 14px 30px;
-  border-radius: 2px;
+  padding: 11px 22px;
+  border-radius: 10px;
   font-family: var(--font-sans);
-  font-size: 13px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  font-weight: 500;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
   border: 1px solid var(--gold);
   background: var(--gold);
-  color: #0b0b0d;
+  color: #211d1d;
   cursor: pointer;
-  transition: all 0.35s ease;
+  transition: all 0.25s ease;
 }
-.btn:hover { background: transparent; color: var(--gold-bright); }
-.btn.ghost { background: transparent; color: var(--text); border-color: rgba(255,255,255,0.25); }
-.btn.ghost:hover { border-color: var(--gold); color: var(--gold-bright); }
-.btn.sm { padding: 9px 18px; font-size: 11px; }
-.btn.danger { background: transparent; border-color: rgba(224,85,85,0.5); color: var(--danger); }
-.btn.danger:hover { background: rgba(224,85,85,0.12); }
+.btn:hover { background: var(--gold-deep); border-color: var(--gold-deep); }
+.btn.ghost { background: transparent; color: var(--text); border-color: var(--border); }
+.btn.ghost:hover { border-color: var(--gold); color: var(--gold); background: transparent; }
+.btn.sm { padding: 8px 16px; font-size: 13px; border-radius: 8px; }
+.btn.danger { background: transparent; border-color: rgba(224,101,79,0.5); color: var(--danger); }
+.btn.danger:hover { background: rgba(224,101,79,0.12); border-color: var(--danger); }
 .btn:disabled { opacity: 0.5; cursor: default; }
 
 .input {
   width: 100%;
-  background: var(--bg);
+  background: var(--surface);
   border: 1px solid var(--border);
   color: var(--text);
-  padding: 14px 16px;
+  padding: 13px 15px;
+  border-radius: 10px;
   font-size: 15px;
   font-family: var(--font-sans);
   margin-bottom: 14px;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
-.input:focus { outline: none; border-color: var(--gold); }
+.input:focus {
+  outline: none;
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(242,166,90,0.15);
+}
 .error { color: var(--danger); font-size: 14px; margin-bottom: 14px; }
-
-.auth-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
-.auth-card { width: 420px; max-width: 100%; background: var(--surface); border: 1px solid var(--border); padding: 48px 40px; }
-.auth-card h2 { font-size: 34px; margin-bottom: 6px; }
 
 .brand { font-family: var(--font-serif); font-size: 26px; letter-spacing: 1px; }
 .brand b { color: var(--gold); font-weight: 600; }
 .muted { color: var(--muted); }
 
-.admin { display: flex; min-height: 100vh; }
+/* ---- admin shell ---- */
+.admin { display: flex; min-height: 100vh; background: var(--bg); }
 .admin-side {
-  width: 240px; background: var(--bg-soft); border-right: 1px solid var(--border);
-  padding: 28px 16px; position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column;
+  width: 256px;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  padding: 26px 16px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
-.admin-side .brand { padding: 0 12px 28px; font-size: 24px; }
-.admin-side a { padding: 12px 14px; color: var(--muted); font-size: 14px; border-radius: 3px; margin-bottom: 2px; }
+.admin-side .brand { padding: 4px 12px 26px; font-size: 24px; }
+.admin-side a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 14px;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 10px;
+  margin-bottom: 3px;
+  transition: all 0.2s ease;
+}
 .admin-side a:hover { background: var(--surface-2); color: var(--text); }
-.admin-side a.active { background: var(--gold); color: #0b0b0d; font-weight: 500; }
-.admin-main { flex: 1; padding: 40px 44px; overflow: auto; }
-.admin-main h1 { font-size: 38px; margin-bottom: 28px; }
+.admin-side a.active {
+  background: var(--gold);
+  color: #211d1d;
+  font-weight: 600;
+  box-shadow: 0 8px 20px rgba(242,166,90,0.25);
+}
+.admin-main { flex: 1; padding: 40px 46px; overflow: auto; }
+.admin-main h1 {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 30px;
+  letter-spacing: -0.01em;
+  margin-bottom: 28px;
+}
 
-.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 18px; margin-bottom: 36px; }
-.card { background: var(--surface); border: 1px solid var(--border); padding: 26px; }
-.card .label { color: var(--muted); font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; }
-.card .value { font-family: var(--font-serif); font-size: 42px; color: var(--gold); margin-top: 8px; }
+/* ---- cards ---- */
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 18px; margin-bottom: 36px; }
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px;
+  transition: transform 0.25s ease, border-color 0.25s ease;
+}
+.card:hover { transform: translateY(-3px); border-color: var(--gold); }
+.card .label { color: var(--muted); font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; }
+.card .value { font-family: var(--font-sans); font-weight: 700; font-size: 38px; color: var(--gold); margin-top: 8px; }
 
-table { width: 100%; border-collapse: collapse; background: var(--surface); border: 1px solid var(--border); }
-th, td { text-align: left; padding: 14px 16px; border-bottom: 1px solid var(--border); font-size: 14px; }
-th { color: var(--muted); font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; font-size: 12px; background: var(--bg-soft); }
+/* ---- tables ---- */
+table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+}
+th, td { text-align: left; padding: 14px 18px; border-bottom: 1px solid var(--border); font-size: 14px; }
+th { color: var(--muted); font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; font-size: 11px; background: var(--surface-2); }
+tbody tr { transition: background 0.15s; }
+tbody tr:hover { background: var(--surface-2); }
 tr:last-child td { border-bottom: none; }
 
-.badge { padding: 4px 10px; font-size: 12px; border: 1px solid var(--border); }
-.badge.green { color: var(--success); border-color: rgba(91,191,122,0.4); }
-.badge.gold { color: var(--gold); border-color: rgba(201,161,74,0.4); }
+/* ---- badges & toolbar ---- */
+.badge { padding: 4px 11px; font-size: 12px; font-weight: 600; border-radius: 999px; border: 1px solid var(--border); }
+.badge.green { color: var(--sage); border-color: rgba(111,143,114,0.45); background: rgba(111,143,114,0.1); }
+.badge.gold { color: var(--gold); border-color: rgba(242,166,90,0.45); background: rgba(242,166,90,0.1); }
 
 .toolbar { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
-.field { background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 12px 16px; font-size: 14px; font-family: var(--font-sans); min-width: 150px; }
+.field {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 11px 15px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-family: var(--font-sans);
+  min-width: 150px;
+}
+.field:focus { outline: none; border-color: var(--gold); }
 .field::placeholder { color: var(--muted); }

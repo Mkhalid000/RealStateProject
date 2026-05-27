@@ -1,16 +1,23 @@
-/** Soft floating champagne + emerald light blooms behind a section. */
+/**
+ * Global ambient background — slowly drifting amber & sage glows behind all
+ * content (viewport-fixed, visible while scrolling). Pure CSS, reduced-motion safe.
+ */
 export function AuroraBackground() {
   return (
-    <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-      <div className="absolute -left-32 -top-24 h-96 w-96 animate-float rounded-full bg-gold/10 blur-[130px]" />
+    <div aria-hidden className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
       <div
-        className="absolute right-0 top-1/3 h-[30rem] w-[30rem] animate-float rounded-full bg-emerald/15 blur-[150px]"
-        style={{animationDelay: '2s'}}
+        className="absolute -left-[12%] top-[2%] h-[44vw] w-[44vw] rounded-full bg-gold/15 blur-[130px] motion-reduce:!animate-none"
+        style={{animation: 'auroraA 22s ease-in-out infinite'}}
       />
       <div
-        className="absolute bottom-0 left-1/3 h-80 w-80 animate-float rounded-full bg-gold/5 blur-[120px]"
-        style={{animationDelay: '4s'}}
+        className="absolute -right-[10%] top-[34%] h-[40vw] w-[40vw] rounded-full bg-sage/15 blur-[130px] motion-reduce:!animate-none"
+        style={{animation: 'auroraB 28s ease-in-out infinite'}}
       />
+      <div
+        className="absolute bottom-[-12%] left-[28%] h-[42vw] w-[42vw] rounded-full bg-gold/10 blur-[150px] motion-reduce:!animate-none"
+        style={{animation: 'auroraC 32s ease-in-out infinite'}}
+      />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_55%,rgba(0,0,0,0.35))]" />
     </div>
   );
 }

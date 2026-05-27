@@ -25,7 +25,7 @@ export function Gem3D() {
     // faceted gem
     const geo = new THREE.IcosahedronGeometry(1.7, 1);
     const mat = new THREE.MeshStandardMaterial({
-      color: 0xcba45e,
+      color: 0xf2a65a,
       metalness: 1,
       roughness: 0.28,
       flatShading: true,
@@ -36,7 +36,7 @@ export function Gem3D() {
     // wireframe shell
     const wire = new THREE.LineSegments(
       new THREE.WireframeGeometry(new THREE.IcosahedronGeometry(2.15, 1)),
-      new THREE.LineBasicMaterial({color: 0xe7c988, transparent: true, opacity: 0.28}),
+      new THREE.LineBasicMaterial({color: 0xf6b978, transparent: true, opacity: 0.28}),
     );
     scene.add(wire);
 
@@ -45,7 +45,7 @@ export function Gem3D() {
     const key = new THREE.DirectionalLight(0xfff0d0, 2.2);
     key.position.set(4, 5, 6);
     scene.add(key);
-    const rim = new THREE.PointLight(0xcba45e, 3, 30);
+    const rim = new THREE.PointLight(0xf2a65a, 3, 30);
     rim.position.set(-5, -2, 3);
     scene.add(rim);
 

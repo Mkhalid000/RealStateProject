@@ -1,7 +1,6 @@
 import {useState} from 'react';
 import {Reveal} from '../components/Reveal';
 import {MagneticButton} from '../components/MagneticButton';
-import {AuroraBackground} from '../components/AuroraBackground';
 import {ImageReveal} from '../components/ImageReveal';
 
 export default function Contact() {
@@ -11,7 +10,6 @@ export default function Contact() {
 
   return (
     <div className="relative">
-      <AuroraBackground />
       <div className="mx-auto max-w-7xl px-6 pb-28 pt-32">
         <Reveal>
           <p className="eyebrow mb-4">Get in Touch</p>

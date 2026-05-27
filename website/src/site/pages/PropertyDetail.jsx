@@ -3,7 +3,6 @@ import {useParams, Link} from 'react-router-dom';
 import {apiFetch} from '../../lib/api';
 import {Reveal} from '../components/Reveal';
 import {MagneticButton} from '../components/MagneticButton';
-import {AuroraBackground} from '../components/AuroraBackground';
 import {ImageReveal} from '../components/ImageReveal';
 
 const FALLBACK =
@@ -53,7 +52,6 @@ export default function PropertyDetail() {
 
   return (
     <div className="relative mx-auto max-w-7xl px-6 pb-28 pt-28">
-      <AuroraBackground />
       <ImageReveal
         key={active}
         src={images[active]}

@@ -155,7 +155,7 @@ export default function Home() {
             </select>
             <Link
               to="/properties"
-              className="rounded-xl bg-gold px-7 py-3 text-center text-xs uppercase tracking-[0.16em] text-ink transition-colors hover:bg-gold-light">
+              className="sheen rounded-xl bg-gold px-7 py-3 text-center text-xs uppercase tracking-[0.16em] text-ink transition-colors hover:bg-gold-light">
               Search
             </Link>
           </div>
@@ -267,7 +267,7 @@ export default function Home() {
           </p>
           <MagneticButton
             to="/about"
-            className="mt-9 rounded-sm bg-gold px-8 py-4 text-xs uppercase tracking-[0.16em] text-ink hover:bg-gold-light">
+            className="sheen mt-9 rounded-sm bg-gold px-8 py-4 text-xs uppercase tracking-[0.16em] text-ink hover:bg-gold-light">
             Our Story
           </MagneticButton>
         </Reveal>
@@ -328,7 +328,7 @@ export default function Home() {
             <div className="mt-10 flex flex-wrap justify-center gap-4">
               <MagneticButton
                 to="/properties"
-                className="rounded-sm bg-gold px-9 py-4 text-xs uppercase tracking-[0.16em] text-ink hover:bg-gold-light">
+                className="sheen rounded-sm bg-gold px-9 py-4 text-xs uppercase tracking-[0.16em] text-ink hover:bg-gold-light">
                 Browse Properties
               </MagneticButton>
               <MagneticButton

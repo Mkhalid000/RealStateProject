@@ -4,6 +4,7 @@ import {useEffect} from 'react';
 // Public website
 import {Navbar} from './site/components/Navbar';
 import {Footer} from './site/components/Footer';
+import {AuroraBackground} from './site/components/AuroraBackground';
 import {SmoothScroll} from './site/components/SmoothScroll';
 import {CursorGlow} from './site/components/CursorGlow';
 import {ScrollProgress} from './site/components/ScrollProgress';
@@ -43,8 +44,9 @@ function PublicLayout() {
       <CursorGlow />
       <ScrollProgress />
       <PageTransition />
+      <AuroraBackground />
       <Navbar />
-      <main>
+      <main className="relative z-10">
         <Outlet />
       </main>
       <Footer />
