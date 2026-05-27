@@ -1,4 +1,4 @@
-import {useEffect, useRef, useState} from 'react';
+import {lazy, Suspense, useEffect, useRef, useState} from 'react';
 import {Link} from 'react-router-dom';
 import {gsap, ScrollTrigger} from '../../lib/gsap';
 import {apiFetch} from '../../lib/api';
@@ -7,6 +7,14 @@ import {Counter} from '../components/Counter';
 import {Marquee} from '../components/Marquee';
 import {MagneticButton} from '../components/MagneticButton';
 import {PropertyCard} from '../components/PropertyCard';
+
+// three.js is heavy — load it only on the home page, as its own chunk.
+const Hero3D = lazy(() =>
+  import('../components/Hero3D').then(m => ({default: m.Hero3D})),
+);
+const Gem3D = lazy(() =>
+  import('../components/Gem3D').then(m => ({default: m.Gem3D})),
+);
 
 const HERO_IMG =
   'https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&w=2400&q=80';
@@ -110,6 +118,13 @@ export default function Home() {
         />
         <div className="absolute inset-0 bg-gradient-to-r from-ink/95 via-ink/60 to-ink/20" />
         <div className="absolute inset-0 bg-gradient-to-t from-ink via-transparent to-transparent" />
+
+        {/* Three.js ambient golden dust */}
+        <div className="pointer-events-none absolute inset-0 z-[5] opacity-90">
+          <Suspense fallback={null}>
+            <Hero3D />
+          </Suspense>
+        </div>
 
         <div className="relative z-10 mx-auto w-full max-w-7xl px-6">
           <p className="hero-fade eyebrow mb-6">Aurevia · Luxury Estates</p>
@@ -292,9 +307,19 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ===== CTA ===== */}
+      {/* ===== CTA (with interactive gold crystal) ===== */}
       <section className="relative overflow-hidden py-32">
-        <div className="mx-auto max-w-3xl px-6 text-center">
+        {/* interactive 3D crystal centerpiece */}
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+          <div className="h-[520px] w-[520px] max-w-[90vw] opacity-30">
+            <Suspense fallback={null}>
+              <Gem3D />
+            </Suspense>
+          </div>
+        </div>
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-bg via-transparent to-bg" />
+
+        <div className="relative z-10 mx-auto max-w-3xl px-6 text-center">
           <Reveal>
             <p className="eyebrow mb-6 flex justify-center">Begin Your Search</p>
             <h2 className="font-serif text-4xl md:text-7xl">

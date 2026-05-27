@@ -12,7 +12,7 @@ No monorepo tooling — `website`, `server`, and `mobile` each have their own `n
 
 ## Tech
 - **Website:** Vite + React + React Router + Framer Motion (JavaScript/.jsx), luxury animated UI + admin dashboard. Deploy on Vercel (free).
-- **Backend:** NestJS + Prisma + PostgreSQL (Neon free), JWT auth, Socket.IO, Cloudinary.
+- **Backend:** NestJS + Prisma + PostgreSQL (Neon free), JWT auth, Socket.IO, ImageKit (media).
 - **Mobile:** React Native CLI + React Navigation + React Query (JavaScript/.jsx).
 
 ## Quick start
@@ -27,4 +27,4 @@ cd website && npm install && npm run dev           # http://localhost:3000
 cd mobile && npm install && npm start              # then: npm run android
 ```
 
-See `server/README.md` and `SETUP.md` for environment variables and hosting (Neon, Render, Vercel, Cloudinary).
+See `server/README.md` and `SETUP.md` for environment variables and hosting (Neon, Render, Vercel, ImageKit).

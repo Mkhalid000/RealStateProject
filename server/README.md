@@ -1,10 +1,10 @@
 # RealReels — Backend (NestJS)
 
-REST + WebSocket API. Postgres via Prisma, JWT auth, Socket.IO realtime, Cloudinary uploads.
+REST + WebSocket API. Postgres via Prisma, JWT auth, Socket.IO realtime, ImageKit uploads.
 
 ## Setup
 1. **Database (Neon, free):** https://neon.tech → create project → copy connection string into `.env` `DATABASE_URL`.
-2. **Cloudinary:** dashboard se cloud name / api key / api secret → `.env`.
+2. **ImageKit:** dashboard (Developer → API Keys) se public key / private key / URL endpoint → `.env`.
 3. Set strong `JWT_ACCESS_SECRET` and `JWT_REFRESH_SECRET`.
 
 ```bash
@@ -29,7 +29,7 @@ npm run start:dev                      # http://localhost:4000/api
 | Chat | `GET/POST /chat/conversations`, `GET/POST /chat/conversations/:id/messages` |
 | Notifications | `GET /notifications`, `GET /notifications/unread-count`, `PATCH /notifications/read-all` |
 | Billing | `GET /billing/plans`, `POST/GET /billing/boosts`, `GET/POST /billing/subscription` |
-| Uploads | `GET /uploads/signature?folder=reels` (Cloudinary signed upload) |
+| Uploads | `GET /uploads/signature` (ImageKit client-upload auth params) |
 | Admin | `GET /admin/stats`, `GET /admin/users`, `PATCH /admin/users/:id/verify`, `/role`, `DELETE /admin/reels|properties/:id`, `GET /admin/boosts`, `POST /admin/boosts/expire` |
 
 ## Realtime (Socket.IO)
