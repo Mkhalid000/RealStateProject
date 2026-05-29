@@ -211,6 +211,7 @@ model Reel {
   propertyId     String?
   isBoosted      Boolean   @default(false)
   boostExpiresAt DateTime?
+  viewCount      Int       @default(0)
   likeCount      Int       @default(0)
   commentCount   Int       @default(0)
   createdAt      DateTime  @default(now())

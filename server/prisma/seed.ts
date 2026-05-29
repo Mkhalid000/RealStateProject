@@ -377,7 +377,57 @@ async function main() {
     verificationStatus: VerificationStatus.verified,
   });
 
-  console.log('\n✅  Seed complete — 6 properties added.\n');
+  /* ── 5. Sample reels (Instagram-style feed) ── */
+  const propSlugs = [
+    'skyline-penthouse-bandra-west',
+    'portuguese-heritage-villa-north-goa',
+    'modern-3bhk-apartment-whitefield-bangalore',
+    'grade-a-office-space-cyber-city-gurugram',
+    'luxury-4bhk-villa-jubilee-hills-hyderabad',
+  ];
+  const seededProps = await prisma.property.findMany({
+    where: {slug: {in: propSlugs}},
+    select: {id: true, slug: true},
+  });
+  const propIdBySlug = Object.fromEntries(seededProps.map(p => [p.slug, p.id]));
+
+  const SAMPLE_VIDEOS = [
+    'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+    'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
+    'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4',
+    'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
+    'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',
+  ];
+
+  const reels = [
+    {id: 'seed-reel-1', caption: 'Sky-high living above Bandra — sunset from the 28th floor ✨', video: SAMPLE_VIDEOS[0], thumb: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=800&q=80', slug: 'skyline-penthouse-bandra-west', boosted: true, likes: 184, comments: 21},
+    {id: 'seed-reel-2', caption: 'A 200-year-old Portuguese villa restored to perfection 🏛️', video: SAMPLE_VIDEOS[1], thumb: 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&w=800&q=80', slug: 'portuguese-heritage-villa-north-goa', boosted: true, likes: 142, comments: 17},
+    {id: 'seed-reel-3', caption: 'Modern 3BHK walkthrough in Whitefield — minutes from ITPL', video: SAMPLE_VIDEOS[2], thumb: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=800&q=80', slug: 'modern-3bhk-apartment-whitefield-bangalore', boosted: false, likes: 76, comments: 8},
+    {id: 'seed-reel-4', caption: 'Grade-A office space in Cyber City, Gurugram 🏢', video: SAMPLE_VIDEOS[3], thumb: 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=800&q=80', slug: 'grade-a-office-space-cyber-city-gurugram', boosted: false, likes: 53, comments: 5},
+    {id: 'seed-reel-5', caption: 'Contemporary 4BHK villa in Jubilee Hills — rooftop infinity pool 🌊', video: SAMPLE_VIDEOS[4], thumb: 'https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?auto=format&fit=crop&w=800&q=80', slug: 'luxury-4bhk-villa-jubilee-hills-hyderabad', boosted: false, likes: 98, comments: 12},
+  ];
+
+  for (const r of reels) {
+    const data = {
+      agentId: agent.id,
+      videoUrl: r.video,
+      thumbnailUrl: r.thumb,
+      caption: r.caption,
+      propertyId: propIdBySlug[r.slug] ?? null,
+      isBoosted: r.boosted,
+      boostExpiresAt: r.boosted ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) : null,
+      likeCount: r.likes,
+      commentCount: r.comments,
+    };
+    await prisma.reel.upsert({
+      where: {id: r.id},
+      update: data,
+      create: {id: r.id, ...data},
+    });
+    console.log(`  ↳  Reel: ${r.caption.slice(0, 42)}…`);
+  }
+
+  console.log('\n✅  Seed complete — 6 properties, 5 reels added.\n');
 }
 
 main()

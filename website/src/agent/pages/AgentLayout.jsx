@@ -19,6 +19,11 @@ const LINKS = [
     label: 'Add Property',
     icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>,
   },
+  {
+    to: '/agent/reels',
+    label: 'Reels',
+    icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="3"/><path d="M7 2v20M17 2v20M2 12h20M2 7h5M2 17h5M17 17h5M17 7h5"/></svg>,
+  },
 ];
 
 function pageTitle(pathname) {
@@ -26,6 +31,8 @@ function pageTitle(pathname) {
   if (pathname.includes('/properties/new')) return {title: 'Add Property', sub: 'Create a new listing'};
   if (pathname.includes('/properties/') && pathname.includes('/edit')) return {title: 'Edit Property', sub: 'Update your listing'};
   if (pathname.startsWith('/agent/properties')) return {title: 'My Listings', sub: 'Manage the properties you have listed'};
+  if (pathname.includes('/reels/new')) return {title: 'New Reel', sub: 'Upload a property video'};
+  if (pathname.startsWith('/agent/reels')) return {title: 'My Reels', sub: 'Manage and boost your reels'};
   return {title: 'Agent', sub: ''};
 }
 

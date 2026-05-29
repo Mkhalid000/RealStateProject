@@ -74,6 +74,7 @@ function ProfileMenu({user, onLogout, dark}) {
 const links = [
   {to: '/', label: 'Home', end: true},
   {to: '/properties', label: 'Properties'},
+  {to: '/reels', label: 'Reels'},
   {to: '/about', label: 'About'},
   {to: '/contact', label: 'Contact'},
 ];

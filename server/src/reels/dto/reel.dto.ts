@@ -37,4 +37,9 @@ export class FeedQueryDto {
   @IsInt()
   @Min(1)
   limit?: number;
+
+  // optional filters (used by the admin moderation page)
+  @IsOptional() @IsString() q?: string;
+  @IsOptional() @IsString() boosted?: string; // 'true' | 'false'
+  @IsOptional() @IsString() agentId?: string;
 }

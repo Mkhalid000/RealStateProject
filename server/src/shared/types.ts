@@ -98,6 +98,7 @@ export interface Reel {
   property?: Property | null;
   isBoosted: boolean;
   boostExpiresAt: string | null;
+  viewCount: number;
   likeCount: number;
   commentCount: number;
   likedByMe?: boolean;

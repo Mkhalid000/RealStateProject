@@ -3,6 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import {Prisma} from '@prisma/client';
 import {NotificationType} from '../shared';
 import {PrismaService} from '../prisma/prisma.service';
 import {NotificationsService} from '../notifications/notifications.service';
@@ -32,12 +33,18 @@ export class ReelsService {
       likes: viewerId ? {where: {userId: viewerId}, select: {userId: true}} : false,
     } as const;
 
-    const rows = await this.prisma.reel.findMany({
-      include,
-      orderBy: [{isBoosted: 'desc'}, {createdAt: 'desc'}],
-      skip,
-      take: limit,
-    });
+    const where = this.feedWhere(query);
+
+    const [rows, total] = await Promise.all([
+      this.prisma.reel.findMany({
+        where,
+        include,
+        orderBy: [{isBoosted: 'desc'}, {createdAt: 'desc'}],
+        skip,
+        take: limit,
+      }),
+      this.prisma.reel.count({where}),
+    ]);
 
     // Demote boosts whose window has expired (lazy correction).
     const items = rows.map(r => {
@@ -46,7 +53,56 @@ export class ReelsService {
       return toReel({...r, isBoosted: boostActive}, viewerId);
     });
 
-    return {items, page, limit, hasMore: rows.length === limit};
+    return {items, page, limit, total, hasMore: page * limit < total};
+  }
+
+  /** Agent listing — only the caller's own reels, newest first. */
+  async listMine(agentId: string, query: FeedQueryDto) {
+    const page = query.page ?? 1;
+    const limit = Math.min(query.limit ?? 12, 30);
+    const where: Prisma.ReelWhereInput = {agentId};
+    const now = new Date();
+
+    const [rows, total] = await Promise.all([
+      this.prisma.reel.findMany({
+        where,
+        include: {agent: true, property: {include: {agent: true}}},
+        orderBy: {createdAt: 'desc'},
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prisma.reel.count({where}),
+    ]);
+
+    const items = rows.map(r => {
+      const boostActive =
+        r.isBoosted && r.boostExpiresAt != null && r.boostExpiresAt > now;
+      return toReel({...r, isBoosted: boostActive});
+    });
+    return {items, page, limit, total, hasMore: page * limit < total};
+  }
+
+  private feedWhere(query: FeedQueryDto): Prisma.ReelWhereInput {
+    const where: Prisma.ReelWhereInput = {};
+    if (query.agentId) where.agentId = query.agentId;
+    if (query.boosted === 'true') where.isBoosted = true;
+    else if (query.boosted === 'false') where.isBoosted = false;
+    if (query.q) {
+      where.OR = [
+        {caption: {contains: query.q, mode: 'insensitive'}},
+        {agent: {fullName: {contains: query.q, mode: 'insensitive'}}},
+        {agent: {email: {contains: query.q, mode: 'insensitive'}}},
+      ];
+    }
+    return where;
+  }
+
+  /** Increment the view counter (best-effort; client dedupes per session). */
+  async recordView(id: string) {
+    await this.prisma.reel
+      .update({where: {id}, data: {viewCount: {increment: 1}}})
+      .catch(() => null);
+    return {success: true};
   }
 
   async getOne(id: string, viewerId?: string) {

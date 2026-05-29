@@ -13,6 +13,7 @@ import {PageTransition} from './site/components/PageTransition';
 import Home from './site/pages/Home';
 import Properties from './site/pages/Properties';
 import PropertyDetail from './site/pages/PropertyDetail';
+import ReelsFeed from './site/pages/Reels';
 import About from './site/pages/About';
 import Contact from './site/pages/Contact';
 
@@ -32,6 +33,8 @@ import Boosts from './dashboard/boosts/Boosts';
 import AgentLayout from './agent/pages/AgentLayout';
 import AgentOverview from './agent/pages/AgentOverview';
 import AgentProperties from './agent/pages/AgentProperties';
+import AgentReels from './agent/pages/AgentReels';
+import ReelForm from './agent/pages/ReelForm';
 
 function ScrollToTop() {
   const {pathname} = useLocation();
@@ -75,6 +78,9 @@ export default function App() {
           <Route path="/contact" element={<Contact />} />
         </Route>
 
+        {/* Immersive public reels feed (its own full-screen chrome) */}
+        <Route path="/reels" element={<ReelsFeed />} />
+
         {/* Auth */}
         <Route path="/login" element={<Login />} />
 
@@ -108,6 +114,8 @@ export default function App() {
           <Route path="properties" element={<AgentProperties />} />
           <Route path="properties/new" element={<PropertyForm />} />
           <Route path="properties/:id/edit" element={<PropertyForm />} />
+          <Route path="reels" element={<AgentReels />} />
+          <Route path="reels/new" element={<ReelForm />} />
         </Route>
       </Routes>
     </>
