@@ -13,6 +13,7 @@ import {NotificationsModule} from './notifications/notifications.module';
 import {BillingModule} from './billing/billing.module';
 import {UploadsModule} from './uploads/uploads.module';
 import {AdminModule} from './admin/admin.module';
+import {LeadsModule} from './leads/leads.module';
 import {JwtAuthGuard} from './common/guards/jwt-auth.guard';
 import {RolesGuard} from './common/guards/roles.guard';
 
@@ -31,6 +32,7 @@ import {RolesGuard} from './common/guards/roles.guard';
     BillingModule,
     UploadsModule,
     AdminModule,
+    LeadsModule,
   ],
   providers: [
     // Auth on every route by default; @Public() opts out.

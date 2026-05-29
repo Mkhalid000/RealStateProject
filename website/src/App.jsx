@@ -28,6 +28,7 @@ import PropertyForm from './dashboard/properties/PropertyForm';
 import PropertyDetails from './dashboard/properties/PropertyDetails';
 import Reels from './dashboard/reels/Reels';
 import Boosts from './dashboard/boosts/Boosts';
+import Leads from './dashboard/leads/Leads';
 
 // Agent portal
 import AgentLayout from './agent/pages/AgentLayout';
@@ -102,6 +103,7 @@ export default function App() {
           <Route path="reels" element={<Reels />} />
           <Route path="reels/new" element={<ReelForm />} />
           <Route path="boosts" element={<Boosts />} />
+          <Route path="leads/:source" element={<Leads />} />
         </Route>
 
         {/* Agent */}

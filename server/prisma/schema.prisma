@@ -193,11 +193,28 @@ model Property {
 
   reels   Reel[]
   savedBy SavedProperty[]
+  leads   Lead[]
 
   @@index([agentId])
   @@index([type])
   @@index([price])
   @@index([isVerified])
+}
+
+model Lead {
+  id         String    @id @default(uuid())
+  name       String
+  email      String?
+  phone      String?
+  message    String?
+  source     String    @default("website") // website | mobile
+  status     String    @default("new") // new | contacted | closed
+  property   Property? @relation(fields: [propertyId], references: [id], onDelete: SetNull)
+  propertyId String?
+  createdAt  DateTime  @default(now())
+
+  @@index([source, createdAt])
+  @@index([status])
 }
 
 model Reel {

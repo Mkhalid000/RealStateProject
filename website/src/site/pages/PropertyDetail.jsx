@@ -81,11 +81,45 @@ export default function PropertyDetail() {
   const [error, setError] = useState('');
   const [active, setActive] = useState(0);
 
+  // enquiry → lead
+  const [lead, setLead] = useState({name: '', email: '', phone: '', message: ''});
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [leadError, setLeadError] = useState('');
+  const setL = (k, v) => setLead(f => ({...f, [k]: v}));
+
   useEffect(() => {
     apiFetch(`/properties/${id}`)
       .then(p => { setP(p); setActive(0); })
       .catch(e => setError(e.message));
   }, [id]);
+
+  async function submitLead(e) {
+    e.preventDefault();
+    if (!lead.name.trim() || !(lead.email.trim() || lead.phone.trim())) {
+      return setLeadError('Please add your name and an email or phone.');
+    }
+    setSending(true);
+    setLeadError('');
+    try {
+      await apiFetch('/leads', {
+        method: 'POST',
+        body: JSON.stringify({
+          name: lead.name.trim(),
+          email: lead.email.trim() || undefined,
+          phone: lead.phone.trim() || undefined,
+          message: lead.message.trim() || undefined,
+          propertyId: p.id,
+          source: 'website',
+        }),
+      });
+      setSent(true);
+    } catch (err) {
+      setLeadError(err.message || 'Could not send your request.');
+    } finally {
+      setSending(false);
+    }
+  }
 
   if (error) {
     return (
@@ -177,7 +211,7 @@ export default function PropertyDetail() {
           {/* description */}
           <Reveal y={30}>
             <div className="mt-10">
-              <h4 className="text-xs uppercase tracking-luxe text-muted">Overview</h4>
+              <h4 className="text-lg uppercase tracking-luxe text-black text-bold">Overview</h4>
               <p className="mt-4 whitespace-pre-line leading-relaxed text-fg/80">
                 {p.description || 'A truly exceptional residence. Contact our advisors for full details and private viewings.'}
               </p>
@@ -187,7 +221,7 @@ export default function PropertyDetail() {
           {/* full details */}
           <Reveal y={30}>
             <div className="mt-10">
-              <h4 className="text-xs uppercase tracking-luxe text-muted">Property Details</h4>
+              <h4 className="text-lg uppercase tracking-luxe text-black text-bold">Property Details</h4>
               <div className="mt-4 grid gap-x-12 sm:grid-cols-2">
                 <div>
                   <Detail label="Listing" value={forLabel} />
@@ -227,21 +261,52 @@ export default function PropertyDetail() {
 
             <h3 className="font-serif text-2xl">Request a Private Viewing</h3>
             <p className="mb-5 mt-1 text-sm text-muted">Our advisor will respond within 24 hours.</p>
-            {['Your name', 'Email', 'Phone'].map(ph => (
-              <input
-                key={ph}
-                placeholder={ph}
-                className="mb-3 w-full rounded-md border border-line bg-transparent px-4 py-3 text-sm outline-none transition-colors focus:border-gold"
-              />
-            ))}
-            <textarea
-              rows={3}
-              placeholder="I'd like a private viewing…"
-              className="mb-4 w-full rounded-md border border-line bg-transparent px-4 py-3 text-sm outline-none transition-colors focus:border-gold"
-            />
-            <MagneticButton className="w-full rounded-md bg-gold py-3.5 text-xs uppercase tracking-[0.16em] text-ink hover:bg-gold-light">
-              Request Viewing
-            </MagneticButton>
+
+            {sent ? (
+              <div className="rounded-xl border border-sage/40 bg-sage/10 p-5 text-center">
+                <div className="mx-auto mb-3 grid h-11 w-11 place-items-center rounded-full bg-sage/20 text-sage-light">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12" /></svg>
+                </div>
+                <p className="font-medium text-fg">Enquiry sent!</p>
+                <p className="mt-1 text-sm text-muted">Our advisor will be in touch shortly.</p>
+              </div>
+            ) : (
+              <form onSubmit={submitLead}>
+                <input
+                  value={lead.name}
+                  onChange={e => setL('name', e.target.value)}
+                  placeholder="Your name"
+                  className="mb-3 w-full rounded-md border border-line bg-transparent px-4 py-3 text-sm outline-none transition-colors focus:border-gold"
+                />
+                <input
+                  type="email"
+                  value={lead.email}
+                  onChange={e => setL('email', e.target.value)}
+                  placeholder="Email"
+                  className="mb-3 w-full rounded-md border border-line bg-transparent px-4 py-3 text-sm outline-none transition-colors focus:border-gold"
+                />
+                <input
+                  value={lead.phone}
+                  onChange={e => setL('phone', e.target.value)}
+                  placeholder="Phone"
+                  className="mb-3 w-full rounded-md border border-line bg-transparent px-4 py-3 text-sm outline-none transition-colors focus:border-gold"
+                />
+                <textarea
+                  rows={3}
+                  value={lead.message}
+                  onChange={e => setL('message', e.target.value)}
+                  placeholder="I'd like a private viewing…"
+                  className="mb-3 w-full rounded-md border border-line bg-transparent px-4 py-3 text-sm outline-none transition-colors focus:border-gold"
+                />
+                {leadError && <p className="mb-3 text-sm text-danger">{leadError}</p>}
+                <button
+                  type="submit"
+                  disabled={sending}
+                  className="sheen w-full rounded-md bg-gold py-3.5 text-xs uppercase tracking-[0.16em] text-ink transition-colors hover:bg-gold-light disabled:opacity-60">
+                  {sending ? 'Sending…' : 'Request Viewing'}
+                </button>
+              </form>
+            )}
 
             {(p.ownerPhone || p.ownerWhatsapp) && (
               <div className="mt-4 flex gap-3">
@@ -266,7 +331,7 @@ export default function PropertyDetail() {
       {p.amenities?.length > 0 && (
         <Reveal y={30}>
           <div className="mt-16">
-            <h4 className="text-xs uppercase tracking-luxe text-muted">Amenities &amp; Features</h4>
+            <h4 className="text-lg uppercase tracking-luxe text-black text-bold">Amenities &amp; Features</h4>
             <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
               {p.amenities.map(a => (
                 <div key={a} className="flex items-center gap-2.5 py-1.5 text-fg">

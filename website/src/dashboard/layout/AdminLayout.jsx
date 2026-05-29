@@ -84,6 +84,7 @@ export default function AdminLayout() {
   const {logout, user} = useAuth();
   const navigate = useNavigate();
   const {pathname} = useLocation();
+  const [leadsOpen, setLeadsOpen] = useState(pathname.startsWith('/admin/leads'));
 
   function onLogout() {
     logout();
@@ -112,6 +113,34 @@ export default function AdminLayout() {
             {l.label}
           </NavLink>
         ))}
+
+        {/* Leads group (Website / Mobile) */}
+        <button
+          type="button"
+          onClick={() => setLeadsOpen(o => !o)}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 11, width: '100%',
+            padding: '10px 14px', marginBottom: 2, borderRadius: 10, border: 'none', cursor: 'pointer',
+            fontFamily: 'var(--font-sans)', fontSize: 13.5, fontWeight: 500,
+            background: pathname.startsWith('/admin/leads') ? 'linear-gradient(135deg, rgba(242,166,90,0.12), rgba(242,166,90,0.06))' : 'transparent',
+            color: pathname.startsWith('/admin/leads') ? '#d98a3e' : '#636274',
+          }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M22 12h-6l-2 3h-4l-2-3H2" /><path d="M5.5 5h13a2 2 0 0 1 1.8 1.2L22 12v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-6l1.7-5.8A2 2 0 0 1 5.5 5z" /></svg>
+          Leads
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{marginLeft: 'auto', transform: leadsOpen ? 'rotate(180deg)' : 'none', transition: 'transform .2s'}}><path d="M6 9l6 6 6-6" /></svg>
+        </button>
+        {leadsOpen && (
+          <div style={{marginBottom: 2}}>
+            <NavLink to="/admin/leads/website" style={{paddingLeft: 40, fontSize: 13}}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3a14 14 0 0 1 0 18 14 14 0 0 1 0-18z" /></svg>
+              Website
+            </NavLink>
+            <NavLink to="/admin/leads/mobile" style={{paddingLeft: 40, fontSize: 13}}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><rect x="7" y="2" width="10" height="20" rx="2" /><path d="M11 18h2" /></svg>
+              Mobile
+            </NavLink>
+          </div>
+        )}
 
         <div style={{flex: 1}} />
 
