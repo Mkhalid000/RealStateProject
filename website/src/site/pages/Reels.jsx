@@ -240,9 +240,9 @@ export default function Reels() {
         ))}
 
         {reels.length === 0 && (
-          <div className="flex h-full items-center justify-center text-white/60">
-            {loading ? 'Loading reels…' : 'No reels yet.'}
-          </div>
+          loading ? <ReelSkeleton /> : (
+            <div className="flex h-full items-center justify-center text-white/60">No reels yet.</div>
+          )
         )}
       </div>
 
@@ -268,6 +268,43 @@ export default function Reels() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function ReelSkeleton() {
+  return (
+    <div className="relative h-full w-full overflow-hidden bg-gradient-to-b from-[#1a1614] to-black">
+      {/* sweeping shimmer */}
+      <div className="pointer-events-none absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+
+      {/* center brand + spinner */}
+      <div className="absolute inset-0 flex flex-col items-center justify-center gap-5">
+        <span className="relative grid h-16 w-16 place-items-center">
+          <span className="absolute inset-0 rounded-full border-2 border-white/10" />
+          <span className="absolute inset-0 animate-spin rounded-full border-2 border-transparent border-t-gold" />
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="#f2a65a"><path d="M8 5v14l11-7z" /></svg>
+        </span>
+        <span className="font-serif text-2xl tracking-wide text-white">AU<span className="text-gold">REVIA</span></span>
+        <span className="text-[11px] uppercase tracking-[0.3em] text-white/40">Loading reels…</span>
+      </div>
+
+      {/* faux caption block */}
+      <div className="absolute bottom-10 left-1/2 w-full max-w-[480px] -translate-x-1/2 px-5">
+        <div className="flex items-center gap-2.5">
+          <div className="h-9 w-9 animate-pulse rounded-full bg-white/15" />
+          <div className="h-3 w-28 animate-pulse rounded-full bg-white/15" />
+        </div>
+        <div className="mt-3 h-3 w-3/4 animate-pulse rounded-full bg-white/10" />
+        <div className="mt-2 h-3 w-1/2 animate-pulse rounded-full bg-white/10" />
+      </div>
+
+      {/* faux action rail */}
+      <div className="absolute bottom-28 right-8 flex flex-col gap-5">
+        {[0, 1, 2].map(i => (
+          <div key={i} className="h-12 w-12 animate-pulse rounded-full bg-white/15" />
+        ))}
+      </div>
     </div>
   );
 }
