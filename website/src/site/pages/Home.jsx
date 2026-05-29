@@ -28,10 +28,10 @@ const SHOWCASE = [
 ];
 
 const STATS = [
-  {value: 320, suffix: '+', label: 'Private Listings'},
-  {value: 48, suffix: '', label: 'Global Cities'},
-  {value: 2.4, prefix: '$', suffix: 'B', decimals: 1, label: 'Property Sold'},
-  {value: 15, suffix: '', label: 'Years of Trust'},
+  {value: 120, suffix: '+', label: 'Private Listings'},
+  {value: 18, suffix: '', label: 'Global Cities'},
+  {value: 1.4, prefix: '$', suffix: 'M', decimals: 1, label: 'Property Sold'},
+  {value: 10, suffix: '', label: 'Years of Trust'},
 ];
 
 const TESTIMONIALS = [
@@ -190,9 +190,9 @@ export default function Home() {
       </section>
 
       {/* ===== FEATURED ===== */}
-      <section className="mx-auto max-w-7xl px-6 py-24">
+      <section className="mx-auto max-w-7xl px-6 pb-12">
         <Reveal>
-          <p className="eyebrow mb-4">The Collection</p>
+          <p className="eyebrow mb-2">The Collection</p>
           <div className="flex flex-wrap items-end justify-between gap-6">
             <h2 className="max-w-2xl font-serif text-4xl md:text-6xl">Featured Residences</h2>
             <Link to="/properties" className="text-sm uppercase tracking-[0.16em] text-gold hover:text-gold-light">
@@ -202,7 +202,7 @@ export default function Home() {
         </Reveal>
 
         {featured.length > 0 ? (
-          <Reveal stagger={0.1} className="mt-14 grid gap-7 sm:grid-cols-2 lg:grid-cols-3">
+          <Reveal stagger={0.1} className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {featured.map(p => (
               <PropertyCard key={p.id} property={p} />
             ))}
@@ -211,6 +211,19 @@ export default function Home() {
           <p className="mt-12 text-muted">
             No listings yet — start the backend and add properties from the admin panel.
           </p>
+        )}
+
+        {featured.length > 0 && (
+          <div className="mt-10 flex justify-end">
+            <Link
+              to="/properties"
+              className="group inline-flex items-center gap-2 rounded-full border border-gold/60 bg-gold/10 px-7 py-3 text-xs font-semibold uppercase tracking-[0.16em] text-gold transition-colors hover:bg-gold hover:text-ink">
+              See more
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="transition-transform duration-300 group-hover:translate-x-1">
+                <path d="M5 12h14M12 5l7 7-7 7" />
+              </svg>
+            </Link>
+          </div>
         )}
       </section>
 

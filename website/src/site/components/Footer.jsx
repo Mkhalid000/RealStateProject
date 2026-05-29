@@ -145,7 +145,7 @@ export function Footer() {
       {/* oversized watermark wordmark */}
       <div
         aria-hidden
-        className="pointer-events-none -mb-[3vw] select-none whitespace-nowrap text-center font-serif text-[22vw] leading-none text-fg/[0.035]">
+        className="text-gradient-gold pointer-events-none -mb-[3vw] select-none whitespace-nowrap text-center font-serif text-[22vw] leading-none tracking-tight opacity-[0.16]">
         AUREVIA
       </div>
     </footer>
