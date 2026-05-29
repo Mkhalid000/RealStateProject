@@ -81,7 +81,7 @@ function Dropdown({trigger, children, align = 'right', width = 230}) {
 }
 
 export default function AdminLayout() {
-  const {logout, admin} = useAuth();
+  const {logout, user} = useAuth();
   const navigate = useNavigate();
   const {pathname} = useLocation();
 
@@ -90,9 +90,9 @@ export default function AdminLayout() {
     navigate('/login');
   }
 
-  const initial = (admin?.fullName || 'A').charAt(0).toUpperCase();
-  const name = admin?.fullName || 'Admin';
-  const email = admin?.email || 'admin@realreels.app';
+  const initial = (user?.fullName || 'A').charAt(0).toUpperCase();
+  const name = user?.fullName || 'Admin';
+  const email = user?.email || 'admin@realreels.app';
   const {title, sub} = pageTitle(pathname);
 
   return (

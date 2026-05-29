@@ -1,5 +1,5 @@
 import {useEffect, useRef, useState} from 'react';
-import {useNavigate, useParams, Link} from 'react-router-dom';
+import {useNavigate, useParams, useLocation, Link} from 'react-router-dom';
 import {gsap} from '../../lib/gsap';
 import {apiFetch} from '../../lib/api';
 import {uploadFile} from '../../lib/upload';
@@ -226,6 +226,9 @@ export default function PropertyForm() {
   const {id} = useParams();
   const editing = !!id;
   const navigate = useNavigate();
+  const {pathname} = useLocation();
+  // Keep agents inside /agent and admins inside /admin when navigating.
+  const base = pathname.startsWith('/agent') ? '/agent/properties' : '/admin/properties';
   const [form, setForm] = useState(EMPTY);
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
@@ -326,7 +329,7 @@ export default function PropertyForm() {
     try {
       if (editing) await apiFetch(`/properties/${id}`, {method: 'PATCH', body: JSON.stringify(payload)});
       else await apiFetch('/properties', {method: 'POST', body: JSON.stringify(payload)});
-      navigate('/admin/properties');
+      navigate(base);
     } catch (e) {
       setError(e.message);
       setSaving(false);
@@ -341,7 +344,7 @@ export default function PropertyForm() {
       {/* ── Page header ── */}
       <div style={{marginBottom: 28}}>
         <div style={{display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, fontSize: 13, color: '#a0a3b1'}}>
-          <Link to="/admin/properties" style={{color: '#a0a3b1', textDecoration: 'none'}}>Properties</Link>
+          <Link to={base} style={{color: '#a0a3b1', textDecoration: 'none'}}>Properties</Link>
           <span>›</span>
           <span style={{color: '#11111b'}}>{editing ? 'Edit Property' : 'New Property'}</span>
         </div>
@@ -838,7 +841,7 @@ export default function PropertyForm() {
         <button
           type="button"
           className="btn ghost"
-          onClick={() => step === 0 ? navigate('/admin/properties') : setStep(s => s - 1)}>
+          onClick={() => step === 0 ? navigate(base) : setStep(s => s - 1)}>
           {step === 0 ? (
             <>
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>

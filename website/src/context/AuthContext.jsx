@@ -4,7 +4,7 @@ import {apiFetch, getToken, setToken, clearToken} from '../lib/api';
 const AuthContext = createContext(null);
 
 export function AuthProvider({children}) {
-  const [admin, setAdmin] = useState(null);
+  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -13,10 +13,7 @@ export function AuthProvider({children}) {
       return;
     }
     apiFetch('/auth/me')
-      .then(me => {
-        if (me.role === 'admin') setAdmin(me);
-        else clearToken();
-      })
+      .then(setUser)
       .catch(() => clearToken())
       .finally(() => setLoading(false));
   }, []);
@@ -26,24 +23,43 @@ export function AuthProvider({children}) {
       method: 'POST',
       body: JSON.stringify({email, password}),
     });
-    if (data.user.role !== 'admin') {
-      throw new Error('This account is not an admin.');
+    setToken(data.tokens.accessToken);
+    setUser(data.user);
+    return data.user;
+  }
+
+  // payload: {fullName, email, password, role?, phone?, agencyName?}
+  // Returns the created user (auto-login) OR {pendingVerification, message} for agents.
+  async function register(payload) {
+    const data = await apiFetch('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    if (data?.pendingVerification) {
+      return data;
     }
     setToken(data.tokens.accessToken);
-    setAdmin(data.user);
+    setUser(data.user);
     return data.user;
   }
 
   function logout() {
     clearToken();
-    setAdmin(null);
+    setUser(null);
   }
 
-  return (
-    <AuthContext.Provider value={{admin, loading, login, logout}}>
-      {children}
-    </AuthContext.Provider>
-  );
+  const value = {
+    user,
+    loading,
+    login,
+    register,
+    logout,
+    // convenience flags
+    isAdmin: user?.role === 'admin',
+    isAgent: user?.role === 'agent',
+  };
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {

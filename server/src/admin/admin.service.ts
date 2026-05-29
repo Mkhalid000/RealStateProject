@@ -1,7 +1,20 @@
-import {Injectable} from '@nestjs/common';
+import {ConflictException, Injectable} from '@nestjs/common';
 import {Prisma} from '@prisma/client';
-import {UserRole} from '../shared';
+import * as bcrypt from 'bcryptjs';
+import {UserRole, VerificationStatus} from '../shared';
 import {PrismaService} from '../prisma/prisma.service';
+import {CreateAgentDto} from '../auth/dto/auth.dto';
+
+const USER_SELECT = {
+  id: true,
+  email: true,
+  role: true,
+  fullName: true,
+  phone: true,
+  isVerified: true,
+  verificationStatus: true,
+  createdAt: true,
+} satisfies Prisma.UserSelect;
 
 @Injectable()
 export class AdminService {
@@ -27,37 +40,77 @@ export class AdminService {
     };
   }
 
-  listUsers(role?: UserRole, q?: string) {
+  async listUsers(opts: {
+    role?: UserRole;
+    q?: string;
+    verified?: string;
+    page?: number;
+    limit?: number;
+  }) {
+    const page = Math.max(Number(opts.page) || 1, 1);
+    const limit = Math.min(Math.max(Number(opts.limit) || 10, 1), 100);
     const where: Prisma.UserWhereInput = {};
-    if (role) {
-      where.role = role as any;
+    if (opts.role) {
+      where.role = opts.role as any;
     }
-    if (q) {
+    if (opts.verified === 'true' || opts.verified === 'verified') {
+      where.isVerified = true;
+    } else if (opts.verified === 'false' || opts.verified === 'unverified') {
+      where.isVerified = false;
+    }
+    if (opts.q) {
       where.OR = [
-        {email: {contains: q, mode: 'insensitive'}},
-        {fullName: {contains: q, mode: 'insensitive'}},
+        {email: {contains: opts.q, mode: 'insensitive'}},
+        {fullName: {contains: opts.q, mode: 'insensitive'}},
       ];
     }
-    return this.prisma.user.findMany({
-      where,
-      orderBy: {createdAt: 'desc'},
-      take: 100,
-      select: {
-        id: true,
-        email: true,
-        role: true,
-        fullName: true,
-        isVerified: true,
-        createdAt: true,
-      },
-    });
+    const [items, total] = await Promise.all([
+      this.prisma.user.findMany({
+        where,
+        orderBy: {createdAt: 'desc'},
+        skip: (page - 1) * limit,
+        take: limit,
+        select: USER_SELECT,
+      }),
+      this.prisma.user.count({where}),
+    ]);
+    return {items, total, page, limit, hasMore: page * limit < total};
   }
 
-  setVerified(userId: string, isVerified: boolean) {
+  async createAgent(dto: CreateAgentDto) {
+    const existing = await this.prisma.user.findUnique({where: {email: dto.email}});
+    if (existing) {
+      throw new ConflictException('Email already registered');
+    }
+    const passwordHash = await bcrypt.hash(dto.password, 10);
+    const user = await this.prisma.user.create({
+      data: {
+        email: dto.email,
+        passwordHash,
+        fullName: dto.fullName,
+        role: UserRole.AGENT as any,
+        phone: dto.phone ?? null,
+        bio: dto.bio ?? null,
+        // Admin-created agents are trusted and verified immediately.
+        isVerified: true,
+        verificationStatus: VerificationStatus.VERIFIED as any,
+        socialLinks: dto.agencyName ? {agency: dto.agencyName} : undefined,
+      },
+      select: USER_SELECT,
+    });
+    await this.prisma.subscription.create({data: {agentId: user.id}});
+    return user;
+  }
+
+  // Admin approve / reject an agent (or reset to pending).
+  setVerification(userId: string, status: VerificationStatus) {
     return this.prisma.user.update({
       where: {id: userId},
-      data: {isVerified},
-      select: {id: true, isVerified: true},
+      data: {
+        verificationStatus: status as any,
+        isVerified: status === VerificationStatus.VERIFIED,
+      },
+      select: USER_SELECT,
     });
   }
 

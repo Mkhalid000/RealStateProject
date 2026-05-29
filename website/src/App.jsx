@@ -27,6 +27,11 @@ import PropertyForm from './dashboard/pages/PropertyForm';
 import Reels from './dashboard/pages/Reels';
 import Boosts from './dashboard/pages/Boosts';
 
+// Agent portal
+import AgentLayout from './agent/pages/AgentLayout';
+import AgentOverview from './agent/pages/AgentOverview';
+import AgentProperties from './agent/pages/AgentProperties';
+
 function ScrollToTop() {
   const {pathname} = useLocation();
   useEffect(() => {
@@ -69,12 +74,14 @@ export default function App() {
           <Route path="/contact" element={<Contact />} />
         </Route>
 
-        {/* Admin */}
+        {/* Auth */}
         <Route path="/login" element={<Login />} />
+
+        {/* Admin */}
         <Route
           path="/admin"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute role="admin">
               <AdminLayout />
             </ProtectedRoute>
           }>
@@ -85,6 +92,20 @@ export default function App() {
           <Route path="properties/:id/edit" element={<PropertyForm />} />
           <Route path="reels" element={<Reels />} />
           <Route path="boosts" element={<Boosts />} />
+        </Route>
+
+        {/* Agent */}
+        <Route
+          path="/agent"
+          element={
+            <ProtectedRoute role="agent">
+              <AgentLayout />
+            </ProtectedRoute>
+          }>
+          <Route index element={<AgentOverview />} />
+          <Route path="properties" element={<AgentProperties />} />
+          <Route path="properties/new" element={<PropertyForm />} />
+          <Route path="properties/:id/edit" element={<PropertyForm />} />
         </Route>
       </Routes>
     </>

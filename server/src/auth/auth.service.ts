@@ -2,14 +2,20 @@ import {
   Injectable,
   UnauthorizedException,
   ConflictException,
+  ForbiddenException,
 } from '@nestjs/common';
 import {ConfigService} from '@nestjs/config';
 import {JwtService} from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
-import {AuthResponse, AuthTokens, PublicProfile, UserRole} from '../shared';
+import {AuthResponse, AuthTokens, PublicProfile, UserRole, VerificationStatus} from '../shared';
 import {PrismaService} from '../prisma/prisma.service';
 import {LoginDto, RegisterDto} from './dto/auth.dto';
 import {toPublicProfile} from '../profiles/profile.mapper';
+
+export interface PendingVerification {
+  pendingVerification: true;
+  message: string;
+}
 
 @Injectable()
 export class AuthService {
@@ -19,24 +25,38 @@ export class AuthService {
     private config: ConfigService,
   ) {}
 
-  async register(dto: RegisterDto): Promise<AuthResponse> {
+  async register(dto: RegisterDto): Promise<AuthResponse | PendingVerification> {
     const existing = await this.prisma.user.findUnique({where: {email: dto.email}});
     if (existing) {
       throw new ConflictException('Email already registered');
     }
     const passwordHash = await bcrypt.hash(dto.password, 10);
     const role = dto.role === UserRole.AGENT ? UserRole.AGENT : UserRole.USER;
+    const isAgent = role === UserRole.AGENT;
     const user = await this.prisma.user.create({
       data: {
         email: dto.email,
         passwordHash,
         fullName: dto.fullName,
         role: role as any,
+        phone: dto.phone ?? null,
+        // Agents need admin approval; buyers are usable immediately.
+        isVerified: !isAgent,
+        verificationStatus: (isAgent
+          ? VerificationStatus.PENDING
+          : VerificationStatus.VERIFIED) as any,
+        socialLinks: dto.agencyName ? {agency: dto.agencyName} : undefined,
       },
     });
     // Every agent starts on the free plan.
-    if (role === UserRole.AGENT) {
+    if (isAgent) {
       await this.prisma.subscription.create({data: {agentId: user.id}});
+      // Self-registered agents are NOT logged in — they must be verified first.
+      return {
+        pendingVerification: true,
+        message:
+          'Your agent account has been created and is pending admin verification. You will be able to sign in once an administrator approves it.',
+      };
     }
     return this.buildAuthResponse(user.id, user.email, user.role, toPublicProfile(user));
   }
@@ -49,6 +69,17 @@ export class AuthService {
     const ok = await bcrypt.compare(dto.password, user.passwordHash);
     if (!ok) {
       throw new UnauthorizedException('Invalid credentials');
+    }
+    // Agents must be verified by an admin before they can sign in.
+    if (user.role === UserRole.AGENT && !user.isVerified) {
+      if (user.verificationStatus === (VerificationStatus.REJECTED as any)) {
+        throw new ForbiddenException(
+          'Your agent application was not approved. Please contact support for more information.',
+        );
+      }
+      throw new ForbiddenException(
+        'Your agent account is pending admin verification. You will be able to sign in once an administrator approves it.',
+      );
     }
     return this.buildAuthResponse(user.id, user.email, user.role, toPublicProfile(user));
   }
@@ -85,9 +116,9 @@ export class AuthService {
     }
   }
 
-  async me(userId: string): Promise<PublicProfile> {
+  async me(userId: string): Promise<PublicProfile & {email: string}> {
     const user = await this.prisma.user.findUniqueOrThrow({where: {id: userId}});
-    return toPublicProfile(user);
+    return {...toPublicProfile(user), email: user.email};
   }
 
   // ---------- helpers ----------
@@ -110,7 +141,7 @@ export class AuthService {
     profile: PublicProfile,
   ): Promise<AuthResponse> {
     const tokens = await this.issueTokens(id, email, role);
-    return {user: profile, tokens};
+    return {user: {...profile, email}, tokens};
   }
 
   private async issueTokens(

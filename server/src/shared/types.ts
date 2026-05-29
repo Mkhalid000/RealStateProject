@@ -167,6 +167,6 @@ export interface AuthTokens {
 }
 
 export interface AuthResponse {
-  user: PublicProfile;
+  user: PublicProfile & {email: string};
   tokens: AuthTokens;
 }

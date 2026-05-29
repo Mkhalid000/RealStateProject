@@ -1,5 +1,5 @@
 const API = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
-const TOKEN_KEY = 'rr_admin_token';
+const TOKEN_KEY = 'rr_token';
 
 export function getToken() {
   return localStorage.getItem(TOKEN_KEY);

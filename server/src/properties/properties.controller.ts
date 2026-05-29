@@ -37,6 +37,13 @@ export class PropertiesController {
     return this.properties.adminList(query);
   }
 
+  // Agent: only my own listings (incl. pending) — declared before ':idOrSlug'
+  @Roles(UserRole.AGENT, UserRole.ADMIN)
+  @Get('mine')
+  listMine(@CurrentUser('id') userId: string, @Query() query: QueryPropertiesDto) {
+    return this.properties.listMine(userId, query);
+  }
+
   @Get('saved/mine')
   listSaved(@CurrentUser('id') userId: string) {
     return this.properties.listSaved(userId);

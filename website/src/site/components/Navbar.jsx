@@ -1,7 +1,75 @@
 import {useEffect, useLayoutEffect, useRef, useState} from 'react';
-import {NavLink, Link, useLocation} from 'react-router-dom';
+import {NavLink, Link, useLocation, useNavigate} from 'react-router-dom';
 import {MagneticButton} from './MagneticButton';
 import {ThemeToggle} from './ThemeToggle';
+import {useAuth} from '../../context/AuthContext';
+
+const DASH_FOR = {admin: '/admin', agent: '/agent'};
+
+function ProfileMenu({user, onLogout, dark}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!open) return;
+    const onClick = e => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    const onKey = e => { if (e.key === 'Escape') setOpen(false); };
+    document.addEventListener('mousedown', onClick);
+    document.addEventListener('keydown', onKey);
+    return () => { document.removeEventListener('mousedown', onClick); document.removeEventListener('keydown', onKey); };
+  }, [open]);
+
+  const initial = (user.fullName || user.email || 'U').charAt(0).toUpperCase();
+  const dashTo = DASH_FOR[user.role];
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen(o => !o)}
+        aria-label="Account"
+        className={`grid h-10 w-10 place-items-center rounded-full text-sm font-semibold ring-1 transition ${
+          dark ? 'bg-white/10 text-white ring-white/20 hover:bg-white/20' : 'bg-ink/5 text-ink ring-ink/15 hover:bg-ink/10'
+        }`}>
+        <span className="grid h-8 w-8 place-items-center rounded-full bg-gradient-to-br from-gold to-gold-deep text-ink">
+          {initial}
+        </span>
+      </button>
+
+      {open && (
+        <div
+          onClick={() => setOpen(false)}
+          className="absolute right-0 top-12 w-60 overflow-hidden rounded-2xl border border-black/10 bg-white p-1.5 text-ink shadow-2xl">
+          <div className="flex items-center gap-3 px-3 py-3">
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-gradient-to-br from-gold to-gold-deep text-sm font-bold text-ink">{initial}</span>
+            <span className="overflow-hidden">
+              <span className="block truncate text-sm font-semibold text-ink">{user.fullName || 'Account'}</span>
+              <span className="block truncate text-xs text-ink/50">{user.email}</span>
+            </span>
+          </div>
+          <div className="my-1 h-px bg-black/5" />
+
+          {dashTo && (
+            <button onClick={() => navigate(dashTo)} className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm text-ink transition hover:bg-black/5">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+              {user.role === 'admin' ? 'Admin Dashboard' : 'Agent Dashboard'}
+            </button>
+          )}
+          <button onClick={() => navigate('/properties')} className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm text-ink transition hover:bg-black/5">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M3 11l9-8 9 8M5 10v10h14V10"/></svg>
+            Browse Properties
+          </button>
+
+          <div className="my-1 h-px bg-black/5" />
+          <button onClick={onLogout} className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm text-danger transition hover:bg-danger/10">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+            Sign out
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
 
 const links = [
   {to: '/', label: 'Home', end: true},
@@ -16,6 +84,7 @@ export function Navbar() {
   const [open, setOpen] = useState(false);
   const lastY = useRef(0);
   const {pathname} = useLocation();
+  const {user, logout} = useAuth();
 
   // sliding indicator
   const pillRef = useRef(null);
@@ -105,11 +174,15 @@ export function Navbar() {
         {/* right cluster */}
         <div className="hidden items-center gap-3 md:flex">
           <ThemeToggle />
-          <MagneticButton
-            to="/login"
-            className="rounded-full bg-gold px-6 py-2.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-ink shadow-glow transition-colors hover:bg-gold-light">
-            Login
-          </MagneticButton>
+          {user ? (
+            <ProfileMenu user={user} onLogout={logout} dark={!scrolled} />
+          ) : (
+            <MagneticButton
+              to="/login"
+              className="rounded-full bg-gold px-6 py-2.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-ink shadow-glow transition-colors hover:bg-gold-light">
+              Login
+            </MagneticButton>
+          )}
         </div>
 
         {/* mobile hamburger */}
@@ -143,15 +216,42 @@ export function Navbar() {
               {l.label}
             </NavLink>
           ))}
-          <div className="flex items-center justify-between py-4">
-            <Link
-              to="/login"
-              onClick={() => setOpen(false)}
-              className="rounded-full bg-gold px-6 py-2.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-ink">
-              Login
-            </Link>
-            <ThemeToggle />
-          </div>
+          {user ? (
+            <div className="py-3">
+              <div className="flex items-center gap-3 border-b border-line/40 pb-3">
+                <span className="grid h-9 w-9 place-items-center rounded-full bg-gradient-to-br from-gold to-gold-deep text-sm font-bold text-ink">
+                  {(user.fullName || user.email || 'U').charAt(0).toUpperCase()}
+                </span>
+                <span className="overflow-hidden">
+                  <span className="block truncate text-sm font-semibold text-fg">{user.fullName || 'Account'}</span>
+                  <span className="block truncate text-xs text-fg/50">{user.email}</span>
+                </span>
+              </div>
+              {DASH_FOR[user.role] && (
+                <Link to={DASH_FOR[user.role]} onClick={() => setOpen(false)} className="block py-3 text-sm uppercase tracking-[0.14em] text-fg/80">
+                  {user.role === 'admin' ? 'Admin Dashboard' : 'Agent Dashboard'}
+                </Link>
+              )}
+              <div className="flex items-center justify-between py-3">
+                <button
+                  onClick={() => { logout(); setOpen(false); }}
+                  className="rounded-full border border-danger/40 px-6 py-2.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-danger">
+                  Sign out
+                </button>
+                <ThemeToggle />
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between py-4">
+              <Link
+                to="/login"
+                onClick={() => setOpen(false)}
+                className="rounded-full bg-gold px-6 py-2.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-ink">
+                Login
+              </Link>
+              <ThemeToggle />
+            </div>
+          )}
         </nav>
       </div>
     </header>

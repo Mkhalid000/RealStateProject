@@ -94,6 +94,7 @@ model User {
   phone        String?
   socialLinks  Json?
   isVerified   Boolean  @default(false)
+  verificationStatus VerificationStatus @default(pending)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 

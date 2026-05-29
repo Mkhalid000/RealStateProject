@@ -66,6 +66,20 @@ export class PropertiesService {
     return this.paginate(where, page, limit);
   }
 
+  /** Agent listing — only the caller's own properties (any verification state). */
+  async listMine(userId: string, query: QueryPropertiesDto) {
+    const page = query.page ?? 1;
+    const limit = Math.min(query.limit ?? 20, 50);
+    const where: Prisma.PropertyWhereInput = {
+      ...this.filters(query),
+      agentId: userId,
+    };
+    if (query.verification && query.verification !== 'all') {
+      where.verificationStatus = query.verification as any;
+    }
+    return this.paginate(where, page, limit);
+  }
+
   async getOne(idOrSlug: string) {
     const property = await this.prisma.property.findFirst({
       where: {OR: [{id: idOrSlug}, {slug: idOrSlug}]},

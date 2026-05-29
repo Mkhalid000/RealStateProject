@@ -8,10 +8,11 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import {UserRole} from '../shared';
+import {UserRole, VerificationStatus} from '../shared';
 import {AdminService} from './admin.service';
 import {BillingService} from '../billing/billing.service';
 import {Roles} from '../common/decorators/roles.decorator';
+import {CreateAgentDto} from '../auth/dto/auth.dto';
 
 // Entire controller is admin-only.
 @Roles(UserRole.ADMIN)
@@ -28,13 +29,30 @@ export class AdminController {
   }
 
   @Get('users')
-  users(@Query('role') role?: UserRole, @Query('q') q?: string) {
-    return this.admin.listUsers(role, q);
+  users(
+    @Query('role') role?: UserRole,
+    @Query('q') q?: string,
+    @Query('verified') verified?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.admin.listUsers({
+      role,
+      q,
+      verified,
+      page: page ? Number(page) : undefined,
+      limit: limit ? Number(limit) : undefined,
+    });
+  }
+
+  @Post('agents')
+  createAgent(@Body() dto: CreateAgentDto) {
+    return this.admin.createAgent(dto);
   }
 
   @Patch('users/:id/verify')
-  verify(@Param('id') id: string, @Body() body: {isVerified: boolean}) {
-    return this.admin.setVerified(id, body.isVerified);
+  verify(@Param('id') id: string, @Body() body: {verificationStatus: VerificationStatus}) {
+    return this.admin.setVerification(id, body.verificationStatus);
   }
 
   @Patch('users/:id/role')
