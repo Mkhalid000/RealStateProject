@@ -1,8 +1,11 @@
-import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import {lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {Link, useSearchParams} from 'react-router-dom';
 import {apiFetch} from '../../lib/api';
 import {Reveal} from '../components/Reveal';
 import {PropertyCard} from '../components/PropertyCard';
+
+// subtle interactive golden-dust backdrop (three.js) — its own lazy chunk
+const Hero3D = lazy(() => import('../components/Hero3D').then(m => ({default: m.Hero3D})));
 
 const PAGE = 12;
 const TYPES = ['apartment', 'villa', 'plot', 'commercial', 'office', 'shop'];
@@ -165,7 +168,14 @@ export default function Properties() {
 
   return (
     <div className="relative">
-      <div className="mx-auto max-w-7xl px-6 pb-28 pt-32">
+      {/* subtle interactive three.js golden-dust backdrop */}
+      <div className="pointer-events-none fixed inset-0 z-0 opacity-40">
+        <Suspense fallback={null}>
+          <Hero3D />
+        </Suspense>
+      </div>
+
+      <div className="relative z-10 mx-auto max-w-7xl px-6 pb-28 pt-32">
         <Reveal>
           <p className="eyebrow mb-4">The Collection</p>
           <h1 className="font-serif text-5xl md:text-7xl">Properties</h1>
