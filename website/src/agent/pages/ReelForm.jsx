@@ -1,5 +1,5 @@
 import {useEffect, useRef, useState} from 'react';
-import {useNavigate, Link} from 'react-router-dom';
+import {useNavigate, useLocation, Link} from 'react-router-dom';
 import {apiFetch} from '../../lib/api';
 import {uploadFile} from '../../lib/upload';
 import {parseVideo, embedSrc} from '../../lib/video';
@@ -20,6 +20,9 @@ const muiTheme = createTheme({
 
 export default function ReelForm() {
   const navigate = useNavigate();
+  const {pathname} = useLocation();
+  const base = pathname.startsWith('/admin') ? '/admin/reels' : '/agent/reels';
+  const backLabel = pathname.startsWith('/admin') ? 'Reels' : 'My Reels';
   const [source, setSource] = useState('upload'); // 'upload' | 'url'
   const [videoUrl, setVideoUrl] = useState('');
   const [thumbnailUrl, setThumbnailUrl] = useState('');
@@ -82,7 +85,7 @@ export default function ReelForm() {
           propertyId: propertyId || undefined,
         }),
       });
-      navigate('/agent/reels');
+      navigate(base);
     } catch (e) {
       setError(e.message);
       setSaving(false);
@@ -93,7 +96,7 @@ export default function ReelForm() {
     <ThemeProvider theme={muiTheme}>
       <div className="mx-auto">
         <div className="mb-3 flex items-center gap-2 text-sm text-muted">
-          <Link to="/agent/reels" className="hover:text-gold-dark">My Reels</Link>
+          <Link to={base} className="hover:text-gold-dark">{backLabel}</Link>
           <span>›</span>
           <span className="text-fg">New Reel</span>
         </div>
@@ -159,7 +162,7 @@ export default function ReelForm() {
             {error ? <div className="rounded-lg border border-danger/30 bg-danger/10 px-4 py-2.5 text-sm text-danger">{error}</div> : null}
 
             <div className="flex justify-end gap-2.5">
-              <Button variant="outlined" color="inherit" component={Link} to="/agent/reels" sx={{borderColor: '#e2e4eb'}}>Cancel</Button>
+              <Button variant="outlined" color="inherit" component={Link} to={base} sx={{borderColor: '#e2e4eb'}}>Cancel</Button>
               <Button type="submit" variant="contained" disabled={saving || uploading}>{saving ? 'Publishing…' : 'Publish Reel'}</Button>
             </div>
           </div>

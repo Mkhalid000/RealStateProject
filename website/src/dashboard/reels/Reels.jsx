@@ -1,7 +1,9 @@
 import {useCallback, useEffect, useState} from 'react';
+import {Link} from 'react-router-dom';
 import {apiFetch} from '../../lib/api';
 import {parseVideo, embedSrc} from '../../lib/video';
 import {createTheme, ThemeProvider} from '@mui/material/styles';
+import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
 import MenuItem from '@mui/material/MenuItem';
 import InputAdornment from '@mui/material/InputAdornment';
@@ -89,8 +91,15 @@ export default function Reels() {
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-line pb-4">
         <div>
           <div className="text-2xl font-bold tracking-tight text-fg">Reels</div>
-          <p className="mt-0.5 text-sm text-muted">Moderate the property reels feed</p>
+          <p className="mt-0.5 text-sm text-muted">Moderate and publish property reels</p>
         </div>
+        <Button
+          variant="contained"
+          component={Link}
+          to="/admin/reels/new"
+          startIcon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><path d="M12 5v14M5 12h14"/></svg>}>
+          Add Reel
+        </Button>
       </div>
 
       <div className="mb-5 flex flex-wrap items-center gap-2.5">

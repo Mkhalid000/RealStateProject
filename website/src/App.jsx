@@ -100,6 +100,7 @@ export default function App() {
           <Route path="properties/:id" element={<PropertyDetails />} />
           <Route path="properties/:id/edit" element={<PropertyForm />} />
           <Route path="reels" element={<Reels />} />
+          <Route path="reels/new" element={<ReelForm />} />
           <Route path="boosts" element={<Boosts />} />
         </Route>
 
