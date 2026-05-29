@@ -146,8 +146,14 @@ export class QueryPropertiesDto {
 
   @IsOptional() @IsString() agentId?: string;
 
+  // free-text search on the listing agent's name or email
+  @IsOptional() @IsString() agent?: string;
+
   // admin-only filter (see service): pending | verified | rejected | all
   @IsOptional() @IsString() verification?: string;
+
+  // newest | oldest | price_asc | price_desc | title_asc
+  @IsOptional() @IsString() sort?: string;
 
   @IsOptional()
   @Type(() => Number)

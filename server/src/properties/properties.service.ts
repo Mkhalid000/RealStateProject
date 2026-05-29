@@ -52,7 +52,7 @@ export class PropertiesService {
       status: 'active',
       ...this.filters(query),
     };
-    return this.paginate(where, page, limit);
+    return this.paginate(where, page, limit, this.orderByFromSort(query.sort));
   }
 
   /** Admin listing — everything, optionally filtered by verification state. */
@@ -63,7 +63,7 @@ export class PropertiesService {
     if (query.verification && query.verification !== 'all') {
       where.verificationStatus = query.verification as any;
     }
-    return this.paginate(where, page, limit);
+    return this.paginate(where, page, limit, this.orderByFromSort(query.sort));
   }
 
   /** Agent listing — only the caller's own properties (any verification state). */
@@ -77,7 +77,7 @@ export class PropertiesService {
     if (query.verification && query.verification !== 'all') {
       where.verificationStatus = query.verification as any;
     }
-    return this.paginate(where, page, limit);
+    return this.paginate(where, page, limit, this.orderByFromSort(query.sort));
   }
 
   async getOne(idOrSlug: string) {
@@ -157,6 +157,14 @@ export class PropertiesService {
     if (query.listingType) where.listingType = query.listingType as any;
     if (query.city) where.city = {contains: query.city, mode: 'insensitive'};
     if (query.agentId) where.agentId = query.agentId;
+    if (query.agent) {
+      where.agent = {
+        OR: [
+          {fullName: {contains: query.agent, mode: 'insensitive'}},
+          {email: {contains: query.agent, mode: 'insensitive'}},
+        ],
+      };
+    }
     if (query.bhk != null) where.bhk = query.bhk;
     if (query.minPrice != null || query.maxPrice != null) {
       where.price = {};
@@ -175,16 +183,38 @@ export class PropertiesService {
     return where;
   }
 
+  private orderByFromSort(
+    sort?: string,
+  ): Prisma.PropertyOrderByWithRelationInput[] {
+    switch (sort) {
+      case 'oldest':
+        return [{createdAt: 'asc'}];
+      case 'price_asc':
+        return [{price: 'asc'}];
+      case 'price_desc':
+        return [{price: 'desc'}];
+      case 'title_asc':
+        return [{title: 'asc'}];
+      case 'newest':
+      default:
+        return [{featured: 'desc'}, {createdAt: 'desc'}];
+    }
+  }
+
   private async paginate(
     where: Prisma.PropertyWhereInput,
     page: number,
     limit: number,
+    orderBy: Prisma.PropertyOrderByWithRelationInput[] = [
+      {featured: 'desc'},
+      {createdAt: 'desc'},
+    ],
   ) {
     const [rows, total] = await Promise.all([
       this.prisma.property.findMany({
         where,
         include: {agent: true},
-        orderBy: [{featured: 'desc'}, {createdAt: 'desc'}],
+        orderBy,
         skip: (page - 1) * limit,
         take: limit,
       }),

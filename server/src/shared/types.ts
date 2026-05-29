@@ -14,6 +14,7 @@ export interface PublicProfile {
   id: string;
   role: UserRole;
   fullName: string | null;
+  email?: string | null;
   bio: string | null;
   avatarUrl: string | null;
   phone: string | null;

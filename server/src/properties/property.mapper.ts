@@ -8,7 +8,7 @@ export function toProperty(p: PropertyWithAgent): SharedProperty {
   return {
     id: p.id,
     agentId: p.agentId,
-    agent: p.agent ? toPublicProfile(p.agent) : undefined,
+    agent: p.agent ? {...toPublicProfile(p.agent), email: p.agent.email} : undefined,
 
     title: p.title,
     slug: p.slug,

@@ -1,5 +1,5 @@
 import {createContext, useContext, useEffect, useState} from 'react';
-import {apiFetch, getToken, setToken, clearToken} from '../lib/api';
+import {apiFetch, getToken, setTokens, clearToken} from '../lib/api';
 
 const AuthContext = createContext(null);
 
@@ -23,7 +23,7 @@ export function AuthProvider({children}) {
       method: 'POST',
       body: JSON.stringify({email, password}),
     });
-    setToken(data.tokens.accessToken);
+    setTokens(data.tokens);
     setUser(data.user);
     return data.user;
   }
@@ -38,7 +38,7 @@ export function AuthProvider({children}) {
     if (data?.pendingVerification) {
       return data;
     }
-    setToken(data.tokens.accessToken);
+    setTokens(data.tokens);
     setUser(data.user);
     return data.user;
   }

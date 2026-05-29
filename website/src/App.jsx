@@ -18,14 +18,15 @@ import Contact from './site/pages/Contact';
 
 // Dashboard (admin)
 import {ProtectedRoute} from './dashboard/components/ProtectedRoute';
-import Login from './dashboard/pages/Login';
-import AdminLayout from './dashboard/pages/AdminLayout';
-import Overview from './dashboard/pages/Overview';
-import Users from './dashboard/pages/Users';
-import ManageProperties from './dashboard/pages/ManageProperties';
-import PropertyForm from './dashboard/pages/PropertyForm';
-import Reels from './dashboard/pages/Reels';
-import Boosts from './dashboard/pages/Boosts';
+import Login from './dashboard/auth/Login';
+import AdminLayout from './dashboard/layout/AdminLayout';
+import Overview from './dashboard/overview/Overview';
+import Users from './dashboard/users/Users';
+import ManageProperties from './dashboard/properties/ManageProperties';
+import PropertyForm from './dashboard/properties/PropertyForm';
+import PropertyDetails from './dashboard/properties/PropertyDetails';
+import Reels from './dashboard/reels/Reels';
+import Boosts from './dashboard/boosts/Boosts';
 
 // Agent portal
 import AgentLayout from './agent/pages/AgentLayout';
@@ -89,6 +90,7 @@ export default function App() {
           <Route path="users" element={<Users />} />
           <Route path="properties" element={<ManageProperties />} />
           <Route path="properties/new" element={<PropertyForm />} />
+          <Route path="properties/:id" element={<PropertyDetails />} />
           <Route path="properties/:id/edit" element={<PropertyForm />} />
           <Route path="reels" element={<Reels />} />
           <Route path="boosts" element={<Boosts />} />

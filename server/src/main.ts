@@ -8,6 +8,10 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const config = app.get(ConfigService);
 
+  // Ensure PrismaService.onModuleDestroy ($disconnect) runs on SIGINT/restart
+  // so --watch reloads don't leak DB connections (Neon connection-limit safety).
+  app.enableShutdownHooks();
+
   app.setGlobalPrefix('api');
   app.useGlobalPipes(
     new ValidationPipe({whitelist: true, transform: true, forbidNonWhitelisted: false}),
