@@ -110,6 +110,13 @@ export default function Reels() {
     else v.pause();
   }
 
+  function goTo(i) {
+    const slides = containerRef.current?.querySelectorAll('[data-reel-id]');
+    if (!slides || i < 0 || i >= slides.length) return;
+    slides[i].scrollIntoView({behavior: 'smooth'});
+  }
+  const activeIdx = reels.findIndex(r => r.id === activeId);
+
   return (
     <div className="fixed inset-0 z-50 bg-black">
       {/* top bar */}
@@ -131,6 +138,26 @@ export default function Reels() {
           </Link>
         </div>
       </div>
+
+      {/* prev / next jump buttons */}
+      {reels.length > 1 && (
+        <div className="absolute right-6 top-1/2 z-20 flex -translate-y-1/2 flex-col gap-3 sm:right-8">
+          <button
+            onClick={() => goTo(activeIdx - 1)}
+            disabled={activeIdx <= 0}
+            aria-label="Previous reel"
+            className="grid h-11 w-11 place-items-center rounded-full bg-white/15 text-white backdrop-blur transition hover:bg-white/30 disabled:opacity-30">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M18 15l-6-6-6 6"/></svg>
+          </button>
+          <button
+            onClick={() => goTo(activeIdx + 1)}
+            disabled={activeIdx >= reels.length - 1 && !hasMore}
+            aria-label="Next reel"
+            className="grid h-11 w-11 place-items-center rounded-full bg-white/15 text-white backdrop-blur transition hover:bg-white/30 disabled:opacity-30">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+        </div>
+      )}
 
       {/* feed */}
       <div ref={containerRef} className="h-full snap-y snap-mandatory overflow-y-scroll">
