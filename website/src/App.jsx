@@ -80,6 +80,7 @@ export default function App() {
 
         {/* Immersive public reels feed (its own full-screen chrome) */}
         <Route path="/reels" element={<ReelsFeed />} />
+        <Route path="/reels/:id" element={<ReelsFeed />} />
 
         {/* Auth */}
         <Route path="/login" element={<Login />} />

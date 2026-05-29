@@ -1,5 +1,5 @@
 import {useCallback, useEffect, useRef, useState} from 'react';
-import {Link, useNavigate} from 'react-router-dom';
+import {Link, useNavigate, useParams} from 'react-router-dom';
 import {apiFetch} from '../../lib/api';
 import {useAuth} from '../../context/AuthContext';
 import {parseVideo, embedSrc} from '../../lib/video';
@@ -24,9 +24,11 @@ export default function Reels() {
   const [commentsFor, setCommentsFor] = useState(null);
   const [needLogin, setNeedLogin] = useState(false);
 
+  const {id: startId} = useParams();
   const containerRef = useRef(null);
   const videoRefs = useRef({});
   const viewedRef = useRef(new Set());
+  const jumpedRef = useRef(false);
 
   const load = useCallback((p) => {
     setLoading(true);
@@ -84,13 +86,23 @@ export default function Reels() {
     setReels(prev => prev.map(r => (r.id === id ? {...r, ...patch} : r)));
   }
 
-  // count a view once per session when a reel becomes active
+  // reflect the active reel in the URL (shareable deep link) + count a view once
   useEffect(() => {
-    if (!activeId || viewedRef.current.has(activeId)) return;
+    if (!activeId) return;
+    window.history.replaceState(null, '', `/reels/${activeId}`);
+    if (viewedRef.current.has(activeId)) return;
     viewedRef.current.add(activeId);
     apiFetch(`/reels/${activeId}/view`, {method: 'POST'}).catch(() => {});
     setReels(prev => prev.map(r => (r.id === activeId ? {...r, viewCount: (r.viewCount || 0) + 1} : r)));
   }, [activeId]);
+
+  // deep link: if opened at /reels/:id, jump to that reel once it has loaded
+  useEffect(() => {
+    if (jumpedRef.current || !startId || reels.length === 0) return;
+    jumpedRef.current = true;
+    const i = reels.findIndex(r => r.id === startId);
+    if (i > 0) requestAnimationFrame(() => goTo(i));
+  }, [reels, startId]);
 
   async function toggleLike(reel) {
     if (!user) return setNeedLogin(true);
