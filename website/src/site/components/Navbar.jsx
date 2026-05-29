@@ -3,6 +3,7 @@ import {NavLink, Link, useLocation, useNavigate} from 'react-router-dom';
 import {MagneticButton} from './MagneticButton';
 import {ThemeToggle} from './ThemeToggle';
 import {useAuth} from '../../context/AuthContext';
+import logo from '../../assets/logo.png';
 
 const DASH_FOR = {admin: '/admin', agent: '/agent'};
 
@@ -141,8 +142,8 @@ export function Navbar() {
 
       <div className="relative mx-auto flex max-w-7xl items-center justify-between px-6">
         {/* brand */}
-        <Link to="/" className={`font-serif text-2xl tracking-wide transition-colors ${brandColor}`}>
-          AU<span className="text-gold">REVIA</span>
+        <Link to="/" className="flex items-center" aria-label="Aurevia — Home">
+          <img src={logo} alt="Aurevia" className="h-10 w-auto md:h-10" />
         </Link>
 
         {/* center floating glass pill */}

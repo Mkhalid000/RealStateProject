@@ -133,8 +133,16 @@ export default function PropertyDetail() {
   }
   if (!p) {
     return (
-      <div className="mx-auto max-w-7xl px-6 pt-40">
-        <div className="h-[60vh] animate-pulse rounded-2xl border border-line bg-surface2/40" />
+      <div className="grid min-h-screen place-items-center px-6">
+        <div className="flex flex-col items-center gap-5">
+          <span className="relative grid h-16 w-16 place-items-center">
+            <span className="absolute inset-0 rounded-full border-2 border-line" />
+            <span className="absolute inset-0 animate-spin rounded-full border-2 border-transparent border-t-gold" />
+            <span className="h-2 w-2 rounded-full bg-gold" />
+          </span>
+          <div className="font-serif text-3xl tracking-wide text-fg">AU<span className="text-gold">REVIA</span></div>
+          <div className="animate-pulse text-[11px] uppercase tracking-[0.3em] text-muted">Loading residence…</div>
+        </div>
       </div>
     );
   }
