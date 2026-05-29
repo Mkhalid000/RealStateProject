@@ -14,8 +14,9 @@ import {
   CreatePropertyDto,
   QueryPropertiesDto,
   UpdatePropertyDto,
+  VerifyPropertyDto,
 } from './dto/property.dto';
-import {CurrentUser} from '../common/decorators/current-user.decorator';
+import {AuthUser, CurrentUser} from '../common/decorators/current-user.decorator';
 import {Roles} from '../common/decorators/roles.decorator';
 import {Public} from '../common/decorators/public.decorator';
 
@@ -29,37 +30,50 @@ export class PropertiesController {
     return this.properties.list(query);
   }
 
+  // Admin: list everything (incl. pending) — declared before ':idOrSlug'
+  @Roles(UserRole.ADMIN)
+  @Get('admin')
+  adminList(@Query() query: QueryPropertiesDto) {
+    return this.properties.adminList(query);
+  }
+
   @Get('saved/mine')
   listSaved(@CurrentUser('id') userId: string) {
     return this.properties.listSaved(userId);
   }
 
   @Public()
-  @Get(':id')
-  getOne(@Param('id') id: string) {
-    return this.properties.getOne(id);
+  @Get(':idOrSlug')
+  getOne(@Param('idOrSlug') idOrSlug: string) {
+    return this.properties.getOne(idOrSlug);
   }
 
   @Roles(UserRole.AGENT, UserRole.ADMIN)
   @Post()
-  create(@CurrentUser('id') agentId: string, @Body() dto: CreatePropertyDto) {
-    return this.properties.create(agentId, dto);
+  create(@CurrentUser() user: AuthUser, @Body() dto: CreatePropertyDto) {
+    return this.properties.create(user.id, user.role, dto);
   }
 
   @Roles(UserRole.AGENT, UserRole.ADMIN)
   @Patch(':id')
   update(
-    @CurrentUser('id') agentId: string,
+    @CurrentUser() user: AuthUser,
     @Param('id') id: string,
     @Body() dto: UpdatePropertyDto,
   ) {
-    return this.properties.update(agentId, id, dto);
+    return this.properties.update(user.id, user.role, id, dto);
+  }
+
+  @Roles(UserRole.ADMIN)
+  @Patch(':id/verify')
+  verify(@Param('id') id: string, @Body() dto: VerifyPropertyDto) {
+    return this.properties.setVerification(id, dto.verificationStatus);
   }
 
   @Roles(UserRole.AGENT, UserRole.ADMIN)
   @Delete(':id')
-  remove(@CurrentUser('id') agentId: string, @Param('id') id: string) {
-    return this.properties.remove(agentId, id);
+  remove(@CurrentUser() user: AuthUser, @Param('id') id: string) {
+    return this.properties.remove(user.id, user.role, id);
   }
 
   @Post(':id/save')

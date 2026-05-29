@@ -82,7 +82,7 @@ export function Footer() {
               {to: '/properties', label: 'Properties'},
               {to: '/about', label: 'About'},
               {to: '/contact', label: 'Contact'},
-              {to: '/login', label: 'Admin'},
+              {to: '/login', label: 'Login'},
             ].map(l => (
               <Link
                 key={l.to}

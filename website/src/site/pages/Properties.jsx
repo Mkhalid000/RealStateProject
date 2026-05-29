@@ -3,7 +3,7 @@ import {apiFetch} from '../../lib/api';
 import {Reveal} from '../components/Reveal';
 import {PropertyCard} from '../components/PropertyCard';
 
-const TYPES = ['', 'house', 'apartment', 'plot', 'commercial'];
+const TYPES = ['', 'apartment', 'villa', 'plot', 'commercial', 'office', 'shop'];
 
 export default function Properties() {
   const [items, setItems] = useState([]);

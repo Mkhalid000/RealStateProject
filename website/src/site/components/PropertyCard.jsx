@@ -73,12 +73,14 @@ export function PropertyCard({property}) {
       <div className="p-6">
         <h3 className="text-lg font-medium">{property.title}</h3>
         <p className="mt-1 text-sm text-muted">
-          {property.locationText || 'Location on request'}
+          {property.locality || property.city || property.locationText || 'Location on request'}
         </p>
         <div className="mt-5 flex gap-6 border-t border-line pt-4 text-[13px] text-muted">
-          {property.bedrooms != null && <span>{property.bedrooms} Beds</span>}
+          {property.bhk != null && <span>{property.bhk} BHK</span>}
           {property.bathrooms != null && <span>{property.bathrooms} Baths</span>}
-          {property.areaSqft != null && <span>{property.areaSqft} sqft</span>}
+          {(property.carpetArea ?? property.superBuiltUpArea) != null && (
+            <span>{property.carpetArea ?? property.superBuiltUpArea} sqft</span>
+          )}
         </div>
       </div>
 

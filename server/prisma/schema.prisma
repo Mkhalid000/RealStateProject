@@ -14,10 +14,40 @@ enum UserRole {
 }
 
 enum PropertyType {
-  house
   apartment
+  villa
   plot
   commercial
+  office
+  shop
+}
+
+enum ListingType {
+  buy
+  rent
+}
+
+enum Furnishing {
+  unfurnished
+  semi_furnished
+  furnished
+}
+
+enum Facing {
+  north
+  south
+  east
+  west
+  north_east
+  north_west
+  south_east
+  south_west
+}
+
+enum VerificationStatus {
+  pending
+  verified
+  rejected
 }
 
 enum PropertyStatus {
@@ -97,32 +127,76 @@ model RefreshToken {
 }
 
 model Property {
-  id           String         @id @default(uuid())
-  agent        User           @relation(fields: [agentId], references: [id], onDelete: Cascade)
-  agentId      String
-  title        String
-  description  String?
-  price        Decimal        @default(0) @db.Decimal(14, 2)
-  currency     String         @default("USD")
-  locationText String?
+  id              String       @id @default(uuid())
+  agent           User         @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  agentId         String
+
+  // Step 1 — basic
+  title           String
+  slug            String       @unique
+  type            PropertyType @default(apartment)
+  listingType     ListingType  @default(buy)
+  description     String?
+  price           Decimal      @default(0) @db.Decimal(14, 2)
+  currency        String       @default("USD")
+  priceNegotiable Boolean      @default(false)
+  featured        Boolean      @default(false)
+
+  // Step 2 — location
+  country      String?
+  state        String?
+  city         String?
+  locality     String?
+  address      String?
+  landmark     String?
+  pincode      String?
   latitude     Float?
   longitude    Float?
-  type         PropertyType   @default(house)
-  bedrooms     Int?
-  bathrooms    Int?
-  areaSqft     Float?
-  amenities    String[]       @default([])
-  imageUrls    String[]       @default([])
-  status       PropertyStatus @default(active)
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
+  locationText String?
 
-  reels      Reel[]
-  savedBy    SavedProperty[]
+  // Step 3 — specifications
+  bhk              Int?
+  bathrooms        Int?
+  balconies        Int?
+  superBuiltUpArea Float?
+  carpetArea       Float?
+  plotArea         Float?
+  floorNumber      Int?
+  totalFloors      Int?
+  propertyAge      String?
+  furnishing       Furnishing?
+  facing           Facing?
+
+  // Step 4 — amenities
+  amenities String[] @default([])
+
+  // Step 5 — media
+  imageUrls      String[] @default([])
+  videoUrl       String?
+  virtualTourUrl String?
+  modelUrl       String?
+
+  // Step 6 — owner / agent
+  ownerName     String?
+  ownerPhone    String?
+  ownerWhatsapp String?
+  ownerEmail    String?
+  agencyName    String?
+
+  // meta + verification
+  status             PropertyStatus     @default(active)
+  isVerified         Boolean            @default(false)
+  verificationStatus VerificationStatus @default(pending)
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  reels   Reel[]
+  savedBy SavedProperty[]
 
   @@index([agentId])
   @@index([type])
   @@index([price])
+  @@index([isVerified])
 }
 
 model Reel {

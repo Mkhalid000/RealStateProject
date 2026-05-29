@@ -1,9 +1,13 @@
 import {
+  Facing,
+  Furnishing,
+  ListingType,
   NotificationType,
   PropertyStatus,
   PropertyType,
   SubscriptionPlan,
   UserRole,
+  VerificationStatus,
 } from './enums';
 
 export interface PublicProfile {
@@ -23,20 +27,62 @@ export interface Property {
   id: string;
   agentId: string;
   agent?: PublicProfile;
+
+  // basic
   title: string;
+  slug: string;
+  type: PropertyType;
+  listingType: ListingType;
   description: string | null;
   price: number;
   currency: string;
-  locationText: string | null;
+  priceNegotiable: boolean;
+  featured: boolean;
+
+  // location
+  country: string | null;
+  state: string | null;
+  city: string | null;
+  locality: string | null;
+  address: string | null;
+  landmark: string | null;
+  pincode: string | null;
   latitude: number | null;
   longitude: number | null;
-  type: PropertyType;
-  bedrooms: number | null;
+  locationText: string | null;
+
+  // specifications
+  bhk: number | null;
   bathrooms: number | null;
-  areaSqft: number | null;
+  balconies: number | null;
+  superBuiltUpArea: number | null;
+  carpetArea: number | null;
+  plotArea: number | null;
+  floorNumber: number | null;
+  totalFloors: number | null;
+  propertyAge: string | null;
+  furnishing: Furnishing | null;
+  facing: Facing | null;
+
   amenities: string[];
+
+  // media
   imageUrls: string[];
+  videoUrl: string | null;
+  virtualTourUrl: string | null;
+  modelUrl: string | null;
+
+  // owner / agent
+  ownerName: string | null;
+  ownerPhone: string | null;
+  ownerWhatsapp: string | null;
+  ownerEmail: string | null;
+  agencyName: string | null;
+
+  // meta
   status: PropertyStatus;
+  isVerified: boolean;
+  verificationStatus: VerificationStatus;
   createdAt: string;
 }
 

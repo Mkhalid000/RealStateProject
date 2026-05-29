@@ -82,13 +82,15 @@ export default function PropertyDetail() {
           </span>
           <h1 className="mt-5 font-serif text-4xl md:text-6xl">{p.title}</h1>
           <p className="mt-3 font-serif text-4xl text-gold">{money(p.price, p.currency)}</p>
-          <p className="mt-2 text-muted">{p.locationText || 'Location available on request'}</p>
+          <p className="mt-2 text-muted">
+            {[p.locality, p.city, p.state].filter(Boolean).join(', ') || p.locationText || 'Location available on request'}
+          </p>
 
           <div className="mt-8 flex flex-wrap gap-10 border-y border-line py-6 text-muted">
-            {p.bedrooms != null && (
+            {p.bhk != null && (
               <div>
-                <div className="font-serif text-3xl text-fg">{p.bedrooms}</div>
-                <div className="text-xs uppercase tracking-luxe">Bedrooms</div>
+                <div className="font-serif text-3xl text-fg">{p.bhk}</div>
+                <div className="text-xs uppercase tracking-luxe">BHK</div>
               </div>
             )}
             {p.bathrooms != null && (
@@ -97,9 +99,9 @@ export default function PropertyDetail() {
                 <div className="text-xs uppercase tracking-luxe">Bathrooms</div>
               </div>
             )}
-            {p.areaSqft != null && (
+            {(p.carpetArea ?? p.superBuiltUpArea) != null && (
               <div>
-                <div className="font-serif text-3xl text-fg">{p.areaSqft}</div>
+                <div className="font-serif text-3xl text-fg">{p.carpetArea ?? p.superBuiltUpArea}</div>
                 <div className="text-xs uppercase tracking-luxe">Sq Ft</div>
               </div>
             )}

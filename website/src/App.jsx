@@ -23,6 +23,7 @@ import AdminLayout from './dashboard/pages/AdminLayout';
 import Overview from './dashboard/pages/Overview';
 import Users from './dashboard/pages/Users';
 import ManageProperties from './dashboard/pages/ManageProperties';
+import PropertyForm from './dashboard/pages/PropertyForm';
 import Reels from './dashboard/pages/Reels';
 import Boosts from './dashboard/pages/Boosts';
 
@@ -80,6 +81,8 @@ export default function App() {
           <Route index element={<Overview />} />
           <Route path="users" element={<Users />} />
           <Route path="properties" element={<ManageProperties />} />
+          <Route path="properties/new" element={<PropertyForm />} />
+          <Route path="properties/:id/edit" element={<PropertyForm />} />
           <Route path="reels" element={<Reels />} />
           <Route path="boosts" element={<Boosts />} />
         </Route>
