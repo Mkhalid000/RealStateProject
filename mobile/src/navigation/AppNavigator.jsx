@@ -1,39 +1,43 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {MainTabs} from './MainTabs';
-import {Placeholder} from '../components/ui/Placeholder';
+import {PropertyDetailScreen} from '../screens/property/PropertyDetailScreen';
+import {PostPropertyScreen} from '../screens/property/PostPropertyScreen';
+import {MyPropertiesScreen} from '../screens/property/MyPropertiesScreen';
+import {SavedScreen} from '../screens/saved/SavedScreen';
+import {useSavedStore} from '../store/savedStore';
 import {colors} from '../theme';
 
 const Stack = createNativeStackNavigator();
 
-// Phase 3+ screens are placeholders for now; routes already exist so other
-// screens can navigate to them without changing call sites later.
-const PropertyDetail = () => <Placeholder title="Property Detail" />;
-const AgentProfile = () => <Placeholder title="Agent Profile" />;
-const Chat = () => <Placeholder title="Chat" />;
-const CreateReel = () => <Placeholder title="Create Reel" />;
-const ManageProperty = () => <Placeholder title="Manage Property" />;
-const AgentDashboard = () => <Placeholder title="Agent Dashboard" />;
-
 export function AppNavigator() {
+  // Hydrate the saved-properties set once the user is in the app so hearts
+  // reflect server state across every screen.
+  const load = useSavedStore(s => s.load);
+  const loaded = useSavedStore(s => s.loaded);
+  useEffect(() => {
+    if (!loaded) load();
+  }, [loaded, load]);
+
   return (
     <Stack.Navigator
       screenOptions={{
-        headerStyle: {backgroundColor: colors.bg},
+        headerStyle: {backgroundColor: colors.bgSoft},
         headerTintColor: colors.text,
+        headerTitleStyle: {fontWeight: '700'},
+        headerShadowVisible: false,
         contentStyle: {backgroundColor: colors.bg},
+        animation: 'slide_from_right',
       }}>
+      <Stack.Screen name="MainTabs" component={MainTabs} options={{headerShown: false}} />
       <Stack.Screen
-        name="MainTabs"
-        component={MainTabs}
+        name="PropertyDetail"
+        component={PropertyDetailScreen}
         options={{headerShown: false}}
       />
-      <Stack.Screen name="PropertyDetail" component={PropertyDetail} />
-      <Stack.Screen name="AgentProfile" component={AgentProfile} />
-      <Stack.Screen name="Chat" component={Chat} />
-      <Stack.Screen name="CreateReel" component={CreateReel} />
-      <Stack.Screen name="ManageProperty" component={ManageProperty} />
-      <Stack.Screen name="AgentDashboard" component={AgentDashboard} />
+      <Stack.Screen name="PostProperty" component={PostPropertyScreen} options={{title: 'Post a Property'}} />
+      <Stack.Screen name="MyProperties" component={MyPropertiesScreen} options={{title: 'My Properties'}} />
+      <Stack.Screen name="Saved" component={SavedScreen} options={{title: 'Saved'}} />
     </Stack.Navigator>
   );
 }

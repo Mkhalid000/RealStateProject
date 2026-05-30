@@ -1,34 +1,34 @@
-import React from 'react';
-import {ActivityIndicator, StyleSheet, View} from 'react-native';
-import {NavigationContainer, DefaultTheme} from '@react-navigation/native';
+import React, {useState} from 'react';
+import {NavigationContainer, DarkTheme} from '@react-navigation/native';
 import {useAuthStore} from '../store/authStore';
 import {useAuthInit} from '../hooks/useAuthInit';
 import {AuthNavigator} from './AuthNavigator';
 import {AppNavigator} from './AppNavigator';
+import {SplashScreen} from '../screens/SplashScreen';
 import {colors} from '../theme';
 
 const navTheme = {
-  ...DefaultTheme,
+  ...DarkTheme,
   colors: {
-    ...DefaultTheme.colors,
+    ...DarkTheme.colors,
     background: colors.bg,
     card: colors.surface,
     text: colors.text,
     border: colors.border,
-    primary: colors.primary,
+    primary: colors.gold,
+    notification: colors.gold,
   },
 };
 
 export function RootNavigator() {
   useAuthInit();
   const {user, initializing} = useAuthStore();
+  const [splashDone, setSplashDone] = useState(false);
 
-  if (initializing) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
-    );
+  // Hold the splash until BOTH the intro animation has played and the stored
+  // session has been resolved — no flicker between splash and the first screen.
+  if (!splashDone || initializing) {
+    return <SplashScreen onDone={() => setSplashDone(true)} />;
   }
 
   return (
@@ -37,7 +37,3 @@ export function RootNavigator() {
     </NavigationContainer>
   );
 }
-
-const styles = StyleSheet.create({
-  center: {flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bg},
-});
