@@ -19,7 +19,21 @@ export function SmoothScroll() {
     // expose for instant scroll-to-top on route change
     window.__lenis = lenis;
 
+    // Page content (listings, images) loads async after a route change, which
+    // grows the document and leaves every ScrollTrigger's measurements stale —
+    // most visibly the Footer, whose reveal then never fires until a hard
+    // refresh. Recompute trigger positions whenever the document height changes.
+    let rafId = 0;
+    const refresh = () => {
+      cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(() => ScrollTrigger.refresh());
+    };
+    const ro = new ResizeObserver(refresh);
+    ro.observe(document.body);
+
     return () => {
+      cancelAnimationFrame(rafId);
+      ro.disconnect();
       gsap.ticker.remove(raf);
       lenis.destroy();
       window.__lenis = null;
