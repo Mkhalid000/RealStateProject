@@ -1,5 +1,5 @@
 import {useState} from 'react';
-import {useNavigate, Link} from 'react-router-dom';
+import {useNavigate, useSearchParams, Link} from 'react-router-dom';
 import {useAuth} from '../../context/AuthContext';
 
 const BG =
@@ -57,10 +57,15 @@ function Field({label, icon, type = 'text', value, onChange, placeholder, autoCo
 
 export default function Login() {
   const navigate = useNavigate();
+  const [params] = useSearchParams();
   const {login, register} = useAuth();
 
-  const [mode, setMode] = useState('login'); // 'login' | 'register'
-  const [role, setRole] = useState('user'); // register role: 'user' | 'agent'
+  // Where to land after a successful sign-in (e.g. coming from "Post Property").
+  const next = params.get('next');
+  const wantsAgent = params.get('register') === 'agent';
+
+  const [mode, setMode] = useState(wantsAgent ? 'register' : 'login'); // 'login' | 'register'
+  const [role, setRole] = useState(wantsAgent ? 'agent' : 'user'); // register role: 'user' | 'agent'
   const [form, setForm] = useState({fullName: '', email: '', password: '', phone: '', agencyName: ''});
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
@@ -83,7 +88,7 @@ export default function Login() {
     setLoading(true);
     try {
       const u = await login(form.email.trim(), form.password);
-      navigate(HOME_FOR[u.role] || '/');
+      navigate(next || HOME_FOR[u.role] || '/');
     } catch (err) {
       setError(err.message || 'Login failed');
     } finally {
@@ -110,7 +115,7 @@ export default function Login() {
         setMode('login');
         setForm(f => ({...f, password: ''}));
       } else {
-        navigate(HOME_FOR[res.role] || '/');
+        navigate(next || HOME_FOR[res.role] || '/');
       }
     } catch (err) {
       setError(err.message || 'Registration failed');

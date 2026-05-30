@@ -227,8 +227,12 @@ export default function PropertyForm() {
   const editing = !!id;
   const navigate = useNavigate();
   const {pathname} = useLocation();
-  // Keep agents inside /agent and admins inside /admin when navigating.
-  const base = pathname.startsWith('/agent') ? '/agent/properties' : '/admin/properties';
+  // Keep each role inside its own area when navigating (breadcrumb + post-save).
+  const base = pathname.startsWith('/agent')
+    ? '/agent/properties'
+    : pathname.startsWith('/account')
+      ? '/account/properties'
+      : '/admin/properties';
   const [form, setForm] = useState(EMPTY);
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
@@ -241,15 +245,29 @@ export default function PropertyForm() {
   const set = (k, v) => setForm(f => ({...f, [k]: v}));
 
   useEffect(() => {
-    if (!editing) return;
-    apiFetch(`/properties/${id}`)
-      .then(p => {
-        const next = {...EMPTY};
-        Object.keys(EMPTY).forEach(k => { if (p[k] != null) next[k] = p[k]; });
-        setForm(next);
-        setSlugTouched(true);
-      })
-      .catch(e => setError(e.message));
+    if (editing) {
+      apiFetch(`/properties/${id}`)
+        .then(p => {
+          const next = {...EMPTY};
+          Object.keys(EMPTY).forEach(k => { if (p[k] != null) next[k] = p[k]; });
+          setForm(next);
+          setSlugTouched(true);
+        })
+        .catch(e => setError(e.message));
+      return;
+    }
+    // New listing: prefill the basic details chosen on the public "Post Property" page.
+    try {
+      const raw = sessionStorage.getItem('rr_post_intent');
+      if (raw) {
+        const intent = JSON.parse(raw);
+        const allowed = Object.fromEntries(
+          Object.entries(intent).filter(([k, v]) => k in EMPTY && v != null && v !== ''),
+        );
+        if (Object.keys(allowed).length) setForm(f => ({...f, ...allowed}));
+        sessionStorage.removeItem('rr_post_intent');
+      }
+    } catch { /* ignore malformed intent */ }
   }, [id, editing]);
 
   useEffect(() => {

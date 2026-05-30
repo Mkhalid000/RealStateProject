@@ -56,6 +56,12 @@ function ProfileMenu({user, onLogout, dark}) {
               {user.role === 'admin' ? 'Admin Dashboard' : 'Agent Dashboard'}
             </button>
           )}
+          {!dashTo && (
+            <button onClick={() => navigate('/account/properties')} className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm text-ink transition hover:bg-black/5">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg>
+              My Properties
+            </button>
+          )}
           <button onClick={() => navigate('/properties')} className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm text-ink transition hover:bg-black/5">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M3 11l9-8 9 8M5 10v10h14V10"/></svg>
             Browse Properties
@@ -140,7 +146,7 @@ export function Navbar() {
         }`}
       />
 
-      <div className="relative mx-auto flex max-w-7xl items-center justify-between px-6">
+      <div className="relative mx-auto flex items-center justify-between px-8">
         {/* brand */}
         <Link to="/" className="flex items-center" aria-label="Aurevia — Home">
           <img src={logo} alt="Aurevia" className="h-10 w-auto md:h-10" />
@@ -175,6 +181,14 @@ export function Navbar() {
 
         {/* right cluster */}
         <div className="hidden items-center gap-3 md:flex">
+          <Link
+            to="/post-property"
+            className="group inline-flex items-center gap-2 rounded-full border border-gold/60 px-5 py-2.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-gold transition-colors hover:bg-gold hover:text-ink">
+            Post Property
+            <span className="rounded-full bg-gold px-1.5 py-0.5 text-[9px] font-bold text-ink transition-colors group-hover:bg-ink group-hover:text-gold">
+              FREE
+            </span>
+          </Link>
           <ThemeToggle />
           {user ? (
             <ProfileMenu user={user} onLogout={logout} dark={!scrolled} />
@@ -218,6 +232,13 @@ export function Navbar() {
               {l.label}
             </NavLink>
           ))}
+          <Link
+            to="/post-property"
+            onClick={() => setOpen(false)}
+            className="flex items-center gap-2 border-b border-line/40 py-3 text-sm uppercase tracking-[0.14em] text-gold">
+            Post Property
+            <span className="rounded-full bg-gold px-1.5 py-0.5 text-[9px] font-bold text-ink">FREE</span>
+          </Link>
           {user ? (
             <div className="py-3">
               <div className="flex items-center gap-3 border-b border-line/40 pb-3">
@@ -229,9 +250,13 @@ export function Navbar() {
                   <span className="block truncate text-xs text-fg/50">{user.email}</span>
                 </span>
               </div>
-              {DASH_FOR[user.role] && (
+              {DASH_FOR[user.role] ? (
                 <Link to={DASH_FOR[user.role]} onClick={() => setOpen(false)} className="block py-3 text-sm uppercase tracking-[0.14em] text-fg/80">
                   {user.role === 'admin' ? 'Admin Dashboard' : 'Agent Dashboard'}
+                </Link>
+              ) : (
+                <Link to="/account/properties" onClick={() => setOpen(false)} className="block py-3 text-sm uppercase tracking-[0.14em] text-fg/80">
+                  My Properties
                 </Link>
               )}
               <div className="flex items-center justify-between py-3">

@@ -13,6 +13,7 @@ import {PageTransition} from './site/components/PageTransition';
 import Home from './site/pages/Home';
 import Properties from './site/pages/Properties';
 import PropertyDetail from './site/pages/PropertyDetail';
+import PostProperty from './site/pages/PostProperty';
 import ReelsFeed from './site/pages/Reels';
 import About from './site/pages/About';
 import Contact from './site/pages/Contact';
@@ -36,6 +37,10 @@ import AgentOverview from './agent/pages/AgentOverview';
 import AgentProperties from './agent/pages/AgentProperties';
 import AgentReels from './agent/pages/AgentReels';
 import ReelForm from './agent/pages/ReelForm';
+
+// User account (buyers who post their own listings)
+import AccountLayout from './account/pages/AccountLayout';
+import AccountProperties from './account/pages/AccountProperties';
 
 function ScrollToTop() {
   const {pathname} = useLocation();
@@ -75,6 +80,7 @@ export default function App() {
           <Route path="/" element={<Home />} />
           <Route path="/properties" element={<Properties />} />
           <Route path="/properties/:id" element={<PropertyDetail />} />
+          <Route path="/post-property" element={<PostProperty />} />
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
         </Route>
@@ -120,6 +126,20 @@ export default function App() {
           <Route path="properties/:id/edit" element={<PropertyForm />} />
           <Route path="reels" element={<AgentReels />} />
           <Route path="reels/new" element={<ReelForm />} />
+        </Route>
+
+        {/* User account — any signed-in user can post & manage their own listings */}
+        <Route
+          path="/account"
+          element={
+            <ProtectedRoute>
+              <AccountLayout />
+            </ProtectedRoute>
+          }>
+          <Route index element={<AccountProperties />} />
+          <Route path="properties" element={<AccountProperties />} />
+          <Route path="properties/new" element={<PropertyForm />} />
+          <Route path="properties/:id/edit" element={<PropertyForm />} />
         </Route>
       </Routes>
     </>

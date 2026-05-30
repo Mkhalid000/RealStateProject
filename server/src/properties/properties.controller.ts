@@ -37,8 +37,9 @@ export class PropertiesController {
     return this.properties.adminList(query);
   }
 
-  // Agent: only my own listings (incl. pending) — declared before ':idOrSlug'
-  @Roles(UserRole.AGENT, UserRole.ADMIN)
+  // Owner's own listings (incl. pending) — users, agents and admins.
+  // Declared before ':idOrSlug'.
+  @Roles(UserRole.USER, UserRole.AGENT, UserRole.ADMIN)
   @Get('mine')
   listMine(@CurrentUser('id') userId: string, @Query() query: QueryPropertiesDto) {
     return this.properties.listMine(userId, query);
@@ -55,13 +56,14 @@ export class PropertiesController {
     return this.properties.getOne(idOrSlug);
   }
 
-  @Roles(UserRole.AGENT, UserRole.ADMIN)
+  // Anyone signed in can post a property for free; non-admins start as pending.
+  @Roles(UserRole.USER, UserRole.AGENT, UserRole.ADMIN)
   @Post()
   create(@CurrentUser() user: AuthUser, @Body() dto: CreatePropertyDto) {
     return this.properties.create(user.id, user.role, dto);
   }
 
-  @Roles(UserRole.AGENT, UserRole.ADMIN)
+  @Roles(UserRole.USER, UserRole.AGENT, UserRole.ADMIN)
   @Patch(':id')
   update(
     @CurrentUser() user: AuthUser,
@@ -77,7 +79,7 @@ export class PropertiesController {
     return this.properties.setVerification(id, dto.verificationStatus);
   }
 
-  @Roles(UserRole.AGENT, UserRole.ADMIN)
+  @Roles(UserRole.USER, UserRole.AGENT, UserRole.ADMIN)
   @Delete(':id')
   remove(@CurrentUser() user: AuthUser, @Param('id') id: string) {
     return this.properties.remove(user.id, user.role, id);
