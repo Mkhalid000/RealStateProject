@@ -1,5 +1,6 @@
 import React, {useState} from 'react';
 import {
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -29,9 +30,10 @@ export function LoginScreen({navigation}) {
   async function onSubmit() {
     setError('');
     if (!email || !password) {
-      setError('Email aur password dono daalein.');
+      setError('Please enter both email and password.');
       return;
     }
+    Keyboard.dismiss();
     setLoading(true);
     try {
       const user = await login(email.trim(), password);
@@ -46,10 +48,7 @@ export function LoginScreen({navigation}) {
   return (
     <SafeAreaView style={styles.root} edges={['top', 'bottom']}>
       <View style={styles.glow} />
-
-      <Pressable style={styles.back} hitSlop={10} onPress={() => navigation.goBack()}>
-        <Icon name="chevron-left" size={22} color={colors.text} />
-      </Pressable>
+      <View style={styles.glowBottom} />
 
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -61,15 +60,24 @@ export function LoginScreen({navigation}) {
           showsVerticalScrollIndicator={false}
           bounces={false}>
           <AnimatedEntrance style={styles.headerBlock}>
-            <Logo width={148} align="left" />
+            <View style={styles.brandRow}>
+              <Logo width={132} align="left" />
+            </View>
+            <View style={styles.badge}>
+              <View style={styles.badgeDot} />
+              <Text style={styles.badgeText}>MEMBER ACCESS</Text>
+            </View>
             <Text style={styles.title}>Welcome back</Text>
             <Text style={styles.subtitle}>
-              Sign in to continue exploring premium properties.
+              Sign in to continue exploring an exclusive collection of premium
+              residences.
             </Text>
           </AnimatedEntrance>
 
-          <AnimatedEntrance delay={120} style={styles.form}>
+          <AnimatedEntrance delay={120} style={styles.card}>
             <Input
+              compact
+              containerStyle={styles.inputGap}
               label="EMAIL ADDRESS"
               icon="mail"
               value={email}
@@ -82,6 +90,8 @@ export function LoginScreen({navigation}) {
               returnKeyType="next"
             />
             <Input
+              compact
+              containerStyle={styles.inputGap}
               label="PASSWORD"
               icon="lock"
               value={password}
@@ -104,7 +114,26 @@ export function LoginScreen({navigation}) {
               </View>
             ) : null}
 
-            <Button title="Sign In" size="lg" onPress={onSubmit} loading={loading} style={styles.cta} />
+            <Button
+              title="Sign In"
+              size="lg"
+              onPress={onSubmit}
+              loading={loading}
+              style={styles.cta}
+            />
+
+            <View style={styles.dividerRow}>
+              <View style={styles.divider} />
+              <Text style={styles.dividerText}>SECURE LOGIN</Text>
+              <View style={styles.divider} />
+            </View>
+
+            <View style={styles.trustRow}>
+              <Icon name="lock" size={13} color={colors.textMuted} />
+              <Text style={styles.trustText}>
+                Your data is protected with end-to-end encryption.
+              </Text>
+            </View>
           </AnimatedEntrance>
 
           <View style={styles.spacer} />
@@ -126,33 +155,78 @@ const styles = StyleSheet.create({
   flex: {flex: 1},
   glow: {
     position: 'absolute',
-    top: -140,
-    right: -90,
+    top: -150,
+    right: -100,
+    width: 320,
+    height: 320,
+    borderRadius: 160,
+    backgroundColor: colors.gold,
+    opacity: 0.12,
+  },
+  glowBottom: {
+    position: 'absolute',
+    bottom: -160,
+    left: -110,
     width: 300,
     height: 300,
     borderRadius: 150,
     backgroundColor: colors.gold,
-    opacity: 0.1,
+    opacity: 0.06,
   },
-  back: {
-    position: 'absolute',
-    top: spacing.sm,
-    left: spacing.md,
-    zIndex: 10,
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+  scroll: {
+    flexGrow: 1,
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.lg,
+  },
+  headerBlock: {marginTop: spacing.lg},
+  brandRow: {marginBottom: spacing.lg},
+  badge: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    alignSelf: 'flex-start',
+    gap: 7,
+    backgroundColor: 'rgba(201,161,74,0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(201,161,74,0.28)',
+    borderRadius: radius.pill,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+  },
+  badgeDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: colors.gold,
+  },
+  badgeText: {
+    color: colors.goldLight,
+    fontSize: 10.5,
+    fontWeight: '700',
+    letterSpacing: 1.5,
+  },
+  title: {
+    color: colors.text,
+    fontSize: 30,
+    fontWeight: '700',
+    fontFamily: 'serif',
+    marginTop: spacing.md,
+  },
+  subtitle: {
+    color: colors.textMuted,
+    marginTop: spacing.xs,
+    fontSize: 14,
+    lineHeight: 20,
+    maxWidth: '92%',
+  },
+  card: {
+    marginTop: spacing.lg,
     backgroundColor: colors.surface,
+    borderRadius: radius.lg,
     borderWidth: 1,
     borderColor: colors.border,
+    padding: spacing.lg,
   },
-  scroll: {flexGrow: 1, paddingHorizontal: spacing.lg, paddingBottom: spacing.lg},
-  headerBlock: {marginTop: 72},
-  title: {color: colors.text, fontSize: 34, fontWeight: '700', fontFamily: 'serif', marginTop: spacing.xl},
-  subtitle: {color: colors.textMuted, marginTop: spacing.xs, fontSize: 14.5, lineHeight: 21},
-  form: {marginTop: spacing.xl},
+  inputGap: {marginBottom: spacing.sm + 4},
   forgot: {alignSelf: 'flex-end', marginTop: 2, marginBottom: spacing.md},
   forgotText: {color: colors.gold, fontSize: 13, fontWeight: '600'},
   errorBox: {
@@ -166,10 +240,36 @@ const styles = StyleSheet.create({
     padding: spacing.sm,
     marginBottom: spacing.md,
   },
-  error: {color: colors.danger, fontSize: 13, flex: 1},
+  error: {color: colors.danger, fontSize: 11.5, lineHeight: 16, flex: 1},
   cta: {marginTop: spacing.xs},
-  spacer: {flex: 1, minHeight: spacing.xl},
-  footer: {flexDirection: 'row', justifyContent: 'center', alignItems: 'center', paddingTop: spacing.lg},
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginTop: spacing.md,
+  },
+  divider: {flex: 1, height: 1, backgroundColor: colors.border},
+  dividerText: {
+    color: colors.textMuted,
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 1.5,
+  },
+  trustRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 7,
+    marginTop: spacing.md,
+  },
+  trustText: {color: colors.textMuted, fontSize: 12, lineHeight: 17},
+  spacer: {flex: 1, minHeight: spacing.md},
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingTop: spacing.md,
+  },
   footerText: {color: colors.textMuted, fontSize: 14},
   link: {color: colors.gold, fontWeight: '700', fontSize: 14},
 });

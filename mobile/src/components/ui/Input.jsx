@@ -13,6 +13,7 @@ export function Input({
   icon,
   error,
   secureTextEntry,
+  compact,
   style,
   containerStyle,
   ...rest
@@ -42,7 +43,13 @@ export function Input({
       {label ? (
         <Text style={[styles.label, focused && styles.labelFocused]}>{label}</Text>
       ) : null}
-      <Animated.View style={[styles.field, {borderColor}, focused && styles.fieldFocused]}>
+      <Animated.View
+        style={[
+          styles.field,
+          compact && styles.fieldCompact,
+          {borderColor},
+          focused && styles.fieldFocused,
+        ]}>
         {icon ? <Icon name={icon} size={19} color={iconColor} style={styles.icon} /> : null}
         <TextInput
           placeholderTextColor={colors.textMuted}
@@ -85,6 +92,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     height: 56,
   },
+  fieldCompact: {height: 50},
   fieldFocused: {backgroundColor: colors.surfaceAlt},
   icon: {marginRight: spacing.sm},
   input: {flex: 1, color: colors.text, fontSize: 16, height: '100%'},
