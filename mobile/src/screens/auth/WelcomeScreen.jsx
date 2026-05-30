@@ -1,6 +1,7 @@
-import React, {useEffect, useRef} from 'react';
-import {Animated, Easing, ImageBackground, StyleSheet, Text, View} from 'react-native';
+import React, {useCallback, useEffect, useRef} from 'react';
+import {Animated, Easing, ImageBackground, Platform, StatusBar, StyleSheet, Text, View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
+import {useFocusEffect} from '@react-navigation/native';
 import {Button} from '../../components/ui/Button';
 import {Logo} from '../../components/ui/Logo';
 import {colors, spacing} from '../../theme';
@@ -28,6 +29,25 @@ export function WelcomeScreen({navigation}) {
       ]),
     ).start();
   }, [fade, zoom]);
+
+  // While this screen is focused, let the hero bleed behind a transparent
+  // status bar (immersive). Revert to the app's ink bar on blur so other
+  // screens stay unaffected.
+  useFocusEffect(
+    useCallback(() => {
+      StatusBar.setBarStyle('light-content');
+      if (Platform.OS === 'android') {
+        StatusBar.setTranslucent(true);
+        StatusBar.setBackgroundColor('transparent');
+      }
+      return () => {
+        if (Platform.OS === 'android') {
+          StatusBar.setTranslucent(false);
+          StatusBar.setBackgroundColor(colors.bg);
+        }
+      };
+    }, []),
+  );
 
   return (
     <View style={styles.root}>

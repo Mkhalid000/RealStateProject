@@ -1,10 +1,12 @@
 import React, {useRef, useState} from 'react';
 import {Animated, Pressable, StyleSheet, Text, TextInput, View} from 'react-native';
+import {Icon} from './Icon';
 import {colors, radius, spacing} from '../../theme';
 
 /**
- * Labeled text field with an animated gold focus glow, optional leading icon
- * and a built-in password show/hide toggle (pass `secureTextEntry`).
+ * Labeled text field with an animated gold focus glow, an optional leading
+ * SVG icon (`icon` = Icon name) and a built-in password show/hide toggle
+ * (pass `secureTextEntry`).
  */
 export function Input({
   label,
@@ -33,22 +35,20 @@ export function Input({
         outputRange: [colors.border, colors.gold],
       });
 
+  const iconColor = error ? colors.danger : focused ? colors.gold : colors.textMuted;
+
   return (
     <View style={[styles.wrap, containerStyle]}>
       {label ? (
         <Text style={[styles.label, focused && styles.labelFocused]}>{label}</Text>
       ) : null}
-      <Animated.View
-        style={[
-          styles.field,
-          {borderColor},
-          focused && styles.fieldFocused,
-        ]}>
-        {icon ? <Text style={styles.icon}>{icon}</Text> : null}
+      <Animated.View style={[styles.field, {borderColor}, focused && styles.fieldFocused]}>
+        {icon ? <Icon name={icon} size={19} color={iconColor} style={styles.icon} /> : null}
         <TextInput
           placeholderTextColor={colors.textMuted}
           secureTextEntry={hidden}
           style={[styles.input, style]}
+          selectionColor={colors.gold}
           onFocus={e => {
             setFocused(true);
             animate(1);
@@ -62,8 +62,8 @@ export function Input({
           {...rest}
         />
         {secureTextEntry ? (
-          <Pressable onPress={() => setHidden(h => !h)} hitSlop={10}>
-            <Text style={styles.eye}>{hidden ? '👁' : '🙈'}</Text>
+          <Pressable onPress={() => setHidden(h => !h)} hitSlop={10} style={styles.eyeBtn}>
+            <Icon name={hidden ? 'eye-off' : 'eye'} size={19} color={colors.textMuted} />
           </Pressable>
         ) : null}
       </Animated.View>
@@ -74,7 +74,7 @@ export function Input({
 
 const styles = StyleSheet.create({
   wrap: {marginBottom: spacing.md},
-  label: {color: colors.textMuted, marginBottom: 6, fontSize: 12.5, letterSpacing: 0.4, fontWeight: '600'},
+  label: {color: colors.textMuted, marginBottom: 7, fontSize: 11.5, letterSpacing: 0.8, fontWeight: '700'},
   labelFocused: {color: colors.gold},
   field: {
     flexDirection: 'row',
@@ -83,11 +83,11 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderRadius: radius.md,
     paddingHorizontal: spacing.md,
-    height: 54,
+    height: 56,
   },
   fieldFocused: {backgroundColor: colors.surfaceAlt},
-  icon: {fontSize: 16, marginRight: spacing.sm, opacity: 0.8},
+  icon: {marginRight: spacing.sm},
   input: {flex: 1, color: colors.text, fontSize: 16, height: '100%'},
-  eye: {fontSize: 18, paddingLeft: spacing.sm},
+  eyeBtn: {paddingLeft: spacing.sm},
   error: {color: colors.danger, fontSize: 12, marginTop: 5, marginLeft: 2},
 });

@@ -13,6 +13,7 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 import {Input} from '../../components/ui/Input';
 import {Button} from '../../components/ui/Button';
 import {Logo} from '../../components/ui/Logo';
+import {Icon} from '../../components/ui/Icon';
 import {AnimatedEntrance} from '../../components/ui/AnimatedEntrance';
 import {register} from '../../lib/auth';
 import {apiErrorMessage} from '../../lib/api';
@@ -59,31 +60,37 @@ export function SignUpScreen({navigation}) {
   }
 
   return (
-    <SafeAreaView style={styles.root}>
+    <SafeAreaView style={styles.root} edges={['top', 'bottom']}>
       <View style={styles.glow} />
+
+      <Pressable style={styles.back} hitSlop={10} onPress={() => navigation.goBack()}>
+        <Icon name="chevron-left" size={22} color={colors.text} />
+      </Pressable>
+
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.flex}>
         <ScrollView
           contentContainerStyle={styles.scroll}
           keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="interactive"
           showsVerticalScrollIndicator={false}>
-          <AnimatedEntrance>
-            <Logo width={150} align="left" />
+          <AnimatedEntrance style={styles.headerBlock}>
+            <Logo width={148} align="left" />
             <Text style={styles.title}>Create your account</Text>
             <Text style={styles.subtitle}>Choose how you’ll use AUREVIA.</Text>
           </AnimatedEntrance>
 
-          <AnimatedEntrance delay={90} style={styles.roleRow}>
+          <AnimatedEntrance delay={110} style={styles.roleRow}>
             <RoleCard
-              emoji="🔍"
+              icon="search"
               label="Buyer"
               desc="Explore reels, save & post homes"
               active={role === 'user'}
               onPress={() => setRole('user')}
             />
             <RoleCard
-              emoji="🏛"
+              icon="briefcase"
               label="Agent"
               desc="List properties & create reels"
               active={role === 'agent'}
@@ -91,27 +98,29 @@ export function SignUpScreen({navigation}) {
             />
           </AnimatedEntrance>
 
-          <AnimatedEntrance delay={180} style={styles.form}>
+          <AnimatedEntrance delay={200} style={styles.form}>
             <Input
               label="FULL NAME"
-              icon="👤"
+              icon="user"
               value={fullName}
               onChangeText={setFullName}
+              textContentType="name"
               placeholder="Aapka naam"
             />
             <Input
-              label="EMAIL"
-              icon="✉"
+              label="EMAIL ADDRESS"
+              icon="mail"
               value={email}
               onChangeText={setEmail}
               autoCapitalize="none"
               autoCorrect={false}
               keyboardType="email-address"
+              textContentType="emailAddress"
               placeholder="you@example.com"
             />
             <Input
-              label="PHONE (optional)"
-              icon="📞"
+              label="PHONE (OPTIONAL)"
+              icon="phone"
               value={phone}
               onChangeText={setPhone}
               keyboardType="phone-pad"
@@ -119,8 +128,8 @@ export function SignUpScreen({navigation}) {
             />
             {role === 'agent' ? (
               <Input
-                label="AGENCY NAME (optional)"
-                icon="🏢"
+                label="AGENCY NAME (OPTIONAL)"
+                icon="building"
                 value={agencyName}
                 onChangeText={setAgencyName}
                 placeholder="Your agency"
@@ -128,16 +137,22 @@ export function SignUpScreen({navigation}) {
             ) : null}
             <Input
               label="PASSWORD"
-              icon="🔒"
+              icon="lock"
               value={password}
               onChangeText={setPassword}
               secureTextEntry
+              textContentType="newPassword"
               placeholder="Min 6 characters"
               onSubmitEditing={onSubmit}
               returnKeyType="go"
             />
 
-            {error ? <Text style={styles.error}>{error}</Text> : null}
+            {error ? (
+              <View style={styles.errorBox}>
+                <Icon name="lock" size={15} color={colors.danger} />
+                <Text style={styles.error}>{error}</Text>
+              </View>
+            ) : null}
 
             <Button title="Create Account" size="lg" onPress={onSubmit} loading={loading} style={styles.cta} />
             <Text style={styles.terms}>
@@ -145,11 +160,11 @@ export function SignUpScreen({navigation}) {
             </Text>
           </AnimatedEntrance>
 
-          <AnimatedEntrance delay={280} style={styles.footer}>
+          <AnimatedEntrance delay={300} style={styles.footer}>
             <Text style={styles.footerText}>Already have an account? </Text>
-            <Text style={styles.link} onPress={() => navigation.navigate('Login')}>
-              Sign in
-            </Text>
+            <Pressable hitSlop={6} onPress={() => navigation.navigate('Login')}>
+              <Text style={styles.link}>Sign in</Text>
+            </Pressable>
           </AnimatedEntrance>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -157,7 +172,7 @@ export function SignUpScreen({navigation}) {
   );
 }
 
-function RoleCard({emoji, label, desc, active, onPress}) {
+function RoleCard({icon, label, desc, active, onPress}) {
   const scale = useRef(new Animated.Value(1)).current;
   return (
     <Animated.View style={[styles.roleWrap, {transform: [{scale}]}]}>
@@ -166,12 +181,16 @@ function RoleCard({emoji, label, desc, active, onPress}) {
         onPressIn={() => Animated.spring(scale, {toValue: 0.97, useNativeDriver: true}).start()}
         onPressOut={() => Animated.spring(scale, {toValue: 1, useNativeDriver: true}).start()}
         style={[styles.roleCard, active && styles.roleCardActive]}>
-        <View style={[styles.roleEmojiWrap, active && styles.roleEmojiActive]}>
-          <Text style={styles.roleEmoji}>{emoji}</Text>
+        <View style={[styles.roleIconWrap, active && styles.roleIconActive]}>
+          <Icon name={icon} size={20} color={active ? colors.gold : colors.textDim} />
         </View>
         <Text style={[styles.roleLabel, active && styles.roleLabelActive]}>{label}</Text>
         <Text style={styles.roleDesc}>{desc}</Text>
-        {active ? <View style={styles.check}><Text style={styles.checkText}>✓</Text></View> : null}
+        {active ? (
+          <View style={styles.check}>
+            <Icon name="check" size={13} color={colors.bgSoft} strokeWidth={2.6} />
+          </View>
+        ) : null}
       </Pressable>
     </Animated.View>
   );
@@ -182,17 +201,32 @@ const styles = StyleSheet.create({
   flex: {flex: 1},
   glow: {
     position: 'absolute',
-    top: -120,
-    left: -80,
-    width: 280,
-    height: 280,
-    borderRadius: 140,
+    top: -140,
+    left: -90,
+    width: 300,
+    height: 300,
+    borderRadius: 150,
     backgroundColor: colors.gold,
-    opacity: 0.1,
+    opacity: 0.09,
   },
-  scroll: {flexGrow: 1, padding: spacing.lg},
+  back: {
+    position: 'absolute',
+    top: spacing.sm,
+    left: spacing.md,
+    zIndex: 10,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  scroll: {flexGrow: 1, paddingHorizontal: spacing.lg, paddingBottom: spacing.lg},
+  headerBlock: {marginTop: 72},
   title: {color: colors.text, fontSize: 28, fontWeight: '700', fontFamily: 'serif', marginTop: spacing.lg},
-  subtitle: {color: colors.textMuted, marginTop: spacing.xs},
+  subtitle: {color: colors.textMuted, marginTop: spacing.xs, fontSize: 14},
   roleRow: {flexDirection: 'row', gap: spacing.sm, marginTop: spacing.lg},
   roleWrap: {flex: 1},
   roleCard: {
@@ -201,20 +235,19 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: colors.border,
     backgroundColor: colors.surface,
-    minHeight: 128,
+    minHeight: 132,
   },
   roleCardActive: {borderColor: colors.gold, backgroundColor: colors.surfaceAlt},
-  roleEmojiWrap: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+  roleIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
     backgroundColor: colors.white06,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing.sm,
   },
-  roleEmojiActive: {backgroundColor: colors.goldFaint},
-  roleEmoji: {fontSize: 18},
+  roleIconActive: {backgroundColor: colors.goldFaint},
   roleLabel: {color: colors.text, fontWeight: '700', fontSize: 16},
   roleLabelActive: {color: colors.gold},
   roleDesc: {color: colors.textMuted, fontSize: 12, marginTop: 3, lineHeight: 16},
@@ -229,12 +262,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  checkText: {color: colors.bgSoft, fontSize: 12, fontWeight: '800'},
   form: {marginTop: spacing.lg},
-  error: {color: colors.danger, marginBottom: spacing.sm, fontSize: 13},
+  errorBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: 'rgba(239,107,107,0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(239,107,107,0.3)',
+    borderRadius: radius.md,
+    padding: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  error: {color: colors.danger, fontSize: 13, flex: 1},
   cta: {marginTop: spacing.xs},
   terms: {color: colors.textMuted, fontSize: 11.5, textAlign: 'center', marginTop: spacing.md, lineHeight: 16},
-  footer: {flexDirection: 'row', justifyContent: 'center', marginTop: spacing.lg},
-  footerText: {color: colors.textMuted},
-  link: {color: colors.gold, fontWeight: '700'},
+  footer: {flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: spacing.lg},
+  footerText: {color: colors.textMuted, fontSize: 14},
+  link: {color: colors.gold, fontWeight: '700', fontSize: 14},
 });
