@@ -11,6 +11,7 @@ export function AnimatedEntrance({
   offset = 18,
   duration = 520,
   style,
+  pointerEvents,
 }) {
   const t = useRef(new Animated.Value(0)).current;
 
@@ -28,6 +29,7 @@ export function AnimatedEntrance({
 
   return (
     <Animated.View
+      pointerEvents={pointerEvents}
       style={[
         style,
         {

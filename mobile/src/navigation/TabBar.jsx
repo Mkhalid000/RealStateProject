@@ -1,7 +1,7 @@
 import React, {useEffect, useRef} from 'react';
 import {Animated, Pressable, StyleSheet, Text, View} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {colors, spacing} from '../theme';
+import {spacing, useColors, useThemedStyles} from '../theme';
 
 const ICONS = {
   Explore: '◎',
@@ -19,6 +19,7 @@ const LABELS = {
 /** Custom bottom bar with an animated gold dot + scale on the active tab. */
 export function TabBar({state, navigation}) {
   const insets = useSafeAreaInsets();
+  const styles = useThemedStyles(makeStyles);
   return (
     <View style={[styles.bar, {paddingBottom: Math.max(insets.bottom, 10)}]}>
       {state.routes.map((route, index) => {
@@ -44,6 +45,8 @@ export function TabBar({state, navigation}) {
 }
 
 function TabItem({focused, icon, label, onPress}) {
+  const c = useColors();
+  const styles = useThemedStyles(makeStyles);
   const v = useRef(new Animated.Value(focused ? 1 : 0)).current;
 
   useEffect(() => {
@@ -58,26 +61,27 @@ function TabItem({focused, icon, label, onPress}) {
       <Animated.Text
         style={[
           styles.icon,
-          {color: focused ? colors.gold : colors.textMuted, transform: [{scale}, {translateY}]},
+          {color: focused ? c.gold : c.textMuted, transform: [{scale}, {translateY}]},
         ]}>
         {icon}
       </Animated.Text>
-      <Text style={[styles.label, {color: focused ? colors.gold : colors.textMuted}]}>{label}</Text>
+      <Text style={[styles.label, {color: focused ? c.gold : c.textMuted}]}>{label}</Text>
       <Animated.View style={[styles.dot, {opacity: v, transform: [{scale: v}]}]} />
     </Pressable>
   );
 }
 
-const styles = StyleSheet.create({
-  bar: {
-    flexDirection: 'row',
-    backgroundColor: colors.bgSoft,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-    paddingTop: spacing.sm,
-  },
-  item: {flex: 1, alignItems: 'center', justifyContent: 'center', gap: 3},
-  icon: {fontSize: 22},
-  label: {fontSize: 10.5, fontWeight: '600', letterSpacing: 0.3},
-  dot: {width: 5, height: 5, borderRadius: 3, backgroundColor: colors.gold, marginTop: 1},
-});
+const makeStyles = c =>
+  StyleSheet.create({
+    bar: {
+      flexDirection: 'row',
+      backgroundColor: c.bgSoft,
+      borderTopWidth: 1,
+      borderTopColor: c.border,
+      paddingTop: spacing.sm,
+    },
+    item: {flex: 1, alignItems: 'center', justifyContent: 'center', gap: 3},
+    icon: {fontSize: 22},
+    label: {fontSize: 10.5, fontWeight: '600', letterSpacing: 0.3},
+    dot: {width: 5, height: 5, borderRadius: 3, backgroundColor: c.gold, marginTop: 1},
+  });

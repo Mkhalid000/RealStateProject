@@ -1,7 +1,7 @@
 import React from 'react';
 import {Text} from 'react-native';
 import Svg, {Circle, Line, Path, Rect} from 'react-native-svg';
-import {colors} from '../../theme';
+import {useColors} from '../../theme';
 
 /**
  * Lightweight stroke-icon set (Feather/Lucide style, 24×24 viewBox) rendered
@@ -13,6 +13,76 @@ const PATHS = {
     <>
       <Rect x="2" y="4" width="20" height="16" rx="2" />
       <Path d="M22 7l-10 7L2 7" />
+    </>
+  ),
+  sliders: (
+    <>
+      <Line x1="4" y1="21" x2="4" y2="14" />
+      <Line x1="4" y1="10" x2="4" y2="3" />
+      <Line x1="12" y1="21" x2="12" y2="12" />
+      <Line x1="12" y1="8" x2="12" y2="3" />
+      <Line x1="20" y1="21" x2="20" y2="16" />
+      <Line x1="20" y1="12" x2="20" y2="3" />
+      <Line x1="1" y1="14" x2="7" y2="14" />
+      <Line x1="9" y1="8" x2="15" y2="8" />
+      <Line x1="17" y1="16" x2="23" y2="16" />
+    </>
+  ),
+  'map-pin': (
+    <>
+      <Path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+      <Circle cx="12" cy="10" r="3" />
+    </>
+  ),
+  bed: (
+    <>
+      <Path d="M2 4v16" />
+      <Path d="M2 8h18a2 2 0 0 1 2 2v10" />
+      <Path d="M2 17h20" />
+      <Path d="M6 8v-2a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+    </>
+  ),
+  bath: (
+    <>
+      <Path d="M4 12V5a2 2 0 0 1 2-2h1a2 2 0 0 1 2 2" />
+      <Line x1="2" y1="12" x2="22" y2="12" />
+      <Path d="M4 12v3a4 4 0 0 0 4 4h8a4 4 0 0 0 4-4v-3" />
+      <Line x1="6" y1="21" x2="6" y2="19" />
+      <Line x1="18" y1="21" x2="18" y2="19" />
+    </>
+  ),
+  ruler: (
+    <>
+      <Path d="M3 9l12-6 6 12-12 6z" />
+      <Path d="M7 8l1.5 3" />
+      <Path d="M11 6l1.5 3" />
+      <Path d="M15 4l1.5 3" />
+    </>
+  ),
+  heart: (
+    <Path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+  ),
+  'chevron-right': <Path d="M9 18l6-6-6-6" />,
+  'chevron-down': <Path d="M6 9l6 6 6-6" />,
+  star: (
+    <Path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+  ),
+  tag: (
+    <>
+      <Path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
+      <Line x1="7" y1="7" x2="7.01" y2="7" />
+    </>
+  ),
+  home: (
+    <>
+      <Path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z" />
+      <Path d="M9 21v-7h6v7" />
+    </>
+  ),
+  bell: (
+    <>
+      <Path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
+      <Path d="M13.73 21a2 2 0 0 1-3.46 0" />
     </>
   ),
   lock: (
@@ -67,6 +137,20 @@ const PATHS = {
     </>
   ),
   check: <Path d="M20 6L9 17l-5-5" />,
+  sun: (
+    <>
+      <Circle cx="12" cy="12" r="4" />
+      <Line x1="12" y1="2" x2="12" y2="4" />
+      <Line x1="12" y1="20" x2="12" y2="22" />
+      <Line x1="4.93" y1="4.93" x2="6.34" y2="6.34" />
+      <Line x1="17.66" y1="17.66" x2="19.07" y2="19.07" />
+      <Line x1="2" y1="12" x2="4" y2="12" />
+      <Line x1="20" y1="12" x2="22" y2="12" />
+      <Line x1="4.93" y1="19.07" x2="6.34" y2="17.66" />
+      <Line x1="17.66" y1="6.34" x2="19.07" y2="4.93" />
+    </>
+  ),
+  moon: <Path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />,
   x: (
     <>
       <Line x1="18" y1="6" x2="6" y2="18" />
@@ -82,10 +166,12 @@ const PATHS = {
   ),
 };
 
-export function Icon({name, size = 22, color = colors.text, strokeWidth = 1.8, style}) {
+export function Icon({name, size = 22, color, strokeWidth = 1.8, style}) {
+  const c = useColors();
+  const resolved = color ?? c.text;
   const content = PATHS[name];
   if (!content) {
-    return <Text style={[{color, fontSize: size * 0.9}, style]}>{name}</Text>;
+    return <Text style={[{color: resolved, fontSize: size * 0.9}, style]}>{name}</Text>;
   }
   return (
     <Svg
@@ -93,7 +179,7 @@ export function Icon({name, size = 22, color = colors.text, strokeWidth = 1.8, s
       height={size}
       viewBox="0 0 24 24"
       fill="none"
-      stroke={color}
+      stroke={resolved}
       strokeWidth={strokeWidth}
       strokeLinecap="round"
       strokeLinejoin="round"

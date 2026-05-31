@@ -1,25 +1,34 @@
-import React, {useMemo, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {
   ActivityIndicator,
+  Alert,
+  Animated,
+  Easing,
   FlatList,
+  Platform,
+  Pressable,
   RefreshControl,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
+import {useFocusEffect} from '@react-navigation/native';
 import {PropertyCard} from '../../components/PropertyCard';
-import {Chip} from '../../components/ui/Chip';
 import {EmptyState} from '../../components/ui/EmptyState';
 import {PropertyCardSkeleton} from '../../components/ui/Skeleton';
 import {Logo} from '../../components/ui/Logo';
+import {Icon} from '../../components/ui/Icon';
+import {Button} from '../../components/ui/Button';
+import {BottomSheet} from '../../components/ui/BottomSheet';
 import {AnimatedEntrance} from '../../components/ui/AnimatedEntrance';
 import {flattenPages, usePropertiesFeed} from '../../hooks/useProperties';
 import {useDebounced} from '../../hooks/useDebounced';
 import {useAuthStore} from '../../store/authStore';
-import {colors, radius, spacing} from '../../theme';
+import {radius, spacing, useColors, useThemedStyles} from '../../theme';
 
 const LISTING_TABS = [
   {key: undefined, label: 'All'},
@@ -28,31 +37,82 @@ const LISTING_TABS = [
 ];
 
 const TYPES = [
-  {key: undefined, label: 'All types'},
-  {key: 'apartment', label: 'Apartment'},
-  {key: 'villa', label: 'Villa'},
-  {key: 'plot', label: 'Plot'},
-  {key: 'commercial', label: 'Commercial'},
-  {key: 'office', label: 'Office'},
-  {key: 'shop', label: 'Shop'},
+  {key: undefined, label: 'All', icon: 'sliders'},
+  {key: 'apartment', label: 'Apartment', icon: 'building'},
+  {key: 'villa', label: 'Villa', icon: 'home'},
+  {key: 'plot', label: 'Plot', icon: 'map-pin'},
+  {key: 'commercial', label: 'Commercial', icon: 'tag'},
+  {key: 'office', label: 'Office', icon: 'briefcase'},
+  {key: 'shop', label: 'Shop', icon: 'tag'},
 ];
 
+const BHK_OPTIONS = [
+  {key: undefined, label: 'Any'},
+  {key: 1, label: '1'},
+  {key: 2, label: '2'},
+  {key: 3, label: '3'},
+  {key: 4, label: '4+'},
+];
+
+const PRICE_RANGES = [
+  {key: 'any', label: 'Any price', min: undefined, max: undefined},
+  {key: 'u100k', label: 'Under $100K', min: undefined, max: 100000},
+  {key: '100-300', label: '$100K – $300K', min: 100000, max: 300000},
+  {key: '300-600', label: '$300K – $600K', min: 300000, max: 600000},
+  {key: '600-1m', label: '$600K – $1M', min: 600000, max: 1000000},
+  {key: '1m+', label: '$1M+', min: 1000000, max: undefined},
+];
+
+const SORTS = [
+  {key: 'newest', label: 'Newest'},
+  {key: 'price_asc', label: 'Price: Low to High'},
+  {key: 'price_desc', label: 'Price: High to Low'},
+  {key: 'title_asc', label: 'Name: A to Z'},
+];
+
+const DEFAULTS = {
+  listingType: undefined,
+  type: undefined,
+  bhk: undefined,
+  priceKey: 'any',
+  sort: 'newest',
+};
+
 export function ExploreScreen({navigation}) {
+  const c = useColors();
+  const styles = useThemedStyles(makeStyles);
   const user = useAuthStore(s => s.user);
+
   const [search, setSearch] = useState('');
-  const [listingType, setListingType] = useState(undefined);
-  const [type, setType] = useState(undefined);
-  const q = useDebounced(search, 400);
+  const q = useDebounced(search.trim(), 400);
+
+  // committed filters
+  const [applied, setApplied] = useState(DEFAULTS);
+  // sheet open + its draft
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [draft, setDraft] = useState(DEFAULTS);
+
+  const priceRange = PRICE_RANGES.find(p => p.key === applied.priceKey) || PRICE_RANGES[0];
 
   const filters = useMemo(
     () => ({
       ...(q ? {q} : {}),
-      ...(listingType ? {listingType} : {}),
-      ...(type ? {type} : {}),
-      sort: 'newest',
+      ...(applied.listingType ? {listingType: applied.listingType} : {}),
+      ...(applied.type ? {type: applied.type} : {}),
+      ...(applied.bhk != null ? {bhk: applied.bhk} : {}),
+      ...(priceRange.min != null ? {minPrice: priceRange.min} : {}),
+      ...(priceRange.max != null ? {maxPrice: priceRange.max} : {}),
+      sort: applied.sort || 'newest',
     }),
-    [q, listingType, type],
+    [q, applied, priceRange],
   );
+
+  const activeCount =
+    (applied.listingType ? 1 : 0) +
+    (applied.type ? 1 : 0) +
+    (applied.bhk != null ? 1 : 0) +
+    (applied.priceKey !== 'any' ? 1 : 0) +
+    (applied.sort !== 'newest' ? 1 : 0);
 
   const {
     data,
@@ -66,74 +126,122 @@ export function ExploreScreen({navigation}) {
   } = usePropertiesFeed(filters);
 
   const items = flattenPages(data);
+  const total = data?.pages?.[0]?.total ?? items.length;
+
+  function openSheet() {
+    setDraft(applied);
+    setSheetOpen(true);
+  }
+  function applyDraft() {
+    setApplied(draft);
+    setSheetOpen(false);
+  }
+  function resetAll() {
+    setApplied(DEFAULTS);
+    setDraft(DEFAULTS);
+    setSearch('');
+  }
 
   const header = (
-    <View>
-      <Text style={styles.hello}>
-        Hello{user?.fullName ? `, ${user.fullName.split(' ')[0]}` : ''} 👋
-      </Text>
-      <Text style={styles.heading}>Discover your{'\n'}perfect space</Text>
+    <View style={styles.headerWrap}>
+      {/* <Text style={styles.hello}>
+        Hello{user?.fullName ? `, ${user.fullName.split(' ')[0]}` : ''}
+      </Text> */}
+      <Text style={styles.heading}>Find your{'\n'}perfect space</Text>
 
-      <View style={styles.searchBar}>
-        <Text style={styles.searchIcon}>⌕</Text>
-        <TextInput
-          value={search}
-          onChangeText={setSearch}
-          placeholder="Search city, locality, agent…"
-          placeholderTextColor={colors.textMuted}
-          style={styles.searchInput}
-          returnKeyType="search"
-        />
-        {search ? (
-          <Text style={styles.clear} onPress={() => setSearch('')}>
-            ✕
-          </Text>
-        ) : null}
+      {/* Search + Filters trigger */}
+      <View style={styles.searchRow}>
+        <View style={styles.searchBar}>
+          <Icon name="search" size={18} color={c.textMuted} />
+          <TextInput
+            value={search}
+            onChangeText={setSearch}
+            placeholder="Search city, locality…"
+            placeholderTextColor={c.textMuted}
+            style={styles.searchInput}
+            returnKeyType="search"
+          />
+          {search ? (
+            <Pressable hitSlop={10} onPress={() => setSearch('')} style={styles.clearBtn}>
+              <Icon name="x" size={14} color={c.textMuted} strokeWidth={2.2} />
+            </Pressable>
+          ) : null}
+        </View>
+
+        <Pressable style={styles.filterBtn} onPress={openSheet}>
+          <Icon name="sliders" size={20} color={activeCount ? c.onGold : c.text} />
+          {activeCount ? (
+            <View style={styles.filterDot}>
+              <Text style={styles.filterDotText}>{activeCount}</Text>
+            </View>
+          ) : null}
+        </Pressable>
       </View>
 
-      <View style={styles.segment}>
-        {LISTING_TABS.map(t => (
-          <Chip
-            key={t.label}
-            label={t.label}
-            active={listingType === t.key}
-            onPress={() => setListingType(t.key)}
-            style={styles.segChip}
-          />
-        ))}
-      </View>
-
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.typesRow}>
-        {TYPES.map(t => (
-          <Chip
-            key={t.label}
-            label={t.label}
-            active={type === t.key}
-            onPress={() => setType(t.key)}
-          />
-        ))}
-      </ScrollView>
-
-      <Text style={styles.resultsLabel}>
-        {isLoading ? 'Loading…' : `${items.length} ${items.length === 1 ? 'property' : 'properties'}`}
-      </Text>
     </View>
   );
 
+  const footer = () => {
+    if (isFetchingNextPage) {
+      return (
+        <View style={styles.footer}>
+          <ActivityIndicator color={c.gold} />
+          <Text style={styles.footerText}>Loading more…</Text>
+        </View>
+      );
+    }
+    if (!hasNextPage && items.length > 0) {
+      return (
+        <View style={styles.footer}>
+          <View style={styles.endRule} />
+          <Text style={styles.endText}>You’re all caught up</Text>
+        </View>
+      );
+    }
+    return <View style={{height: spacing.lg}} />;
+  };
+
+  // Let the gold orbs bleed up behind a transparent status bar on this screen.
+  useFocusEffect(
+    useCallback(() => {
+      StatusBar.setBarStyle(c.isDark ? 'light-content' : 'dark-content');
+      if (Platform.OS === 'android') {
+        StatusBar.setTranslucent(true);
+        StatusBar.setBackgroundColor('transparent');
+      }
+      return () => {
+        if (Platform.OS === 'android') {
+          StatusBar.setTranslucent(false);
+          StatusBar.setBackgroundColor(c.bg);
+        }
+      };
+    }, [c]),
+  );
+
   return (
-    <SafeAreaView style={styles.root} edges={['top']}>
+    <View style={styles.root}>
+      <BackgroundDecor />
+      <SafeAreaView style={styles.safe} edges={['top']}>
       <View style={styles.topbar}>
-        <Logo width={132} align="left" />
+        <Logo width={128} align="left" />
+        <Pressable
+          style={styles.bellBtn}
+          hitSlop={8}
+          onPress={() =>
+            Alert.alert('Notifications', 'You’re all caught up — no new notifications.')
+          }>
+          <Icon name="bell" size={20} color={c.text} />
+          <View style={styles.bellDot} />
+        </Pressable>
       </View>
 
       {isLoading ? (
-        <ScrollView contentContainerStyle={styles.list}>
+        <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
           {header}
           {[0, 1, 2].map(i => (
-            <PropertyCardSkeleton key={i} />
+            <View key={i} style={styles.card}>
+              <PropertyCardSkeleton />
+            </View>
           ))}
         </ScrollView>
       ) : (
@@ -148,18 +256,24 @@ export function ExploreScreen({navigation}) {
               <PropertyCard
                 property={item}
                 style={styles.card}
-                onPress={() => navigation.navigate('PropertyDetail', {id: item.id, title: item.title})}
+                onPress={() =>
+                  navigation.navigate('PropertyDetail', {id: item.id, title: item.title})
+                }
               />
             </AnimatedEntrance>
           )}
-          onEndReachedThreshold={0.4}
-          onEndReached={() => hasNextPage && fetchNextPage()}
+          onEndReachedThreshold={0.5}
+          onEndReached={() => {
+            if (hasNextPage && !isFetchingNextPage) {
+              fetchNextPage();
+            }
+          }}
           refreshControl={
             <RefreshControl
               refreshing={isRefetching}
               onRefresh={refetch}
-              tintColor={colors.gold}
-              colors={[colors.gold]}
+              tintColor={c.gold}
+              colors={[c.gold]}
             />
           }
           ListEmptyComponent={
@@ -175,43 +289,385 @@ export function ExploreScreen({navigation}) {
               <EmptyState
                 title="No properties found"
                 subtitle="Try adjusting your search or filters."
+                actionLabel={activeCount > 0 || q ? 'Reset filters' : undefined}
+                onAction={activeCount > 0 || q ? resetAll : undefined}
               />
             )
           }
-          ListFooterComponent={
-            isFetchingNextPage ? (
-              <ActivityIndicator color={colors.gold} style={{marginVertical: spacing.lg}} />
-            ) : null
-          }
+          ListFooterComponent={footer}
         />
       )}
-    </SafeAreaView>
+      </SafeAreaView>
+
+      <FiltersSheet
+        visible={sheetOpen}
+        draft={draft}
+        setDraft={setDraft}
+        onClose={() => setSheetOpen(false)}
+        onApply={applyDraft}
+        onReset={() => setDraft(DEFAULTS)}
+      />
+    </View>
   );
 }
 
-const styles = StyleSheet.create({
-  root: {flex: 1, backgroundColor: colors.bg},
-  topbar: {paddingHorizontal: spacing.lg, paddingTop: spacing.sm, paddingBottom: spacing.xs},
-  list: {paddingHorizontal: spacing.lg, paddingBottom: spacing.xxl},
-  hello: {color: colors.textMuted, fontSize: 14, marginTop: spacing.sm},
-  heading: {color: colors.text, fontSize: 30, fontWeight: '700', fontFamily: 'serif', lineHeight: 34, marginTop: 2},
-  searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.pill,
-    paddingHorizontal: spacing.md,
-    height: 50,
-    marginTop: spacing.lg,
-  },
-  searchIcon: {color: colors.gold, fontSize: 20, marginRight: spacing.sm},
-  searchInput: {flex: 1, color: colors.text, fontSize: 15},
-  clear: {color: colors.textMuted, fontSize: 15, paddingLeft: spacing.sm},
-  segment: {flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md},
-  segChip: {flex: 1},
-  typesRow: {gap: spacing.sm, paddingVertical: spacing.md, paddingRight: spacing.lg},
-  resultsLabel: {color: colors.textMuted, fontSize: 13, fontWeight: '600', marginBottom: spacing.md},
-  card: {marginBottom: spacing.lg},
-});
+/** Subtle, always-on animated backdrop: slowly drifting gold orbs + grid. */
+function BackgroundDecor() {
+  const styles = useThemedStyles(makeStyles);
+  const a = useRef(new Animated.Value(0)).current;
+  const b = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const loop = (v, dur) =>
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(v, {toValue: 1, duration: dur, easing: Easing.inOut(Easing.sin), useNativeDriver: true}),
+          Animated.timing(v, {toValue: 0, duration: dur, easing: Easing.inOut(Easing.sin), useNativeDriver: true}),
+        ]),
+      );
+    const l1 = loop(a, 7000);
+    const l2 = loop(b, 9000);
+    l1.start();
+    l2.start();
+    return () => {
+      l1.stop();
+      l2.stop();
+    };
+  }, [a, b]);
+
+  const orb1 = {
+    transform: [
+      {translateY: a.interpolate({inputRange: [0, 1], outputRange: [0, 40]})},
+      {translateX: a.interpolate({inputRange: [0, 1], outputRange: [0, -24]})},
+      {scale: a.interpolate({inputRange: [0, 1], outputRange: [1, 1.15]})},
+    ],
+  };
+  const orb2 = {
+    transform: [
+      {translateY: b.interpolate({inputRange: [0, 1], outputRange: [0, -50]})},
+      {translateX: b.interpolate({inputRange: [0, 1], outputRange: [0, 30]})},
+      {scale: b.interpolate({inputRange: [0, 1], outputRange: [1.1, 0.95]})},
+    ],
+  };
+
+  return (
+    <View style={StyleSheet.absoluteFill} pointerEvents="none">
+      <Animated.View style={[styles.orb, styles.orbTop, orb1]} />
+      <Animated.View style={[styles.orb, styles.orbBottom, orb2]} />
+    </View>
+  );
+}
+
+function FiltersSheet({visible, draft, setDraft, onClose, onApply, onReset}) {
+  const c = useColors();
+  const styles = useThemedStyles(makeStyles);
+  const set = (k, v) => setDraft(d => ({...d, [k]: v}));
+
+  return (
+    <BottomSheet visible={visible} onClose={onClose}>
+      <View style={styles.sheetHead}>
+        <Text style={styles.sheetTitle}>Filters</Text>
+        <Pressable hitSlop={8} onPress={onReset} style={styles.clearAll}>
+          <Icon name="x" size={13} color={c.gold} strokeWidth={2.2} />
+          <Text style={styles.clearAllText}>Clear all</Text>
+        </Pressable>
+      </View>
+
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        style={styles.sheetScroll}
+        contentContainerStyle={styles.sheetContent}>
+
+        {/* Listing type */}
+        <FilterGroup title="Listing type">
+          <View style={styles.wrapRow}>
+            {LISTING_TABS.map(t => (
+              <SheetPill
+                key={t.label}
+                label={t.label}
+                active={draft.listingType === t.key}
+                onPress={() => set('listingType', t.key)}
+              />
+            ))}
+          </View>
+        </FilterGroup>
+
+        {/* Property type */}
+        <FilterGroup title="Property type">
+          <View style={styles.wrapRow}>
+            {TYPES.map(t => (
+              <SheetPill
+                key={t.label}
+                icon={t.icon}
+                label={t.label}
+                active={draft.type === t.key}
+                onPress={() => set('type', t.key)}
+              />
+            ))}
+          </View>
+        </FilterGroup>
+
+        {/* Bedrooms */}
+        <FilterGroup title="Bedrooms">
+          <View style={styles.wrapRow}>
+            {BHK_OPTIONS.map(b => (
+              <SheetPill
+                key={b.label}
+                label={b.label}
+                active={draft.bhk === b.key}
+                onPress={() => set('bhk', b.key)}
+                wide={b.key == null}
+              />
+            ))}
+          </View>
+        </FilterGroup>
+
+        {/* Price */}
+        <FilterGroup title="Price range">
+          <View style={styles.wrapRow}>
+            {PRICE_RANGES.map(p => (
+              <SheetPill
+                key={p.key}
+                label={p.label}
+                active={draft.priceKey === p.key}
+                onPress={() => set('priceKey', p.key)}
+              />
+            ))}
+          </View>
+        </FilterGroup>
+
+        {/* Sort */}
+        <FilterGroup title="Sort by">
+          <View style={styles.sortList}>
+            {SORTS.map(s => {
+              const active = draft.sort === s.key;
+              return (
+                <Pressable
+                  key={s.key}
+                  style={styles.sortRow}
+                  onPress={() => set('sort', s.key)}>
+                  <Text style={[styles.sortLabel, active && styles.sortLabelActive]}>
+                    {s.label}
+                  </Text>
+                  <View style={[styles.radio, active && styles.radioActive]}>
+                    {active ? <View style={styles.radioDot} /> : null}
+                  </View>
+                </Pressable>
+              );
+            })}
+          </View>
+        </FilterGroup>
+
+        <View style={{height: spacing.sm}} />
+      </ScrollView>
+
+      <View style={styles.sheetActions}>
+        <Button title="Show results" onPress={onApply} style={styles.applyBtn} />
+      </View>
+    </BottomSheet>
+  );
+}
+
+function FilterGroup({title, children}) {
+  const styles = useThemedStyles(makeStyles);
+  return (
+    <View style={styles.group}>
+      <Text style={styles.groupTitle}>{title}</Text>
+      {children}
+    </View>
+  );
+}
+
+function SheetPill({icon, label, active, onPress, wide}) {
+  const c = useColors();
+  const styles = useThemedStyles(makeStyles);
+  return (
+    <Pressable
+      onPress={onPress}
+      style={[styles.pill, wide && styles.pillWide, active && styles.pillActive]}>
+      {icon ? (
+        <Icon name={icon} size={14} color={active ? c.gold : c.textMuted} />
+      ) : null}
+      <Text style={[styles.pillText, active && styles.pillTextActive]}>{label}</Text>
+    </Pressable>
+  );
+}
+
+const makeStyles = c =>
+  StyleSheet.create({
+    root: {flex: 1, backgroundColor: c.bg},
+    safe: {flex: 1},
+    orb: {
+      position: 'absolute',
+      width: 320,
+      height: 320,
+      borderRadius: 160,
+      backgroundColor: c.gold,
+    },
+    orbTop: {top: -120, right: -110, opacity: c.isDark ? 0.1 : 0.14},
+    orbBottom: {bottom: -60, left: -130, opacity: c.isDark ? 0.07 : 0.1},
+    topbar: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: spacing.md,
+      paddingTop: spacing.sm,
+      paddingBottom: spacing.xs,
+    },
+    bellBtn: {
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      backgroundColor: c.surface,
+      borderWidth: 1,
+      borderColor: c.border,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    bellDot: {
+      position: 'absolute',
+      top: 10,
+      right: 11,
+      width: 9,
+      height: 9,
+      borderRadius: 5,
+      backgroundColor: c.gold,
+      borderWidth: 1.5,
+      borderColor: c.surface,
+    },
+    list: {paddingHorizontal: spacing.md, paddingBottom: spacing.xxl},
+    headerWrap: {paddingTop: spacing.xs},
+    hello: {color: c.textMuted, fontSize: 14, marginTop: spacing.sm},
+    heading: {
+      color: c.text,
+      fontSize: 30,
+      fontWeight: '700',
+      fontFamily: 'serif',
+      lineHeight: 34,
+      marginTop: 2,
+    },
+    searchRow: {flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md, marginBottom: spacing.md},
+    searchBar: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.sm,
+      backgroundColor: c.surface,
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: radius.md,
+      paddingHorizontal: spacing.md,
+      height: 45,
+    },
+    searchInput: {flex: 1, color: c.text, fontSize: 15},
+    clearBtn: {
+      width: 22,
+      height: 22,
+      borderRadius: 11,
+      backgroundColor: c.white06,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    filterBtn: {
+      width: 45,
+      height: 45,
+      borderRadius: radius.md,
+      backgroundColor: c.surface,
+      borderWidth: 1,
+      borderColor: c.border,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    filterDot: {
+      position: 'absolute',
+      top: -5,
+      right: -5,
+      minWidth: 20,
+      height: 20,
+      borderRadius: 10,
+      backgroundColor: c.gold,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: 4,
+      borderWidth: 2,
+      borderColor: c.bg,
+    },
+    filterDotText: {color: c.onGold, fontSize: 11, fontWeight: '800'},
+    resultsLabel: {
+      color: c.textMuted,
+      fontSize: 13,
+      fontWeight: '600',
+      marginTop: spacing.lg,
+      marginBottom: spacing.md,
+    },
+    card: {marginBottom: spacing.md},
+    footer: {alignItems: 'center', justifyContent: 'center', paddingVertical: spacing.lg, gap: spacing.sm},
+    footerText: {color: c.textMuted, fontSize: 12.5},
+    endRule: {width: 44, height: 1, backgroundColor: c.border},
+    endText: {color: c.textMuted, fontSize: 12, letterSpacing: 0.3},
+
+    // ----- sheet -----
+    sheetHead: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: spacing.sm,
+    },
+    sheetTitle: {color: c.text, fontSize: 20, fontWeight: '700', fontFamily: 'serif'},
+    clearAll: {flexDirection: 'row', alignItems: 'center', gap: 4},
+    clearAllText: {color: c.gold, fontSize: 13, fontWeight: '700'},
+    sheetScroll: {flexShrink: 1, marginTop: spacing.xs},
+    sheetContent: {paddingBottom: spacing.sm},
+    group: {marginTop: spacing.lg},
+    groupTitle: {
+      color: c.textMuted,
+      fontSize: 12,
+      fontWeight: '700',
+      letterSpacing: 1,
+      textTransform: 'uppercase',
+      marginBottom: spacing.sm,
+    },
+    wrapRow: {flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm},
+    pill: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      paddingHorizontal: 14,
+      height: 42,
+      borderRadius: radius.pill,
+      borderWidth: 1,
+      borderColor: c.border,
+      backgroundColor: c.surface,
+    },
+    pillWide: {minWidth: 64, justifyContent: 'center'},
+    pillActive: {borderColor: c.gold, backgroundColor: c.goldFaint},
+    pillText: {color: c.textDim, fontSize: 13.5, fontWeight: '600'},
+    pillTextActive: {color: c.gold, fontWeight: '700'},
+    sortList: {gap: 2},
+    sortRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      height: 48,
+    },
+    sortLabel: {color: c.textDim, fontSize: 15},
+    sortLabelActive: {color: c.text, fontWeight: '700'},
+    radio: {
+      width: 22,
+      height: 22,
+      borderRadius: 11,
+      borderWidth: 1.5,
+      borderColor: c.border,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    radioActive: {borderColor: c.gold},
+    radioDot: {width: 11, height: 11, borderRadius: 6, backgroundColor: c.gold},
+    sheetActions: {
+      paddingTop: spacing.md,
+      borderTopWidth: 1,
+      borderTopColor: c.borderSoft,
+      marginTop: spacing.xs,
+    },
+    applyBtn: {width: '100%'},
+  });

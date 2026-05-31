@@ -18,11 +18,13 @@ import {EmptyState} from '../../components/ui/EmptyState';
 import {useProperty} from '../../hooks/useProperties';
 import {useSavedStore} from '../../store/savedStore';
 import {coverImage, listingLabel, locationLine, money} from '../../lib/format';
-import {colors, radius, spacing} from '../../theme';
+import {radius, spacing, useColors, useThemedStyles} from '../../theme';
 
 const {width} = Dimensions.get('window');
 
 export function PropertyDetailScreen({route, navigation}) {
+  const c = useColors();
+  const styles = useThemedStyles(makeStyles);
   const {id} = route.params || {};
   const {data: property, isLoading, isError, refetch} = useProperty(id);
   const [activeImg, setActiveImg] = useState(0);
@@ -32,7 +34,7 @@ export function PropertyDetailScreen({route, navigation}) {
   if (isLoading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color={colors.gold} />
+        <ActivityIndicator size="large" color={c.gold} />
       </View>
     );
   }
@@ -95,7 +97,7 @@ export function PropertyDetailScreen({route, navigation}) {
 
           <SafeAreaView style={styles.heroBar} edges={['top']}>
             <RoundBtn glyph="‹" onPress={() => navigation.goBack()} />
-            <RoundBtn glyph={saved ? '♥' : '♡'} tint={saved ? colors.danger : '#fff'} onPress={() => toggle(property)} />
+            <RoundBtn glyph={saved ? '♥' : '♡'} tint={saved ? c.danger : '#fff'} onPress={() => toggle(property)} />
           </SafeAreaView>
 
           <View style={styles.heroBadges}>
@@ -188,6 +190,7 @@ export function PropertyDetailScreen({route, navigation}) {
 }
 
 function Section({title, children}) {
+  const styles = useThemedStyles(makeStyles);
   return (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>{title}</Text>
@@ -197,6 +200,7 @@ function Section({title, children}) {
 }
 
 function RoundBtn({glyph, onPress, tint = '#fff'}) {
+  const styles = useThemedStyles(makeStyles);
   return (
     <Pressable onPress={onPress} style={styles.roundBtn} hitSlop={8}>
       <Text style={[styles.roundGlyph, {color: tint}]}>{glyph}</Text>
@@ -204,40 +208,41 @@ function RoundBtn({glyph, onPress, tint = '#fff'}) {
   );
 }
 
-const styles = StyleSheet.create({
-  root: {flex: 1, backgroundColor: colors.bg},
-  center: {flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center'},
-  hero: {width, height: 340, backgroundColor: colors.surface2},
+const makeStyles = c =>
+  StyleSheet.create({
+  root: {flex: 1, backgroundColor: c.bg},
+  center: {flex: 1, backgroundColor: c.bg, alignItems: 'center', justifyContent: 'center'},
+  hero: {width, height: 340, backgroundColor: c.surface2},
   heroScrim: {position: 'absolute', top: 0, left: 0, right: 0, height: 120, backgroundColor: 'rgba(0,0,0,0.25)'},
   heroBar: {position: 'absolute', top: 0, left: 0, right: 0, flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: spacing.md},
   roundBtn: {width: 42, height: 42, borderRadius: 21, backgroundColor: 'rgba(20,16,16,0.55)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center', marginTop: spacing.sm},
   roundGlyph: {color: '#fff', fontSize: 24, fontWeight: '700', lineHeight: 26},
   dots: {position: 'absolute', bottom: spacing.md, alignSelf: 'center', flexDirection: 'row', gap: 6},
   dot: {width: 6, height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.5)'},
-  dotActive: {width: 18, backgroundColor: colors.gold},
+  dotActive: {width: 18, backgroundColor: c.gold},
   heroBadges: {position: 'absolute', bottom: spacing.md, left: spacing.md, flexDirection: 'row', gap: 6},
   badgeDark: {backgroundColor: 'rgba(20,16,16,0.6)'},
   body: {padding: spacing.lg},
-  price: {color: colors.gold, fontSize: 28, fontWeight: '800'},
-  negotiable: {color: colors.textMuted, fontSize: 14, fontWeight: '500'},
-  title: {color: colors.text, fontSize: 22, fontWeight: '700', fontFamily: 'serif', marginTop: spacing.xs},
-  location: {color: colors.textMuted, fontSize: 14, marginTop: spacing.xs},
-  specGrid: {flexDirection: 'row', flexWrap: 'wrap', marginTop: spacing.lg, backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.borderSoft, paddingVertical: spacing.sm},
+  price: {color: c.gold, fontSize: 28, fontWeight: '800'},
+  negotiable: {color: c.textMuted, fontSize: 14, fontWeight: '500'},
+  title: {color: c.text, fontSize: 22, fontWeight: '700', fontFamily: 'serif', marginTop: spacing.xs},
+  location: {color: c.textMuted, fontSize: 14, marginTop: spacing.xs},
+  specGrid: {flexDirection: 'row', flexWrap: 'wrap', marginTop: spacing.lg, backgroundColor: c.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: c.borderSoft, paddingVertical: spacing.sm},
   specCell: {width: '25%', alignItems: 'center', paddingVertical: spacing.md},
-  specIcon: {fontSize: 20, color: colors.gold, marginBottom: 4},
-  specValue: {color: colors.text, fontWeight: '700', fontSize: 13, textTransform: 'capitalize'},
-  specLabel: {color: colors.textMuted, fontSize: 11, marginTop: 2},
+  specIcon: {fontSize: 20, color: c.gold, marginBottom: 4},
+  specValue: {color: c.text, fontWeight: '700', fontSize: 13, textTransform: 'capitalize'},
+  specLabel: {color: c.textMuted, fontSize: 11, marginTop: 2},
   section: {marginTop: spacing.xl},
-  sectionTitle: {color: colors.text, fontSize: 18, fontWeight: '700', fontFamily: 'serif', marginBottom: spacing.sm},
-  desc: {color: colors.textDim, fontSize: 14.5, lineHeight: 22},
+  sectionTitle: {color: c.text, fontSize: 18, fontWeight: '700', fontFamily: 'serif', marginBottom: spacing.sm},
+  desc: {color: c.textDim, fontSize: 14.5, lineHeight: 22},
   amenities: {flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm},
-  amenity: {backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.borderSoft, borderRadius: radius.pill, paddingHorizontal: spacing.md, paddingVertical: 8},
-  amenityText: {color: colors.textDim, fontSize: 13},
-  agentRow: {flexDirection: 'row', alignItems: 'center', gap: spacing.md, backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.borderSoft, padding: spacing.md},
-  agentName: {color: colors.text, fontSize: 16, fontWeight: '700'},
-  agentRole: {color: colors.textMuted, fontSize: 13, marginTop: 2},
-  ctaBar: {position: 'absolute', left: 0, right: 0, bottom: 0, backgroundColor: colors.bgSoft, borderTopWidth: 1, borderTopColor: colors.border},
+  amenity: {backgroundColor: c.surface, borderWidth: 1, borderColor: c.borderSoft, borderRadius: radius.pill, paddingHorizontal: spacing.md, paddingVertical: 8},
+  amenityText: {color: c.textDim, fontSize: 13},
+  agentRow: {flexDirection: 'row', alignItems: 'center', gap: spacing.md, backgroundColor: c.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: c.borderSoft, padding: spacing.md},
+  agentName: {color: c.text, fontSize: 16, fontWeight: '700'},
+  agentRole: {color: c.textMuted, fontSize: 13, marginTop: 2},
+  ctaBar: {position: 'absolute', left: 0, right: 0, bottom: 0, backgroundColor: c.bgSoft, borderTopWidth: 1, borderTopColor: c.border},
   ctaInner: {flexDirection: 'row', gap: spacing.sm, padding: spacing.md},
   ctaBtn: {flex: 1},
   ctaBtnPrimary: {flex: 2},
-});
+  });

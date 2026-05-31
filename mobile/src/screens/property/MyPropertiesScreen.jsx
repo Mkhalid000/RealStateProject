@@ -19,7 +19,7 @@ import {EmptyState} from '../../components/ui/EmptyState';
 import {useMyProperties} from '../../hooks/useProperties';
 import {deleteProperty} from '../../lib/properties';
 import {coverImage, listingLabel, money} from '../../lib/format';
-import {colors, radius, spacing} from '../../theme';
+import {radius, spacing, useColors, useThemedStyles} from '../../theme';
 
 const TABS = [
   {key: 'all', label: 'All'},
@@ -35,6 +35,8 @@ const STATUS = {
 };
 
 export function MyPropertiesScreen({navigation}) {
+  const c = useColors();
+  const styles = useThemedStyles(makeStyles);
   const qc = useQueryClient();
   const [tab, setTab] = useState('all');
   const {data, isLoading, refetch, isRefetching} = useMyProperties(tab);
@@ -74,7 +76,7 @@ export function MyPropertiesScreen({navigation}) {
 
       {isLoading ? (
         <View style={styles.center}>
-          <ActivityIndicator color={colors.gold} size="large" />
+          <ActivityIndicator color={c.gold} size="large" />
         </View>
       ) : (
         <FlatList
@@ -101,7 +103,7 @@ export function MyPropertiesScreen({navigation}) {
                   hitSlop={8}
                   onPress={() => confirmDelete(item.id)}>
                   {busyId === item.id ? (
-                    <ActivityIndicator color={colors.danger} size="small" />
+                    <ActivityIndicator color={c.danger} size="small" />
                   ) : (
                     <Text style={styles.delGlyph}>🗑</Text>
                   )}
@@ -128,18 +130,19 @@ export function MyPropertiesScreen({navigation}) {
   );
 }
 
-const styles = StyleSheet.create({
-  root: {flex: 1, backgroundColor: colors.bg},
+const makeStyles = c =>
+  StyleSheet.create({
+  root: {flex: 1, backgroundColor: c.bg},
   center: {flex: 1, alignItems: 'center', justifyContent: 'center'},
-  tabs: {borderBottomWidth: 1, borderBottomColor: colors.borderSoft},
+  tabs: {borderBottomWidth: 1, borderBottomColor: c.borderSoft},
   tabsRow: {gap: spacing.sm, padding: spacing.md},
   list: {padding: spacing.lg, paddingBottom: 120, flexGrow: 1},
-  row: {flexDirection: 'row', alignItems: 'center', gap: spacing.md, backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.borderSoft, padding: spacing.sm, marginBottom: spacing.md},
-  rowImg: {width: 80, height: 80, borderRadius: radius.md, backgroundColor: colors.surface2},
+  row: {flexDirection: 'row', alignItems: 'center', gap: spacing.md, backgroundColor: c.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: c.borderSoft, padding: spacing.sm, marginBottom: spacing.md},
+  rowImg: {width: 80, height: 80, borderRadius: radius.md, backgroundColor: c.surface2},
   rowBody: {flex: 1},
-  rowTitle: {color: colors.text, fontSize: 15, fontWeight: '700'},
-  rowPrice: {color: colors.textDim, fontSize: 13, marginTop: 2},
+  rowTitle: {color: c.text, fontSize: 15, fontWeight: '700'},
+  rowPrice: {color: c.textDim, fontSize: 13, marginTop: 2},
   del: {width: 40, height: 40, alignItems: 'center', justifyContent: 'center'},
   delGlyph: {fontSize: 18},
-  fabBar: {position: 'absolute', left: 0, right: 0, bottom: 0, padding: spacing.md, backgroundColor: colors.bgSoft, borderTopWidth: 1, borderTopColor: colors.border},
-});
+  fabBar: {position: 'absolute', left: 0, right: 0, bottom: 0, padding: spacing.md, backgroundColor: c.bgSoft, borderTopWidth: 1, borderTopColor: c.border},
+  });

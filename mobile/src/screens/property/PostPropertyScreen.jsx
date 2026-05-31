@@ -20,11 +20,12 @@ import {Chip} from '../../components/ui/Chip';
 import {createProperty} from '../../lib/properties';
 import {uploadImage} from '../../lib/imagekit';
 import {apiErrorMessage} from '../../lib/api';
-import {colors, radius, spacing} from '../../theme';
+import {radius, spacing, useThemedStyles} from '../../theme';
 
 const TYPES = ['apartment', 'villa', 'plot', 'commercial', 'office', 'shop'];
 
 export function PostPropertyScreen({navigation}) {
+  const styles = useThemedStyles(makeStyles);
   const qc = useQueryClient();
   const [images, setImages] = useState([]); // {uri, uploading, url}
   const [form, setForm] = useState({
@@ -176,16 +177,17 @@ export function PostPropertyScreen({navigation}) {
   );
 }
 
-const styles = StyleSheet.create({
-  root: {flex: 1, backgroundColor: colors.bg},
+const makeStyles = c =>
+  StyleSheet.create({
+  root: {flex: 1, backgroundColor: c.bg},
   flex: {flex: 1},
   scroll: {padding: spacing.lg, paddingBottom: spacing.xxl},
-  label: {color: colors.textMuted, fontSize: 12.5, fontWeight: '600', letterSpacing: 0.4, marginBottom: 6, marginTop: spacing.xs},
+  label: {color: c.textMuted, fontSize: 12.5, fontWeight: '600', letterSpacing: 0.4, marginBottom: 6, marginTop: spacing.xs},
   photoRow: {gap: spacing.sm, paddingBottom: spacing.md},
-  addPhoto: {width: 88, height: 88, borderRadius: radius.md, borderWidth: 1.5, borderColor: colors.border, borderStyle: 'dashed', backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center'},
-  addPhotoPlus: {color: colors.gold, fontSize: 26},
-  addPhotoText: {color: colors.textMuted, fontSize: 12},
-  thumb: {width: 88, height: 88, borderRadius: radius.md, overflow: 'hidden', backgroundColor: colors.surface2},
+  addPhoto: {width: 88, height: 88, borderRadius: radius.md, borderWidth: 1.5, borderColor: c.border, borderStyle: 'dashed', backgroundColor: c.surface, alignItems: 'center', justifyContent: 'center'},
+  addPhotoPlus: {color: c.gold, fontSize: 26},
+  addPhotoText: {color: c.textMuted, fontSize: 12},
+  thumb: {width: 88, height: 88, borderRadius: radius.md, overflow: 'hidden', backgroundColor: c.surface2},
   thumbImg: {width: '100%', height: '100%'},
   thumbOverlay: {...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.4)', alignItems: 'center', justifyContent: 'center'},
   thumbRemove: {position: 'absolute', top: 4, right: 4, width: 22, height: 22, borderRadius: 11, backgroundColor: 'rgba(0,0,0,0.6)', alignItems: 'center', justifyContent: 'center'},
@@ -197,7 +199,7 @@ const styles = StyleSheet.create({
   threeCol: {flexDirection: 'row', gap: spacing.sm},
   col: {flex: 1},
   textarea: {height: 110, textAlignVertical: 'top', paddingTop: spacing.sm},
-  error: {color: colors.danger, marginBottom: spacing.sm, fontSize: 13},
+  error: {color: c.danger, marginBottom: spacing.sm, fontSize: 13},
   submit: {marginTop: spacing.sm},
-  note: {color: colors.textMuted, fontSize: 12, textAlign: 'center', marginTop: spacing.md},
-});
+  note: {color: c.textMuted, fontSize: 12, textAlign: 'center', marginTop: spacing.md},
+  });

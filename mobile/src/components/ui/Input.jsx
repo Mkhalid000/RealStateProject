@@ -1,7 +1,7 @@
 import React, {useRef, useState} from 'react';
 import {Animated, Pressable, StyleSheet, Text, TextInput, View} from 'react-native';
 import {Icon} from './Icon';
-import {colors, radius, spacing} from '../../theme';
+import {radius, spacing, useColors, useThemedStyles} from '../../theme';
 
 /**
  * Labeled text field with an animated gold focus glow, an optional leading
@@ -18,6 +18,8 @@ export function Input({
   containerStyle,
   ...rest
 }) {
+  const c = useColors();
+  const styles = useThemedStyles(makeStyles);
   const [focused, setFocused] = useState(false);
   const [hidden, setHidden] = useState(!!secureTextEntry);
   const glow = useRef(new Animated.Value(0)).current;
@@ -30,13 +32,13 @@ export function Input({
     }).start();
 
   const borderColor = error
-    ? colors.danger
+    ? c.danger
     : glow.interpolate({
         inputRange: [0, 1],
-        outputRange: [colors.border, colors.gold],
+        outputRange: [c.border, c.gold],
       });
 
-  const iconColor = error ? colors.danger : focused ? colors.gold : colors.textMuted;
+  const iconColor = error ? c.danger : focused ? c.gold : c.textMuted;
 
   return (
     <View style={[styles.wrap, containerStyle]}>
@@ -52,10 +54,10 @@ export function Input({
         ]}>
         {icon ? <Icon name={icon} size={19} color={iconColor} style={styles.icon} /> : null}
         <TextInput
-          placeholderTextColor={colors.textMuted}
+          placeholderTextColor={c.textMuted}
           secureTextEntry={hidden}
           style={[styles.input, style]}
-          selectionColor={colors.gold}
+          selectionColor={c.gold}
           onFocus={e => {
             setFocused(true);
             animate(1);
@@ -70,7 +72,7 @@ export function Input({
         />
         {secureTextEntry ? (
           <Pressable onPress={() => setHidden(h => !h)} hitSlop={10} style={styles.eyeBtn}>
-            <Icon name={hidden ? 'eye-off' : 'eye'} size={19} color={colors.textMuted} />
+            <Icon name={hidden ? 'eye-off' : 'eye'} size={19} color={c.textMuted} />
           </Pressable>
         ) : null}
       </Animated.View>
@@ -79,23 +81,30 @@ export function Input({
   );
 }
 
-const styles = StyleSheet.create({
-  wrap: {marginBottom: spacing.md},
-  label: {color: colors.textMuted, marginBottom: 7, fontSize: 11.5, letterSpacing: 0.8, fontWeight: '700'},
-  labelFocused: {color: colors.gold},
-  field: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderWidth: 1.5,
-    borderRadius: radius.md,
-    paddingHorizontal: spacing.md,
-    height: 56,
-  },
-  fieldCompact: {height: 50},
-  fieldFocused: {backgroundColor: colors.surfaceAlt},
-  icon: {marginRight: spacing.sm},
-  input: {flex: 1, color: colors.text, fontSize: 16, height: '100%'},
-  eyeBtn: {paddingLeft: spacing.sm},
-  error: {color: colors.danger, fontSize: 12, marginTop: 5, marginLeft: 2},
-});
+const makeStyles = c =>
+  StyleSheet.create({
+    wrap: {marginBottom: spacing.md},
+    label: {
+      color: c.textMuted,
+      marginBottom: 7,
+      fontSize: 11.5,
+      letterSpacing: 0.8,
+      fontWeight: '700',
+    },
+    labelFocused: {color: c.gold},
+    field: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: c.surface,
+      borderWidth: 1.5,
+      borderRadius: radius.md,
+      paddingHorizontal: spacing.md,
+      height: 56,
+    },
+    fieldCompact: {height: 50},
+    fieldFocused: {backgroundColor: c.surfaceAlt},
+    icon: {marginRight: spacing.sm},
+    input: {flex: 1, color: c.text, fontSize: 16, height: '100%'},
+    eyeBtn: {paddingLeft: spacing.sm},
+    error: {color: c.danger, fontSize: 12, marginTop: 5, marginLeft: 2},
+  });

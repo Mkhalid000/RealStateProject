@@ -19,9 +19,11 @@ import {AnimatedEntrance} from '../../components/ui/AnimatedEntrance';
 import {register} from '../../lib/auth';
 import {apiErrorMessage} from '../../lib/api';
 import {useAuthStore} from '../../store/authStore';
-import {colors, radius, spacing} from '../../theme';
+import {radius, spacing, useColors, useThemedStyles} from '../../theme';
 
 export function SignUpScreen({navigation}) {
+  const c = useColors();
+  const styles = useThemedStyles(makeStyles);
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -103,10 +105,10 @@ export function SignUpScreen({navigation}) {
               style={styles.closeBtn}
               hitSlop={10}
               onPress={goToLogin}>
-              <Icon name="x" size={18} color={colors.textMuted} strokeWidth={2.2} />
+              <Icon name="x" size={18} color={c.textMuted} strokeWidth={2.2} />
             </Pressable>
             <View style={styles.overlayIcon}>
-              <Icon name="check" size={30} color={colors.gold} strokeWidth={2.4} />
+              <Icon name="check" size={30} color={c.gold} strokeWidth={2.4} />
             </View>
             <Text style={styles.overlayTitle}>Account Created</Text>
             <Text style={styles.overlayText}>{pendingMsg}</Text>
@@ -229,7 +231,7 @@ export function SignUpScreen({navigation}) {
 
             {error ? (
               <View style={styles.errorBox}>
-                <Icon name="lock" size={15} color={colors.danger} />
+                <Icon name="lock" size={15} color={c.danger} />
                 <Text style={styles.error}>{error}</Text>
               </View>
             ) : null}
@@ -259,6 +261,8 @@ export function SignUpScreen({navigation}) {
 }
 
 function RoleCard({icon, label, desc, active, onPress}) {
+  const c = useColors();
+  const styles = useThemedStyles(makeStyles);
   const scale = useRef(new Animated.Value(1)).current;
   return (
     <Animated.View style={[styles.roleWrap, {transform: [{scale}]}]}>
@@ -273,7 +277,7 @@ function RoleCard({icon, label, desc, active, onPress}) {
         style={[styles.roleCard, active && styles.roleCardActive]}>
         <View style={styles.roleHead}>
           <View style={[styles.roleIconWrap, active && styles.roleIconActive]}>
-            <Icon name={icon} size={18} color={active ? colors.gold : colors.textDim} />
+            <Icon name={icon} size={18} color={active ? c.gold : c.textDim} />
           </View>
           <Text style={[styles.roleLabel, active && styles.roleLabelActive]}>
             {label}
@@ -285,8 +289,9 @@ function RoleCard({icon, label, desc, active, onPress}) {
   );
 }
 
-const styles = StyleSheet.create({
-  root: {flex: 1, backgroundColor: colors.bg},
+const makeStyles = c =>
+  StyleSheet.create({
+  root: {flex: 1, backgroundColor: c.bg},
   flex: {flex: 1},
   glow: {
     position: 'absolute',
@@ -295,8 +300,8 @@ const styles = StyleSheet.create({
     width: 320,
     height: 320,
     borderRadius: 160,
-    backgroundColor: colors.gold,
-    opacity: 0.12,
+    backgroundColor: c.gold,
+    opacity: c.isDark ? 0.12 : 0.18,
   },
   glowBottom: {
     position: 'absolute',
@@ -305,8 +310,8 @@ const styles = StyleSheet.create({
     width: 300,
     height: 300,
     borderRadius: 150,
-    backgroundColor: colors.gold,
-    opacity: 0.06,
+    backgroundColor: c.gold,
+    opacity: c.isDark ? 0.06 : 0.1,
   },
   scroll: {
     flexGrow: 1,
@@ -320,29 +325,29 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     alignSelf: 'flex-start',
     gap: 7,
-    backgroundColor: 'rgba(201,161,74,0.1)',
+    backgroundColor: c.goldFaint,
     borderWidth: 1,
-    borderColor: 'rgba(201,161,74,0.28)',
+    borderColor: c.goldGlow,
     borderRadius: radius.pill,
     paddingVertical: 6,
     paddingHorizontal: 12,
   },
-  badgeDot: {width: 6, height: 6, borderRadius: 3, backgroundColor: colors.gold},
+  badgeDot: {width: 6, height: 6, borderRadius: 3, backgroundColor: c.gold},
   badgeText: {
-    color: colors.goldLight,
+    color: c.goldLight,
     fontSize: 10.5,
     fontWeight: '700',
     letterSpacing: 1.5,
   },
   title: {
-    color: colors.text,
+    color: c.text,
     fontSize: 30,
     fontWeight: '700',
     fontFamily: 'serif',
     marginTop: spacing.md,
   },
   subtitle: {
-    color: colors.textMuted,
+    color: c.textMuted,
     marginTop: spacing.xs,
     fontSize: 14,
     lineHeight: 20,
@@ -350,7 +355,7 @@ const styles = StyleSheet.create({
   },
   roleSection: {marginTop: spacing.lg},
   sectionLabel: {
-    color: colors.textMuted,
+    color: c.textMuted,
     fontSize: 11,
     fontWeight: '700',
     letterSpacing: 1.2,
@@ -362,11 +367,11 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     borderRadius: radius.lg,
     borderWidth: 1.5,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
+    borderColor: c.border,
+    backgroundColor: c.surface,
     minHeight: 96,
   },
-  roleCardActive: {borderColor: colors.gold, backgroundColor: colors.surfaceAlt},
+  roleCardActive: {borderColor: c.gold, backgroundColor: c.surfaceAlt},
   roleHead: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -377,20 +382,20 @@ const styles = StyleSheet.create({
     width: 34,
     height: 34,
     borderRadius: 10,
-    backgroundColor: colors.white06,
+    backgroundColor: c.white06,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  roleIconActive: {backgroundColor: colors.goldFaint},
-  roleLabel: {color: colors.text, fontWeight: '700', fontSize: 15},
-  roleLabelActive: {color: colors.gold},
-  roleDesc: {color: colors.textMuted, fontSize: 12, lineHeight: 16},
+  roleIconActive: {backgroundColor: c.goldFaint},
+  roleLabel: {color: c.text, fontWeight: '700', fontSize: 15},
+  roleLabelActive: {color: c.gold},
+  roleDesc: {color: c.textMuted, fontSize: 12, lineHeight: 16},
   card: {
     marginTop: spacing.lg,
-    backgroundColor: colors.surface,
+    backgroundColor: c.surface,
     borderRadius: radius.lg,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: c.border,
     padding: spacing.lg,
   },
   inputGap: {marginBottom: spacing.sm + 4},
@@ -405,10 +410,10 @@ const styles = StyleSheet.create({
     padding: spacing.sm,
     marginBottom: spacing.md,
   },
-  error: {color: colors.danger, fontSize: 11.5, lineHeight: 16, flex: 1},
+  error: {color: c.danger, fontSize: 11.5, lineHeight: 16, flex: 1},
   cta: {marginTop: spacing.xs},
   terms: {
-    color: colors.textMuted,
+    color: c.textMuted,
     fontSize: 11.5,
     textAlign: 'center',
     marginTop: spacing.md,
@@ -420,8 +425,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: spacing.lg,
   },
-  footerText: {color: colors.textMuted, fontSize: 14},
-  link: {color: colors.gold, fontWeight: '700', fontSize: 14},
+  footerText: {color: c.textMuted, fontSize: 14},
+  link: {color: c.gold, fontWeight: '700', fontSize: 14},
   pendingWrap: {
     flex: 1,
     alignItems: 'center',
@@ -432,10 +437,10 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 360,
     alignItems: 'center',
-    backgroundColor: colors.surface,
+    backgroundColor: c.surface,
     borderRadius: radius.lg,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: c.border,
     paddingVertical: spacing.xl,
     paddingHorizontal: spacing.lg,
   },
@@ -448,37 +453,37 @@ const styles = StyleSheet.create({
     borderRadius: 17,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.white06,
+    backgroundColor: c.white06,
     zIndex: 2,
   },
   overlayIcon: {
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: colors.goldFaint,
+    backgroundColor: c.goldFaint,
     borderWidth: 1,
-    borderColor: 'rgba(201,161,74,0.28)',
+    borderColor: c.goldGlow,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing.md,
   },
   overlayTitle: {
-    color: colors.text,
+    color: c.text,
     fontSize: 20,
     fontWeight: '700',
     fontFamily: 'serif',
     marginBottom: spacing.sm,
   },
   overlayText: {
-    color: colors.textDim,
+    color: c.textDim,
     fontSize: 13.5,
     lineHeight: 20,
     textAlign: 'center',
   },
   overlayHint: {
-    color: colors.gold,
+    color: c.gold,
     fontSize: 12,
     fontWeight: '600',
     marginTop: spacing.md,
   },
-});
+  });

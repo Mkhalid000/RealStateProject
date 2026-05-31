@@ -1,9 +1,10 @@
 import React, {useEffect, useRef} from 'react';
 import {Animated, StyleSheet, View} from 'react-native';
-import {colors, radius} from '../../theme';
+import {radius, useThemedStyles} from '../../theme';
 
 /** Shimmering placeholder block used while content loads. */
 export function Skeleton({width = '100%', height = 16, style, round}) {
+  const styles = useThemedStyles(makeStyles);
   const pulse = useRef(new Animated.Value(0.4)).current;
 
   useEffect(() => {
@@ -30,6 +31,7 @@ export function Skeleton({width = '100%', height = 16, style, round}) {
 
 /** Card-shaped skeleton matching the property card layout. */
 export function PropertyCardSkeleton() {
+  const styles = useThemedStyles(makeStyles);
   return (
     <View style={styles.card}>
       <Skeleton height={190} style={{borderRadius: radius.lg}} />
@@ -42,14 +44,15 @@ export function PropertyCardSkeleton() {
   );
 }
 
-const styles = StyleSheet.create({
-  base: {backgroundColor: colors.surface2},
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.borderSoft,
-    overflow: 'hidden',
-    marginBottom: 16,
-  },
-});
+const makeStyles = c =>
+  StyleSheet.create({
+    base: {backgroundColor: c.surface2},
+    card: {
+      backgroundColor: c.surface,
+      borderRadius: radius.lg,
+      borderWidth: 1,
+      borderColor: c.borderSoft,
+      overflow: 'hidden',
+      marginBottom: 16,
+    },
+  });

@@ -18,9 +18,11 @@ import {AnimatedEntrance} from '../../components/ui/AnimatedEntrance';
 import {login} from '../../lib/auth';
 import {apiErrorMessage} from '../../lib/api';
 import {useAuthStore} from '../../store/authStore';
-import {colors, radius, spacing} from '../../theme';
+import {radius, spacing, useColors, useThemedStyles} from '../../theme';
 
 export function LoginScreen({navigation}) {
+  const c = useColors();
+  const styles = useThemedStyles(makeStyles);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -109,7 +111,7 @@ export function LoginScreen({navigation}) {
 
             {error ? (
               <View style={styles.errorBox}>
-                <Icon name="lock" size={15} color={colors.danger} />
+                <Icon name="lock" size={15} color={c.danger} />
                 <Text style={styles.error}>{error}</Text>
               </View>
             ) : null}
@@ -129,7 +131,7 @@ export function LoginScreen({navigation}) {
             </View>
 
             <View style={styles.trustRow}>
-              <Icon name="lock" size={13} color={colors.textMuted} />
+              <Icon name="lock" size={13} color={c.textMuted} />
               <Text style={styles.trustText}>
                 Your data is protected with end-to-end encryption.
               </Text>
@@ -150,8 +152,9 @@ export function LoginScreen({navigation}) {
   );
 }
 
-const styles = StyleSheet.create({
-  root: {flex: 1, backgroundColor: colors.bg},
+const makeStyles = c =>
+  StyleSheet.create({
+  root: {flex: 1, backgroundColor: c.bg},
   flex: {flex: 1},
   glow: {
     position: 'absolute',
@@ -160,8 +163,8 @@ const styles = StyleSheet.create({
     width: 320,
     height: 320,
     borderRadius: 160,
-    backgroundColor: colors.gold,
-    opacity: 0.12,
+    backgroundColor: c.gold,
+    opacity: c.isDark ? 0.12 : 0.18,
   },
   glowBottom: {
     position: 'absolute',
@@ -170,8 +173,8 @@ const styles = StyleSheet.create({
     width: 300,
     height: 300,
     borderRadius: 150,
-    backgroundColor: colors.gold,
-    opacity: 0.06,
+    backgroundColor: c.gold,
+    opacity: c.isDark ? 0.06 : 0.1,
   },
   scroll: {
     flexGrow: 1,
@@ -185,9 +188,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     alignSelf: 'flex-start',
     gap: 7,
-    backgroundColor: 'rgba(201,161,74,0.1)',
+    backgroundColor: c.goldFaint,
     borderWidth: 1,
-    borderColor: 'rgba(201,161,74,0.28)',
+    borderColor: c.goldGlow,
     borderRadius: radius.pill,
     paddingVertical: 6,
     paddingHorizontal: 12,
@@ -196,23 +199,23 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: colors.gold,
+    backgroundColor: c.gold,
   },
   badgeText: {
-    color: colors.goldLight,
+    color: c.goldLight,
     fontSize: 10.5,
     fontWeight: '700',
     letterSpacing: 1.5,
   },
   title: {
-    color: colors.text,
+    color: c.text,
     fontSize: 30,
     fontWeight: '700',
     fontFamily: 'serif',
     marginTop: spacing.md,
   },
   subtitle: {
-    color: colors.textMuted,
+    color: c.textMuted,
     marginTop: spacing.xs,
     fontSize: 14,
     lineHeight: 20,
@@ -220,15 +223,15 @@ const styles = StyleSheet.create({
   },
   card: {
     marginTop: spacing.lg,
-    backgroundColor: colors.surface,
+    backgroundColor: c.surface,
     borderRadius: radius.lg,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: c.border,
     padding: spacing.lg,
   },
   inputGap: {marginBottom: spacing.sm + 4},
   forgot: {alignSelf: 'flex-end', marginTop: 2, marginBottom: spacing.md},
-  forgotText: {color: colors.gold, fontSize: 13, fontWeight: '600'},
+  forgotText: {color: c.gold, fontSize: 13, fontWeight: '600'},
   errorBox: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -240,7 +243,7 @@ const styles = StyleSheet.create({
     padding: spacing.sm,
     marginBottom: spacing.md,
   },
-  error: {color: colors.danger, fontSize: 11.5, lineHeight: 16, flex: 1},
+  error: {color: c.danger, fontSize: 11.5, lineHeight: 16, flex: 1},
   cta: {marginTop: spacing.xs},
   dividerRow: {
     flexDirection: 'row',
@@ -248,9 +251,9 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     marginTop: spacing.md,
   },
-  divider: {flex: 1, height: 1, backgroundColor: colors.border},
+  divider: {flex: 1, height: 1, backgroundColor: c.border},
   dividerText: {
-    color: colors.textMuted,
+    color: c.textMuted,
     fontSize: 10,
     fontWeight: '700',
     letterSpacing: 1.5,
@@ -262,7 +265,7 @@ const styles = StyleSheet.create({
     gap: 7,
     marginTop: spacing.md,
   },
-  trustText: {color: colors.textMuted, fontSize: 12, lineHeight: 17},
+  trustText: {color: c.textMuted, fontSize: 12, lineHeight: 17},
   spacer: {flex: 1, minHeight: spacing.md},
   footer: {
     flexDirection: 'row',
@@ -270,6 +273,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingTop: spacing.md,
   },
-  footerText: {color: colors.textMuted, fontSize: 14},
-  link: {color: colors.gold, fontWeight: '700', fontSize: 14},
-});
+  footerText: {color: c.textMuted, fontSize: 14},
+  link: {color: c.gold, fontWeight: '700', fontSize: 14},
+  });

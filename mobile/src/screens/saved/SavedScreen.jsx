@@ -5,9 +5,10 @@ import {PropertyCard} from '../../components/PropertyCard';
 import {EmptyState} from '../../components/ui/EmptyState';
 import {AnimatedEntrance} from '../../components/ui/AnimatedEntrance';
 import {useSavedStore} from '../../store/savedStore';
-import {colors, spacing} from '../../theme';
+import {spacing, useThemedStyles} from '../../theme';
 
 export function SavedScreen({navigation}) {
+  const styles = useThemedStyles(makeStyles);
   const {items, loaded, load} = useSavedStore();
 
   useEffect(() => {
@@ -49,11 +50,12 @@ export function SavedScreen({navigation}) {
   );
 }
 
-const styles = StyleSheet.create({
-  root: {flex: 1, backgroundColor: colors.bg},
+const makeStyles = c =>
+  StyleSheet.create({
+  root: {flex: 1, backgroundColor: c.bg},
   header: {paddingHorizontal: spacing.lg, paddingTop: spacing.md, paddingBottom: spacing.sm},
-  title: {color: colors.text, fontSize: 28, fontWeight: '700', fontFamily: 'serif'},
-  subtitle: {color: colors.textMuted, fontSize: 14, marginTop: 2},
+  title: {color: c.text, fontSize: 28, fontWeight: '700', fontFamily: 'serif'},
+  subtitle: {color: c.textMuted, fontSize: 14, marginTop: 2},
   list: {paddingHorizontal: spacing.lg, paddingBottom: spacing.xxl, flexGrow: 1},
   card: {marginBottom: spacing.lg},
-});
+  });

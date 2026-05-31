@@ -1,67 +1,203 @@
-import React, {useRef} from 'react';
-import {Animated, Image, Pressable, StyleSheet, Text, View} from 'react-native';
-import {Badge} from './ui/Badge';
-import {colors, radius, shadow, spacing} from '../theme';
-import {coverImage, listingLabel, locationLine, money} from '../lib/format';
+import React, {useRef, useState} from 'react';
+import {
+  Animated,
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+import {Icon} from './ui/Icon';
+import {radius, shadow, spacing, useColors, useThemedStyles} from '../theme';
+import {
+  coverImage,
+  FALLBACK_IMG,
+  listingLabel,
+  locationLine,
+  money,
+} from '../lib/format';
 import {useSavedStore} from '../store/savedStore';
 
 /** Premium property card used across Explore / Saved / Profile lists. */
 export function PropertyCard({property, onPress, style}) {
+  const c = useColors();
+  const styles = useThemedStyles(makeStyles);
   const scale = useRef(new Animated.Value(1)).current;
+  const heart = useRef(new Animated.Value(1)).current;
+  const [imgW, setImgW] = useState(0);
+  const [active, setActive] = useState(0);
+
   const area = property.carpetArea ?? property.superBuiltUpArea;
   const saved = useSavedStore(s => s.ids.has(property.id));
   const toggleSaved = useSavedStore(s => s.toggle);
 
+  const images = property.imageUrls?.length
+    ? property.imageUrls
+    : [coverImage(property) || FALLBACK_IMG];
+
   const spring = to =>
-    Animated.spring(scale, {toValue: to, useNativeDriver: true, speed: 30, bounciness: 5}).start();
+    Animated.spring(scale, {
+      toValue: to,
+      useNativeDriver: true,
+      speed: 28,
+      bounciness: 6,
+    }).start();
+
+  const onHeart = () => {
+    toggleSaved(property);
+    heart.setValue(0.6);
+    Animated.spring(heart, {
+      toValue: 1,
+      useNativeDriver: true,
+      speed: 18,
+      bounciness: 12,
+    }).start();
+  };
+
+  const onScroll = e => {
+    if (!imgW) {
+      return;
+    }
+    const i = Math.round(e.nativeEvent.contentOffset.x / imgW);
+    if (i !== active) {
+      setActive(i);
+    }
+  };
+
+  const typeLabel = property.type
+    ? property.type.charAt(0).toUpperCase() + property.type.slice(1)
+    : 'Property';
 
   return (
     <Animated.View style={[{transform: [{scale}]}, shadow.card, style]}>
       <Pressable
         onPress={onPress}
-        onPressIn={() => spring(0.98)}
+        onPressIn={() => spring(0.985)}
         onPressOut={() => spring(1)}
         style={styles.card}>
-        <View style={styles.imageWrap}>
-          <Image source={{uri: coverImage(property)}} style={styles.image} />
-          <View style={styles.scrim} />
+        <View
+          style={styles.imageWrap}
+          onLayout={e => setImgW(e.nativeEvent.layout.width)}>
+          {/* Swipeable image carousel */}
+          <ScrollView
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            scrollEventThrottle={16}
+            onScroll={onScroll}
+            nestedScrollEnabled>
+            {images.map((src, i) => (
+              <Image
+                key={i}
+                source={{uri: src}}
+                style={[styles.image, {width: imgW || undefined}]}
+              />
+            ))}
+          </ScrollView>
 
-          <View style={styles.topRow}>
-            <Badge label={property.type} tone="neutral" style={styles.badgeBlur} />
-            <Badge label={listingLabel(property)} tone="neutral" style={styles.badgeBlur} />
-            {property.featured ? <Badge label="★ Featured" tone="gold" /> : null}
+          {/* layered scrims for depth + legibility */}
+          <View style={styles.scrimTop} pointerEvents="none" />
+          <View style={styles.scrimBottom} pointerEvents="none" />
+
+          {/* top row: listing + featured / heart */}
+          <View style={styles.topRow} pointerEvents="box-none">
+            <View style={styles.tags}>
+              <View style={styles.tag}>
+                <Text style={styles.tagText}>{listingLabel(property)}</Text>
+              </View>
+              {property.featured ? (
+                <View style={styles.featured}>
+                  <Icon name="star" size={11} color={c.onGold} />
+                  <Text style={styles.featuredText}>Featured</Text>
+                </View>
+              ) : null}
+            </View>
+
+            <Animated.View style={{transform: [{scale: heart}]}}>
+              <Pressable style={styles.fav} hitSlop={8} onPress={onHeart}>
+                <Icon
+                  name="heart"
+                  size={18}
+                  color={saved ? c.danger : '#fff'}
+                  strokeWidth={2}
+                />
+              </Pressable>
+            </Animated.View>
           </View>
 
-          <Pressable
-            style={styles.fav}
-            hitSlop={8}
-            onPress={() => toggleSaved(property)}>
-            <Text style={[styles.favGlyph, saved && {color: colors.danger}]}>
-              {saved ? '♥' : '♡'}
-            </Text>
-          </Pressable>
+          {/* paging dots */}
+          {images.length > 1 ? (
+            <View style={styles.dots} pointerEvents="none">
+              {images.map((_, i) => (
+                <View
+                  key={i}
+                  style={[styles.dot, i === active && styles.dotActive]}
+                />
+              ))}
+            </View>
+          ) : null}
 
-          <View style={styles.priceWrap}>
-            <Text style={styles.price}>{money(property.price, property.currency)}</Text>
+          {/* price block */}
+          <View style={styles.priceWrap} pointerEvents="none">
+            <Text style={styles.price}>
+              {money(property.price, property.currency)}
+              {property.listingType === 'rent' ? (
+                <Text style={styles.perMonth}> /mo</Text>
+              ) : null}
+            </Text>
             {property.priceNegotiable ? (
-              <Text style={styles.negotiable}>Negotiable</Text>
+              <View style={styles.negPill}>
+                <Text style={styles.negText}>Negotiable</Text>
+              </View>
             ) : null}
           </View>
         </View>
 
         <View style={styles.body}>
+          <View style={styles.typeRow}>
+            <View style={styles.typeChip}>
+              <Icon name="home" size={12} color={c.gold} />
+              <Text style={styles.typeChipText}>{typeLabel}</Text>
+            </View>
+            {property.isVerified ? (
+              <View style={styles.verified}>
+                <Icon name="check" size={11} color={c.success} strokeWidth={2.6} />
+                <Text style={styles.verifiedText}>Verified</Text>
+              </View>
+            ) : null}
+          </View>
+
           <Text style={styles.title} numberOfLines={1}>
             {property.title}
           </Text>
-          <Text style={styles.location} numberOfLines={1}>
-            ◍ {locationLine(property)}
-          </Text>
 
-          <View style={styles.specs}>
-            {property.bhk != null ? <Spec icon="◳" label={`${property.bhk} BHK`} /> : null}
-            {property.bathrooms != null ? <Spec icon="◴" label={`${property.bathrooms} Bath`} /> : null}
-            {area != null ? <Spec icon="◰" label={`${area} sqft`} /> : null}
+          <View style={styles.locationRow}>
+            <Icon name="map-pin" size={13} color={c.textMuted} />
+            <Text style={styles.location} numberOfLines={1}>
+              {locationLine(property)}
+            </Text>
           </View>
+
+          {property.bhk != null || property.bathrooms != null || area != null ? (
+            <View style={styles.specs}>
+              {property.bhk != null ? (
+                <Spec icon="bed" label={`${property.bhk} BHK`} />
+              ) : null}
+              {property.bhk != null && (property.bathrooms != null || area != null) ? (
+                <View style={styles.specDivider} />
+              ) : null}
+              {property.bathrooms != null ? (
+                <Spec icon="bath" label={`${property.bathrooms} Bath`} />
+              ) : null}
+              {property.bathrooms != null && area != null ? (
+                <View style={styles.specDivider} />
+              ) : null}
+              {area != null ? (
+                <Spec icon="ruler" label={`${area} ft²`} />
+              ) : null}
+            </View>
+          ) : null}
         </View>
       </Pressable>
     </Animated.View>
@@ -69,60 +205,182 @@ export function PropertyCard({property, onPress, style}) {
 }
 
 function Spec({icon, label}) {
+  const c = useColors();
+  const styles = useThemedStyles(makeStyles);
   return (
     <View style={styles.spec}>
-      <Text style={styles.specIcon}>{icon}</Text>
+      <View style={styles.specIconWrap}>
+        <Icon name={icon} size={14} color={c.gold} />
+      </View>
       <Text style={styles.specText}>{label}</Text>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.borderSoft,
-    overflow: 'hidden',
-  },
-  imageWrap: {height: 200, backgroundColor: colors.surface2},
-  image: {width: '100%', height: '100%'},
-  scrim: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(20,16,16,0.18)',
-  },
-  topRow: {
-    position: 'absolute',
-    top: spacing.sm,
-    left: spacing.sm,
-    right: 54,
-    flexDirection: 'row',
-    gap: 6,
-    flexWrap: 'wrap',
-  },
-  badgeBlur: {backgroundColor: 'rgba(20,16,16,0.55)', borderColor: 'rgba(255,255,255,0.18)'},
-  fav: {
-    position: 'absolute',
-    top: spacing.sm,
-    right: spacing.sm,
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: 'rgba(20,16,16,0.55)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.18)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  favGlyph: {color: '#fff', fontSize: 19, lineHeight: 21},
-  priceWrap: {position: 'absolute', bottom: spacing.sm, left: spacing.md, flexDirection: 'row', alignItems: 'flex-end', gap: 8},
-  price: {color: '#fff', fontSize: 22, fontWeight: '800', letterSpacing: 0.2, textShadowColor: 'rgba(0,0,0,0.5)', textShadowRadius: 8},
-  negotiable: {color: 'rgba(255,255,255,0.8)', fontSize: 11, marginBottom: 4},
-  body: {padding: spacing.md},
-  title: {color: colors.text, fontSize: 17, fontWeight: '700'},
-  location: {color: colors.textMuted, fontSize: 13, marginTop: 4},
-  specs: {flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md, marginTop: spacing.md, borderTopWidth: 1, borderTopColor: colors.borderSoft, paddingTop: spacing.sm},
-  spec: {flexDirection: 'row', alignItems: 'center', gap: 5},
-  specIcon: {color: colors.gold, fontSize: 13},
-  specText: {color: colors.textDim, fontSize: 13},
-});
+const makeStyles = c =>
+  StyleSheet.create({
+    card: {
+      // Dark theme: lift the card above the ink background so it reads as a
+      // raised surface. Light theme: keep it clean white.
+      backgroundColor: c.isDark ? c.surfaceAlt : c.surface,
+      borderRadius: radius.lg,
+      borderWidth: 1,
+      borderColor: c.border,
+      overflow: 'hidden',
+    },
+    imageWrap: {height: 210, backgroundColor: c.surface2},
+    image: {height: '100%'},
+    scrimTop: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      height: 86,
+      backgroundColor: 'rgba(15,12,12,0.26)',
+    },
+    scrimBottom: {
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      bottom: 0,
+      height: 118,
+      backgroundColor: 'rgba(15,12,12,0.5)',
+    },
+    topRow: {
+      position: 'absolute',
+      top: spacing.sm,
+      left: spacing.sm,
+      right: spacing.sm,
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      justifyContent: 'space-between',
+    },
+    tags: {flexDirection: 'row', gap: 6, flexWrap: 'wrap', flex: 1},
+    tag: {
+      backgroundColor: 'rgba(15,12,12,0.55)',
+      borderWidth: 1,
+      borderColor: 'rgba(255,255,255,0.16)',
+      borderRadius: radius.pill,
+      paddingHorizontal: 10,
+      paddingVertical: 5,
+    },
+    tagText: {
+      color: '#fff',
+      fontSize: 10.5,
+      fontWeight: '700',
+      letterSpacing: 0.4,
+      textTransform: 'uppercase',
+    },
+    featured: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      backgroundColor: c.gold,
+      borderRadius: radius.pill,
+      paddingHorizontal: 10,
+      paddingVertical: 5,
+    },
+    featuredText: {
+      color: c.onGold,
+      fontSize: 10.5,
+      fontWeight: '800',
+      letterSpacing: 0.4,
+      textTransform: 'uppercase',
+    },
+    fav: {
+      width: 38,
+      height: 38,
+      borderRadius: 19,
+      backgroundColor: 'rgba(15,12,12,0.5)',
+      borderWidth: 1,
+      borderColor: 'rgba(255,255,255,0.18)',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    dots: {
+      position: 'absolute',
+      bottom: 52,
+      alignSelf: 'center',
+      flexDirection: 'row',
+      gap: 5,
+    },
+    dot: {
+      width: 6,
+      height: 6,
+      borderRadius: 3,
+      backgroundColor: 'rgba(255,255,255,0.45)',
+    },
+    dotActive: {width: 18, backgroundColor: c.gold},
+    priceWrap: {
+      position: 'absolute',
+      bottom: spacing.sm + 2,
+      left: spacing.md,
+      right: spacing.md,
+      flexDirection: 'row',
+      alignItems: 'flex-end',
+      gap: 8,
+    },
+    price: {
+      color: '#fff',
+      fontSize: 24,
+      fontWeight: '800',
+      letterSpacing: 0.2,
+      textShadowColor: 'rgba(0,0,0,0.55)',
+      textShadowRadius: 10,
+    },
+    perMonth: {fontSize: 13, fontWeight: '600', color: 'rgba(255,255,255,0.85)'},
+    negPill: {
+      backgroundColor: 'rgba(255,255,255,0.18)',
+      borderRadius: radius.pill,
+      paddingHorizontal: 8,
+      paddingVertical: 3,
+      marginBottom: 4,
+    },
+    negText: {color: '#fff', fontSize: 10, fontWeight: '700'},
+    body: {padding: spacing.md},
+    typeRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: spacing.sm,
+    },
+    typeChip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 5,
+      backgroundColor: c.goldFaint,
+      borderRadius: radius.pill,
+      paddingHorizontal: 9,
+      paddingVertical: 4,
+    },
+    typeChipText: {color: c.gold, fontSize: 11.5, fontWeight: '700'},
+    verified: {flexDirection: 'row', alignItems: 'center', gap: 4},
+    verifiedText: {color: c.success, fontSize: 11.5, fontWeight: '700'},
+    title: {color: c.text, fontSize: 17.5, fontWeight: '700', letterSpacing: 0.1},
+    locationRow: {flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 5},
+    location: {color: c.textMuted, fontSize: 13, flex: 1},
+    specs: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginTop: spacing.md,
+      borderTopWidth: 1,
+      borderTopColor: c.borderSoft,
+      paddingTop: spacing.sm + 2,
+    },
+    spec: {flexDirection: 'row', alignItems: 'center', gap: 7, flex: 1},
+    specIconWrap: {
+      width: 28,
+      height: 28,
+      borderRadius: 8,
+      backgroundColor: c.goldFaint,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    specText: {color: c.textDim, fontSize: 12.5, fontWeight: '600'},
+    specDivider: {
+      width: 1,
+      height: 22,
+      backgroundColor: c.borderSoft,
+      marginHorizontal: spacing.sm,
+    },
+  });

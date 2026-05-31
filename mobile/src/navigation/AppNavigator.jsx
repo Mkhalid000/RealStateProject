@@ -6,7 +6,7 @@ import {PostPropertyScreen} from '../screens/property/PostPropertyScreen';
 import {MyPropertiesScreen} from '../screens/property/MyPropertiesScreen';
 import {SavedScreen} from '../screens/saved/SavedScreen';
 import {useSavedStore} from '../store/savedStore';
-import {colors} from '../theme';
+import {useColors} from '../theme';
 
 const Stack = createNativeStackNavigator();
 
@@ -15,6 +15,7 @@ export function AppNavigator() {
   // reflect server state across every screen.
   const load = useSavedStore(s => s.load);
   const loaded = useSavedStore(s => s.loaded);
+  const c = useColors();
   useEffect(() => {
     if (!loaded) load();
   }, [loaded, load]);
@@ -22,11 +23,11 @@ export function AppNavigator() {
   return (
     <Stack.Navigator
       screenOptions={{
-        headerStyle: {backgroundColor: colors.bgSoft},
-        headerTintColor: colors.text,
+        headerStyle: {backgroundColor: c.bgSoft},
+        headerTintColor: c.text,
         headerTitleStyle: {fontWeight: '700'},
         headerShadowVisible: false,
-        contentStyle: {backgroundColor: colors.bg},
+        contentStyle: {backgroundColor: c.bg},
         animation: 'slide_from_right',
       }}>
       <Stack.Screen name="MainTabs" component={MainTabs} options={{headerShown: false}} />
