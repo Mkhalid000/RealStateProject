@@ -30,6 +30,7 @@ export function PropertyDetailScreen({route, navigation}) {
   const {id} = route.params || {};
   const {data: property, isLoading, isError, refetch} = useProperty(id);
   const [activeImg, setActiveImg] = useState(0);
+  const [descExpanded, setDescExpanded] = useState(false);
   const {ids, toggle} = useSavedStore();
   const scrollY = useRef(new Animated.Value(0)).current;
 
@@ -72,36 +73,69 @@ export function PropertyDetailScreen({route, navigation}) {
 
   // Full detail grid.
   const specs = [
+    property.type && {icon: 'home', label: 'Type', value: property.type},
     property.balconies != null && {icon: 'layers', label: 'Balconies', value: property.balconies},
     property.furnishing && {
       icon: 'sofa',
       label: 'Furnishing',
-      value: String(property.furnishing).replace('_', ' '),
+      value: String(property.furnishing).replace(/_/g, ' '),
     },
-    property.facing && {icon: 'compass', label: 'Facing', value: property.facing},
-    property.floorNumber != null && {
+    property.facing && {
+      icon: 'compass',
+      label: 'Facing',
+      value: String(property.facing).replace(/_/g, '-'),
+    },
+    (property.floorNumber != null || property.totalFloors != null) && {
       icon: 'building',
-      label: 'Floor',
-      value: `${property.floorNumber}${property.totalFloors ? ` / ${property.totalFloors}` : ''}`,
+      label: property.floorNumber != null ? 'Floor' : 'Total floors',
+      value:
+        property.floorNumber != null
+          ? `${property.floorNumber}${property.totalFloors ? ` of ${property.totalFloors}` : ''}`
+          : `${property.totalFloors}`,
     },
     property.propertyAge && {icon: 'calendar', label: 'Age', value: property.propertyAge},
-    property.type && {icon: 'home', label: 'Type', value: property.type},
+    property.carpetArea != null && {
+      icon: 'ruler',
+      label: 'Carpet area',
+      value: `${property.carpetArea} ft²`,
+    },
+    property.superBuiltUpArea != null && {
+      icon: 'ruler',
+      label: 'Built-up area',
+      value: `${property.superBuiltUpArea} ft²`,
+    },
+    property.plotArea != null && {
+      icon: 'layers',
+      label: 'Plot area',
+      value: `${property.plotArea} ft²`,
+    },
   ].filter(Boolean);
 
-  // Parallax + zoom on the hero as you scroll.
+  // Full address line for the Location section.
+  const fullAddress = [
+    property.address,
+    property.landmark,
+    [property.city, property.state].filter(Boolean).join(', '),
+    property.pincode,
+  ]
+    .filter(Boolean)
+    .join('\n');
+
+  // Parallax + zoom on the hero as you scroll: zooms on pull-down (overscroll)
+  // AND gently zooms in as you scroll down through the content.
   const heroTransform = {
     transform: [
       {
         translateY: scrollY.interpolate({
           inputRange: [-HERO_H, 0, HERO_H],
-          outputRange: [-HERO_H / 2, 0, HERO_H * 0.3],
+          outputRange: [-HERO_H / 2, 0, HERO_H * 0.28],
         }),
       },
       {
         scale: scrollY.interpolate({
-          inputRange: [-HERO_H, 0],
-          outputRange: [1.6, 1],
-          extrapolateRight: 'clamp',
+          inputRange: [-HERO_H, 0, HERO_H],
+          outputRange: [1.6, 1, 1.22],
+          extrapolate: 'clamp',
         }),
       },
     ],
@@ -126,9 +160,6 @@ export function PropertyDetailScreen({route, navigation}) {
               styles={styles}
             />
           </Animated.View>
-          <View style={styles.heroScrim} pointerEvents="none" />
-          <View style={styles.heroScrimBottom} pointerEvents="none" />
-
           {images.length > 1 ? (
             <View style={styles.counter} pointerEvents="none">
               <Icon name="layers" size={12} color="#fff" />
@@ -196,18 +227,18 @@ export function PropertyDetailScreen({route, navigation}) {
 
           {specs.length ? (
             <Section title="Property details">
-              <View style={styles.detailCard}>
-                {specs.map((s, i) => (
-                  <View
-                    key={s.label}
-                    style={[styles.detailRow, i === specs.length - 1 && styles.detailRowLast]}>
-                    <View style={styles.detailLeft}>
-                      <View style={styles.specIconWrap}>
-                        <Icon name={s.icon} size={16} color={c.gold} />
-                      </View>
-                      <Text style={styles.detailLabel}>{s.label}</Text>
+              <View style={styles.detailGrid}>
+                {specs.map(s => (
+                  <View key={s.label} style={styles.detailCell}>
+                    <View style={styles.specIconWrap}>
+                      <Icon name={s.icon} size={16} color={c.gold} />
                     </View>
-                    <Text style={styles.detailValue}>{s.value}</Text>
+                    <View style={styles.detailCellText}>
+                      <Text style={styles.detailLabel}>{s.label}</Text>
+                      <Text style={styles.detailValue} numberOfLines={1}>
+                        {s.value}
+                      </Text>
+                    </View>
                   </View>
                 ))}
               </View>
@@ -216,7 +247,27 @@ export function PropertyDetailScreen({route, navigation}) {
 
           {property.description ? (
             <Section title="Description">
-              <Text style={styles.desc}>{property.description}</Text>
+              <Text
+                style={styles.desc}
+                numberOfLines={descExpanded ? undefined : 4}>
+                {property.description}
+              </Text>
+              {property.description.length > 160 ? (
+                <Pressable
+                  hitSlop={8}
+                  onPress={() => setDescExpanded(v => !v)}
+                  style={styles.moreBtn}>
+                  <Text style={styles.moreText}>
+                    {descExpanded ? 'See less' : 'See more'}
+                  </Text>
+                  <Icon
+                    name={descExpanded ? 'chevron-up' : 'chevron-down'}
+                    size={15}
+                    color={c.gold}
+                    strokeWidth={2.4}
+                  />
+                </Pressable>
+              ) : null}
             </Section>
           ) : null}
 
@@ -233,26 +284,42 @@ export function PropertyDetailScreen({route, navigation}) {
             </Section>
           ) : null}
 
+          {fullAddress ? (
+            <Section title="Location">
+              <View style={styles.locationCard}>
+                <View style={styles.locIconWrap}>
+                  <Icon name="map-pin" size={18} color={c.gold} />
+                </View>
+                <Text style={styles.locAddress}>{fullAddress}</Text>
+              </View>
+            </Section>
+          ) : null}
+
           {agent ? (
             <Section title="Listed by">
-              <View style={styles.agentRow}>
-                <Avatar uri={agent.avatarUrl} name={agent.fullName} size={52} ring />
-                <View style={{flex: 1}}>
-                  <Text style={styles.agentName}>
-                    {agent.fullName}
-                    {agent.isVerified ? '  ✓' : ''}
-                  </Text>
-                  <Text style={styles.agentRole}>
-                    {property.agencyName ||
-                      (agent.role === 'agent' ? 'Verified Agent' : 'Owner')}
-                  </Text>
+              <View style={styles.agentCard}>
+                <View style={styles.agentRow}>
+                  <Avatar uri={agent.avatarUrl} name={agent.fullName} size={52} ring />
+                  <View style={{flex: 1}}>
+                    <Text style={styles.agentName}>
+                      {agent.fullName}
+                      {agent.isVerified ? '  ✓' : ''}
+                    </Text>
+                    <Text style={styles.agentRole}>
+                      {property.agencyName ||
+                        (agent.role === 'agent' ? 'Verified Agent' : 'Owner')}
+                    </Text>
+                  </View>
+                  <Pressable
+                    style={styles.agentCall}
+                    hitSlop={8}
+                    onPress={() => phone && Linking.openURL(`tel:${phone}`)}>
+                    <Icon name="phone" size={18} color={c.gold} />
+                  </Pressable>
                 </View>
-                <Pressable
-                  style={styles.agentCall}
-                  hitSlop={8}
-                  onPress={() => phone && Linking.openURL(`tel:${phone}`)}>
-                  <Icon name="phone" size={18} color={c.gold} />
-                </Pressable>
+                {agent.bio ? (
+                  <Text style={styles.agentBio}>{agent.bio}</Text>
+                ) : null}
               </View>
             </Section>
           ) : null}
@@ -344,22 +411,6 @@ const makeStyles = c =>
     center: {flex: 1, backgroundColor: c.bg, alignItems: 'center', justifyContent: 'center'},
     heroWrap: {height: HERO_H, backgroundColor: c.surface2, overflow: 'hidden'},
     hero: {width, height: HERO_H, backgroundColor: c.surface2},
-    heroScrim: {
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      right: 0,
-      height: 140,
-      backgroundColor: 'rgba(0,0,0,0.3)',
-    },
-    heroScrimBottom: {
-      position: 'absolute',
-      bottom: 0,
-      left: 0,
-      right: 0,
-      height: 120,
-      backgroundColor: 'rgba(15,12,12,0.35)',
-    },
     heroBar: {
       position: 'absolute',
       top: 0,
@@ -396,26 +447,19 @@ const makeStyles = c =>
     counterText: {color: '#fff', fontSize: 11.5, fontWeight: '600'},
     dots: {
       position: 'absolute',
-      bottom: 40,
+      bottom: spacing.md,
       alignSelf: 'center',
       flexDirection: 'row',
       gap: 6,
     },
-    dot: {width: 6, height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.5)'},
+    dot: {width: 6, height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.6)'},
     dotActive: {width: 18, backgroundColor: c.gold},
     body: {paddingHorizontal: spacing.md},
     priceCard: {
-      marginTop: -28,
-      backgroundColor: c.isDark ? c.surfaceAlt : c.surface,
-      borderRadius: radius.xl,
-      borderWidth: 1,
-      borderColor: c.border,
-      padding: spacing.lg,
-      shadowColor: '#000',
-      shadowOpacity: 0.25,
-      shadowRadius: 16,
-      shadowOffset: {width: 0, height: 8},
-      elevation: 8,
+      paddingTop: spacing.lg,
+      paddingBottom: spacing.lg,
+      borderBottomWidth: 1,
+      borderBottomColor: c.borderSoft,
     },
     chipsRow: {flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: spacing.md},
     title: {
@@ -451,7 +495,7 @@ const makeStyles = c =>
       borderTopColor: c.borderSoft,
     },
     hl: {flex: 1, alignItems: 'center', gap: 3},
-    hlValue: {color: c.text, fontSize: 16, fontWeight: '800'},
+    hlValue: {color: c.text, fontSize: 18, fontWeight: '900'},
     hlLabel: {color: c.textMuted, fontSize: 11},
     hlDivider: {width: 1, height: 34, backgroundColor: c.borderSoft},
     section: {marginTop: spacing.xl},
@@ -462,23 +506,19 @@ const makeStyles = c =>
       fontFamily: 'serif',
       marginBottom: spacing.md,
     },
-    detailCard: {
-      backgroundColor: c.surface,
-      borderRadius: radius.lg,
-      borderWidth: 1,
-      borderColor: c.borderSoft,
-      paddingHorizontal: spacing.md,
-    },
-    detailRow: {
+    detailGrid: {flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm},
+    detailCell: {
+      width: (width - spacing.lg * 2 - spacing.sm) / 2,
       flexDirection: 'row',
       alignItems: 'center',
-      justifyContent: 'space-between',
-      paddingVertical: spacing.md - 2,
-      borderBottomWidth: 1,
-      borderBottomColor: c.borderSoft,
+      gap: spacing.sm,
+      backgroundColor: c.surface,
+      borderRadius: radius.md,
+      borderWidth: 1,
+      borderColor: c.borderSoft,
+      paddingVertical: spacing.sm + 2,
+      paddingHorizontal: spacing.sm + 2,
     },
-    detailRowLast: {borderBottomWidth: 0},
-    detailLeft: {flexDirection: 'row', alignItems: 'center', gap: spacing.sm},
     specIconWrap: {
       width: 34,
       height: 34,
@@ -487,14 +527,23 @@ const makeStyles = c =>
       alignItems: 'center',
       justifyContent: 'center',
     },
-    detailLabel: {color: c.textMuted, fontSize: 13.5, fontWeight: '500'},
+    detailCellText: {flex: 1},
+    detailLabel: {color: c.textMuted, fontSize: 11.5},
     detailValue: {
       color: c.text,
       fontWeight: '700',
-      fontSize: 14,
+      fontSize: 13.5,
       textTransform: 'capitalize',
+      marginTop: 1,
     },
     desc: {color: c.textDim, fontSize: 14.5, lineHeight: 23},
+    moreBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 3,
+      marginTop: spacing.sm,
+    },
+    moreText: {color: c.gold, fontSize: 13.5, fontWeight: '700'},
     amenities: {flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm},
     amenity: {
       flexDirection: 'row',
@@ -508,9 +557,9 @@ const makeStyles = c =>
       paddingVertical: 8,
     },
     amenityText: {color: c.textDim, fontSize: 13},
-    agentRow: {
+    locationCard: {
       flexDirection: 'row',
-      alignItems: 'center',
+      alignItems: 'flex-start',
       gap: spacing.md,
       backgroundColor: c.surface,
       borderRadius: radius.lg,
@@ -518,8 +567,34 @@ const makeStyles = c =>
       borderColor: c.borderSoft,
       padding: spacing.md,
     },
+    locIconWrap: {
+      width: 38,
+      height: 38,
+      borderRadius: 11,
+      backgroundColor: c.goldFaint,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    locAddress: {color: c.textDim, fontSize: 14, lineHeight: 21, flex: 1},
+    agentCard: {
+      backgroundColor: c.surface,
+      borderRadius: radius.lg,
+      borderWidth: 1,
+      borderColor: c.borderSoft,
+      padding: spacing.md,
+    },
+    agentRow: {flexDirection: 'row', alignItems: 'center', gap: spacing.md},
     agentName: {color: c.text, fontSize: 16, fontWeight: '700'},
     agentRole: {color: c.textMuted, fontSize: 13, marginTop: 2},
+    agentBio: {
+      color: c.textDim,
+      fontSize: 13,
+      lineHeight: 20,
+      marginTop: spacing.md,
+      paddingTop: spacing.md,
+      borderTopWidth: 1,
+      borderTopColor: c.borderSoft,
+    },
     agentCall: {
       width: 42,
       height: 42,
