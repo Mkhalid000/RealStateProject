@@ -85,6 +85,7 @@ export function ExploreScreen({navigation}) {
 
   const [search, setSearch] = useState('');
   const q = useDebounced(search.trim(), 400);
+  const [adVisible, setAdVisible] = useState(true);
 
   // committed filters
   const [applied, setApplied] = useState(DEFAULTS);
@@ -299,6 +300,13 @@ export function ExploreScreen({navigation}) {
       )}
       </SafeAreaView>
 
+      {adVisible ? (
+        <AdBanner
+          onPress={() => navigation.navigate('PostProperty')}
+          onClose={() => setAdVisible(false)}
+        />
+      ) : null}
+
       <FiltersSheet
         visible={sheetOpen}
         draft={draft}
@@ -308,6 +316,81 @@ export function ExploreScreen({navigation}) {
         onReset={() => setDraft(DEFAULTS)}
       />
     </View>
+  );
+}
+
+/** Brand-focused vertical ad pinned bottom-right above the tab bar. */
+function AdBanner({onPress, onClose}) {
+  const c = useColors();
+  const styles = useThemedStyles(makeStyles);
+  const enter = useRef(new Animated.Value(0)).current;
+  const bob = useRef(new Animated.Value(0)).current;
+  const press = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    Animated.spring(enter, {
+      toValue: 1,
+      useNativeDriver: true,
+      speed: 12,
+      bounciness: 7,
+      delay: 600,
+    }).start();
+
+    const bobLoop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(bob, {toValue: 1, duration: 1800, easing: Easing.inOut(Easing.sin), useNativeDriver: true}),
+        Animated.timing(bob, {toValue: 0, duration: 1800, easing: Easing.inOut(Easing.sin), useNativeDriver: true}),
+      ]),
+    );
+    bobLoop.start();
+    return () => bobLoop.stop();
+  }, [enter, bob]);
+
+  const spring = to =>
+    Animated.spring(press, {toValue: to, useNativeDriver: true, speed: 40, bounciness: 8}).start();
+
+  const wrapStyle = {
+    opacity: enter,
+    transform: [
+      {translateY: enter.interpolate({inputRange: [0, 1], outputRange: [50, 0]})},
+      {translateY: bob.interpolate({inputRange: [0, 1], outputRange: [0, -5]})},
+      {scale: press},
+    ],
+  };
+
+  return (
+    <Animated.View style={[styles.ad, wrapStyle]}>
+      <Pressable
+        style={styles.adCard}
+        onPress={onPress}
+        onPressIn={() => spring(0.97)}
+        onPressOut={() => spring(1)}>
+        {/* ambient brand glow */}
+        <View style={styles.adGlow} pointerEvents="none" />
+
+        <Pressable hitSlop={10} onPress={onClose} style={styles.adClose}>
+          <Icon name="x" size={13} color={c.textMuted} strokeWidth={2.4} />
+        </Pressable>
+
+        {/* logo hero */}
+        <View style={styles.adLogoWrap}>
+          <Logo width={120} align="center" />
+        </View>
+
+        <View style={styles.adDivider} />
+
+        <View style={styles.adFree}>
+          <Text style={styles.adFreeText}>LIST FOR FREE</Text>
+        </View>
+
+        <Text style={styles.adHeadline}>Sell or rent your{'\n'}property faster</Text>
+
+        <View style={styles.adCta}>
+          <Text style={styles.adCtaText}>Post now</Text>
+          <Icon name="arrow-right" size={14} color={c.onGold} strokeWidth={2.4} />
+        </View>
+      </Pressable>
+    </Animated.View>
   );
 }
 
@@ -605,6 +688,90 @@ const makeStyles = c =>
     footerText: {color: c.textMuted, fontSize: 12.5},
     endRule: {width: 44, height: 1, backgroundColor: c.border},
     endText: {color: c.textMuted, fontSize: 12, letterSpacing: 0.3},
+
+    // ----- brand ad card -----
+    ad: {
+      position: 'absolute',
+      right: spacing.md,
+      bottom: spacing.md,
+      width: 184,
+      shadowColor: '#000',
+      shadowOpacity: 0.35,
+      shadowRadius: 16,
+      shadowOffset: {width: 0, height: 10},
+      elevation: 12,
+    },
+    adCard: {
+      backgroundColor: c.isDark ? c.surfaceAlt : c.surface,
+      borderRadius: radius.lg,
+      borderWidth: 1,
+      borderColor: c.goldGlow,
+      padding: spacing.md,
+      overflow: 'hidden',
+    },
+    adGlow: {
+      position: 'absolute',
+      top: -50,
+      alignSelf: 'center',
+      width: 180,
+      height: 120,
+      borderRadius: 90,
+      backgroundColor: c.gold,
+      opacity: c.isDark ? 0.12 : 0.16,
+    },
+    adClose: {
+      position: 'absolute',
+      top: 6,
+      right: 6,
+      zIndex: 2,
+      width: 24,
+      height: 24,
+      borderRadius: 12,
+      backgroundColor: c.white06,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    adLogoWrap: {alignItems: 'center', paddingTop: spacing.sm, paddingBottom: spacing.xs},
+    adDivider: {
+      height: 1,
+      backgroundColor: c.border,
+      marginVertical: spacing.sm,
+    },
+    adFree: {
+      alignSelf: 'center',
+      backgroundColor: c.goldFaint,
+      borderWidth: 1,
+      borderColor: c.goldGlow,
+      borderRadius: radius.pill,
+      paddingHorizontal: 10,
+      paddingVertical: 3,
+    },
+    adFreeText: {
+      color: c.gold,
+      fontSize: 9.5,
+      fontWeight: '800',
+      letterSpacing: 0.8,
+    },
+    adHeadline: {
+      color: c.text,
+      fontSize: 14.5,
+      fontWeight: '700',
+      fontFamily: 'serif',
+      lineHeight: 19,
+      textAlign: 'center',
+      marginTop: spacing.sm,
+    },
+    adCta: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 6,
+      backgroundColor: c.gold,
+      borderRadius: radius.md,
+      paddingVertical: 9,
+      marginTop: spacing.md,
+    },
+    adCtaText: {color: c.onGold, fontSize: 13, fontWeight: '800', letterSpacing: 0.2},
 
     // ----- sheet -----
     sheetHead: {

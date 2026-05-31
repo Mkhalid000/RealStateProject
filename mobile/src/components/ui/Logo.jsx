@@ -4,12 +4,15 @@ import {useColors} from '../../theme';
 
 export const LOGO_ASPECT = 737 / 174; // ≈ 4.236, matches src/assets/logo.png
 
-const SOURCE = require('../../assets/logo.png');
+// Gold wordmark for dark surfaces; dark-ink variant for the light theme.
+const SOURCE_DARK = require('../../assets/logo.png');
+const SOURCE_LIGHT = require('../../assets/darkLogo.png');
 
 /**
- * AUREVIA brand wordmark (gold PNG, transparent bg — for dark surfaces).
- * Pass `width` (preferred) or `height`; the other dimension is derived from
- * the logo's aspect ratio. Optional tracked `subtitle` renders beneath.
+ * AUREVIA brand wordmark. Auto-swaps artwork to match the active theme
+ * (gold on dark, ink on light). Pass `width` (preferred) or `height`; the
+ * other dimension is derived from the logo's aspect ratio. Optional tracked
+ * `subtitle` renders beneath.
  */
 export function Logo({width = 160, height, subtitle, align = 'center', style}) {
   const c = useColors();
@@ -19,7 +22,11 @@ export function Logo({width = 160, height, subtitle, align = 'center', style}) {
 
   return (
     <View style={[{alignItems: align === 'center' ? 'center' : 'flex-start'}, style]}>
-      <Image source={SOURCE} style={dims} resizeMode="contain" />
+      <Image
+        source={c.isDark ? SOURCE_DARK : SOURCE_LIGHT}
+        style={dims}
+        resizeMode="contain"
+      />
       {subtitle ? (
         <Text
           style={[

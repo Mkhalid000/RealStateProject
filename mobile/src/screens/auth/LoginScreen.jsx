@@ -1,15 +1,17 @@
-import React, {useState} from 'react';
+import React, {useCallback, useState} from 'react';
 import {
   Keyboard,
   KeyboardAvoidingView,
   Platform,
   Pressable,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
+import {useFocusEffect} from '@react-navigation/native';
 import {Input} from '../../components/ui/Input';
 import {Button} from '../../components/ui/Button';
 import {Logo} from '../../components/ui/Logo';
@@ -27,7 +29,38 @@ export function LoginScreen({navigation}) {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [scrolled, setScrolled] = useState(false);
   const setUser = useAuthStore(s => s.setUser);
+
+  // Translucent bar so the gold orbs bleed into the status bar; once the user
+  // scrolls a little, snap it back to a solid theme bar.
+  const applyBar = useCallback(
+    solid => {
+      StatusBar.setBarStyle(c.isDark ? 'light-content' : 'dark-content');
+      if (Platform.OS === 'android') {
+        // Keep translucent constant (toggling it reflows the layout = blink);
+        // only swap the backdrop colour between transparent and solid.
+        StatusBar.setTranslucent(true);
+        StatusBar.setBackgroundColor(solid ? c.bg : 'transparent');
+      }
+    },
+    [c],
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      applyBar(scrolled);
+    }, [applyBar, scrolled]),
+  );
+
+  const onScroll = e => {
+    const y = e.nativeEvent.contentOffset.y;
+    const next = y > 12;
+    if (next !== scrolled) {
+      setScrolled(next);
+      applyBar(next);
+    }
+  };
 
   async function onSubmit() {
     setError('');
@@ -48,10 +81,11 @@ export function LoginScreen({navigation}) {
   }
 
   return (
-    <SafeAreaView style={styles.root} edges={['top', 'bottom']}>
+    <View style={styles.root}>
       <View style={styles.glow} />
       <View style={styles.glowBottom} />
 
+      <SafeAreaView style={styles.flex} edges={['top', 'bottom']}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.flex}>
@@ -60,6 +94,8 @@ export function LoginScreen({navigation}) {
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="interactive"
           showsVerticalScrollIndicator={false}
+          onScroll={onScroll}
+          scrollEventThrottle={16}
           bounces={false}>
           <AnimatedEntrance style={styles.headerBlock}>
             <View style={styles.brandRow}>
@@ -148,7 +184,8 @@ export function LoginScreen({navigation}) {
           </AnimatedEntrance>
         </ScrollView>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+      </SafeAreaView>
+    </View>
   );
 }
 

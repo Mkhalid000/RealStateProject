@@ -70,31 +70,27 @@ export function PropertyCard({property, onPress, style}) {
     : 'Property';
 
   return (
-    <Animated.View style={[{transform: [{scale}]}, shadow.card, style]}>
-      <Pressable
-        onPress={onPress}
-        onPressIn={() => spring(0.985)}
-        onPressOut={() => spring(1)}
-        style={styles.card}>
-        <View
-          style={styles.imageWrap}
-          onLayout={e => setImgW(e.nativeEvent.layout.width)}>
-          {/* Swipeable image carousel */}
-          <ScrollView
-            horizontal
-            pagingEnabled
-            showsHorizontalScrollIndicator={false}
-            scrollEventThrottle={16}
-            onScroll={onScroll}
-            nestedScrollEnabled>
-            {images.map((src, i) => (
-              <Image
-                key={i}
-                source={{uri: src}}
-                style={[styles.image, {width: imgW || undefined}]}
-              />
-            ))}
-          </ScrollView>
+    <Animated.View style={[{transform: [{scale}]}, shadow.card, styles.card, style]}>
+      <View
+        style={styles.imageWrap}
+        onLayout={e => setImgW(e.nativeEvent.layout.width)}>
+        {/* Swipeable image carousel — each frame taps through to details */}
+        <ScrollView
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          scrollEventThrottle={16}
+          onScroll={onScroll}
+          nestedScrollEnabled>
+          {images.map((src, i) => (
+            <Pressable
+              key={i}
+              onPress={onPress}
+              style={{width: imgW || undefined, height: '100%'}}>
+              <Image source={{uri: src}} style={styles.image} />
+            </Pressable>
+          ))}
+        </ScrollView>
 
           {/* layered scrims for depth + legibility */}
           <View style={styles.scrimTop} pointerEvents="none" />
@@ -154,7 +150,11 @@ export function PropertyCard({property, onPress, style}) {
           </View>
         </View>
 
-        <View style={styles.body}>
+        <Pressable
+          style={styles.body}
+          onPress={onPress}
+          onPressIn={() => spring(0.985)}
+          onPressOut={() => spring(1)}>
           <View style={styles.typeRow}>
             <View style={styles.typeChip}>
               <Icon name="home" size={12} color={c.gold} />
@@ -198,8 +198,7 @@ export function PropertyCard({property, onPress, style}) {
               ) : null}
             </View>
           ) : null}
-        </View>
-      </Pressable>
+        </Pressable>
     </Animated.View>
   );
 }

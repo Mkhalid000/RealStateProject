@@ -30,9 +30,10 @@ export function WelcomeScreen({navigation}) {
     ).start();
   }, [fade, zoom]);
 
-  // While this screen is focused, let the hero bleed behind a transparent
-  // status bar (immersive). Revert to the app's ink bar on blur so other
-  // screens stay unaffected.
+  // While focused, let the hero bleed behind a transparent status bar
+  // (immersive). We do NOT reset on blur — the destination screen (Login /
+  // SignUp) owns its own status bar, so resetting here would race and win,
+  // leaving a wrong (dark) bar on those screens.
   useFocusEffect(
     useCallback(() => {
       StatusBar.setBarStyle('light-content');
@@ -40,12 +41,6 @@ export function WelcomeScreen({navigation}) {
         StatusBar.setTranslucent(true);
         StatusBar.setBackgroundColor('transparent');
       }
-      return () => {
-        if (Platform.OS === 'android') {
-          StatusBar.setTranslucent(false);
-          StatusBar.setBackgroundColor(colors.bg);
-        }
-      };
     }, []),
   );
 
