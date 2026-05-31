@@ -1,14 +1,16 @@
-import React, {useRef, useState} from 'react';
+import React, {useCallback, useRef, useState} from 'react';
 import {
   Alert,
   Animated,
+  Platform,
   Pressable,
-  ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
+import {useFocusEffect} from '@react-navigation/native';
 import {Avatar} from '../../components/ui/Avatar';
 import {Badge} from '../../components/ui/Badge';
 import {Button} from '../../components/ui/Button';
@@ -33,9 +35,10 @@ export function ProfileScreen({navigation}) {
 
   const myListings = mine?.items ?? [];
   const liveCount = myListings.filter(p => p.verificationStatus === 'verified').length;
+  const isAgent = user?.role === 'agent';
 
   function confirmSignOut() {
-    Alert.alert('Sign out', 'Are you sure?', [
+    Alert.alert('Sign out', 'Are you sure you want to sign out?', [
       {text: 'Cancel', style: 'cancel'},
       {text: 'Sign out', style: 'destructive', onPress: doSignOut},
     ]);
@@ -53,15 +56,87 @@ export function ProfileScreen({navigation}) {
     }
   }
 
+  const soon = (what) => Alert.alert('Coming soon', `${what} is on its way.`);
+
+  // Make the status bar translucent while this screen is focused so the gold
+  // glow can bleed up behind it; restore the solid bar on blur.
+  useFocusEffect(
+    useCallback(() => {
+      StatusBar.setBarStyle(c.isDark ? 'light-content' : 'dark-content');
+      if (Platform.OS === 'android') {
+        StatusBar.setTranslucent(true);
+        StatusBar.setBackgroundColor('transparent');
+      }
+      return () => {
+        if (Platform.OS === 'android') {
+          StatusBar.setTranslucent(false);
+          StatusBar.setBackgroundColor(c.bg);
+        }
+      };
+    }, [c.isDark, c.bg]),
+  );
+
+  // Glow reacts to scroll: at rest it bleeds up into the status-bar area, then
+  // gently fades + parallax-shifts away as the list scrolls — all native-driven
+  // so it stays buttery smooth.
+  const scrollY = useRef(new Animated.Value(0)).current;
+  const goldOpacity = scrollY.interpolate({
+    inputRange: [0, 150],
+    outputRange: [c.isDark ? 0.16 : 0.2, 0],
+    extrapolate: 'clamp',
+  });
+  const coolOpacity = scrollY.interpolate({
+    inputRange: [0, 150],
+    outputRange: [c.isDark ? 0.08 : 0.1, 0],
+    extrapolate: 'clamp',
+  });
+  const glowShift = scrollY.interpolate({
+    inputRange: [-160, 0, 240],
+    outputRange: [60, 0, -50],
+    extrapolate: 'clamp',
+  });
+
   return (
-    <SafeAreaView style={styles.root} edges={['top']}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
+    <View style={styles.root}>
+      {/* Ambient premium background — bleeds into the status bar, fades on scroll */}
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          styles.glowGold,
+          {opacity: goldOpacity, transform: [{translateY: glowShift}]},
+        ]}
+      />
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          styles.glowCool,
+          {opacity: coolOpacity, transform: [{translateY: glowShift}]},
+        ]}
+      />
+
+      <SafeAreaView style={styles.safe} edges={['top']}>
+        <Animated.ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scroll}
+          scrollEventThrottle={16}
+          onScroll={Animated.event(
+            [{nativeEvent: {contentOffset: {y: scrollY}}}],
+            {useNativeDriver: true},
+          )}>
+        {/* ---------- Hero ---------- */}
         <AnimatedEntrance>
-          <View style={styles.headerGlow} />
-          <View style={styles.header}>
-            <Avatar uri={user?.avatarUrl} name={user?.fullName} size={88} ring />
+          <View style={styles.hero}>
+            <Pressable
+              hitSlop={10}
+              onPress={() => soon('Profile sharing')}
+              style={({pressed}) => [styles.editBtn, pressed && styles.editBtnPressed]}>
+              <Icon name="share-2" size={16} color={c.gold} />
+            </Pressable>
+
+            <Avatar uri={user?.avatarUrl} name={user?.fullName} size={96} ring />
             <Text style={styles.name}>{user?.fullName ?? 'No name'}</Text>
             <Text style={styles.email}>{user?.email}</Text>
+
             <View style={styles.badges}>
               <Badge label={ROLE_LABEL[user?.role] ?? 'Member'} tone="gold" />
               {user?.isVerified ? <Badge label="✓ Verified" tone="green" /> : null}
@@ -70,19 +145,32 @@ export function ProfileScreen({navigation}) {
           </View>
         </AnimatedEntrance>
 
-        <AnimatedEntrance delay={90} style={styles.stats}>
-          <Stat value={myListings.length} label="Listings" />
+        {/* ---------- Stats ---------- */}
+        <AnimatedEntrance delay={80} style={styles.stats}>
+          <StatTile
+            icon="building"
+            value={myListings.length}
+            label="Listings"
+            onPress={() => navigation.navigate('MyProperties')}
+          />
           <View style={styles.statDivider} />
-          <Stat value={liveCount} label="Live" />
+          <StatTile
+            icon="check"
+            value={liveCount}
+            label="Live"
+            onPress={() => navigation.navigate('MyProperties')}
+          />
           <View style={styles.statDivider} />
-          <Stat value={savedCount} label="Saved" />
+          <StatTile
+            icon="heart"
+            value={savedCount}
+            label="Saved"
+            onPress={() => navigation.navigate('Saved')}
+          />
         </AnimatedEntrance>
 
+        {/* ---------- Primary action ---------- */}
         <AnimatedEntrance delay={130}>
-          <ThemeToggle />
-        </AnimatedEntrance>
-
-        <AnimatedEntrance delay={170}>
           <Button
             title="Post a Property"
             icon="＋"
@@ -91,21 +179,88 @@ export function ProfileScreen({navigation}) {
           />
         </AnimatedEntrance>
 
-        <AnimatedEntrance delay={220} style={styles.menu}>
-          <MenuRow icon="🏠" label="My Properties" hint={`${myListings.length}`} onPress={() => navigation.navigate('MyProperties')} />
-          <MenuRow icon="♥" label="Saved" hint={`${savedCount}`} onPress={() => navigation.navigate('Saved')} />
-          {user?.role === 'agent' ? (
-            <MenuRow icon="🎬" label="Create Reel" onPress={() => Alert.alert('Coming soon', 'Reel creation is on its way.')} />
-          ) : null}
-          <MenuRow icon="✏️" label="Edit Profile" onPress={() => Alert.alert('Coming soon', 'Profile editing is on its way.')} />
-          <MenuRow icon="⚙️" label="Settings" onPress={() => Alert.alert('Coming soon', 'Settings are on their way.')} />
-          <MenuRow icon="❓" label="Help & Support" onPress={() => Alert.alert('Support', 'support@aurevia.app')} last />
+        {/* ---------- Account ---------- */}
+        <AnimatedEntrance delay={180}>
+          <SectionLabel>Account</SectionLabel>
+          <View style={styles.card}>
+            <MenuRow
+              icon="building"
+              label="My Properties"
+              sub="Manage your listings"
+              hint={`${myListings.length}`}
+              onPress={() => navigation.navigate('MyProperties')}
+            />
+            <MenuRow
+              icon="heart"
+              label="Saved"
+              sub="Properties you loved"
+              hint={`${savedCount}`}
+              onPress={() => navigation.navigate('Saved')}
+            />
+            {isAgent ? (
+              <MenuRow
+                icon="film"
+                label="Create Reel"
+                sub="Showcase a property"
+                onPress={() => soon('Reel creation')}
+              />
+            ) : null}
+            <MenuRow
+              icon="user"
+              label="Edit Profile"
+              sub="Name, photo & bio"
+              onPress={() => soon('Profile editing')}
+              last
+            />
+          </View>
         </AnimatedEntrance>
 
-        <Button title="Sign out" variant="danger" loading={loading} onPress={confirmSignOut} style={styles.signout} />
-        <Text style={styles.version}>AUREVIA · v1.0.0</Text>
-      </ScrollView>
-    </SafeAreaView>
+        {/* ---------- Preferences ---------- */}
+        <AnimatedEntrance delay={230}>
+          <SectionLabel>Preferences</SectionLabel>
+          <ThemeToggle />
+          <View style={[styles.card, styles.cardSpaced]}>
+            <MenuRow
+              icon="bell"
+              label="Notifications"
+              sub="Alerts & updates"
+              onPress={() => soon('Notification settings')}
+            />
+            <MenuRow
+              icon="sliders"
+              label="Settings"
+              sub="Account & privacy"
+              onPress={() => soon('Settings')}
+              last
+            />
+          </View>
+        </AnimatedEntrance>
+
+        {/* ---------- Support ---------- */}
+        <AnimatedEntrance delay={280}>
+          <SectionLabel>Support</SectionLabel>
+          <View style={styles.card}>
+            <MenuRow
+              icon="message-circle"
+              label="Help & Support"
+              sub="support@aurevia.app"
+              onPress={() => Alert.alert('Support', 'support@aurevia.app')}
+              last
+            />
+          </View>
+        </AnimatedEntrance>
+
+        <Button
+          title="Sign out"
+          variant="danger"
+          loading={loading}
+          onPress={confirmSignOut}
+          style={styles.signout}
+        />
+          <Text style={styles.version}>AUREVIA · v1.0.0</Text>
+        </Animated.ScrollView>
+      </SafeAreaView>
+    </View>
   );
 }
 
@@ -138,9 +293,14 @@ function ThemeToggle() {
 
   return (
     <View style={styles.themeCard}>
-      <View style={styles.themeHead}>
-        <Text style={styles.themeTitle}>Appearance</Text>
-        <Text style={styles.themeSub}>Choose how AUREVIA looks on this device</Text>
+      <View style={styles.themeRow}>
+        <View style={styles.menuIconWrap}>
+          <Icon name={isDark ? 'moon' : 'sun'} size={20} color={c.gold} />
+        </View>
+        <View style={{flex: 1}}>
+          <Text style={styles.themeTitle}>Appearance</Text>
+          <Text style={styles.themeSub}>How AUREVIA looks on this device</Text>
+        </View>
       </View>
 
       <View
@@ -168,17 +328,26 @@ function ThemeToggle() {
   );
 }
 
-function Stat({value, label}) {
+function SectionLabel({children}) {
+  const styles = useThemedStyles(makeStyles);
+  return <Text style={styles.sectionLabel}>{children}</Text>;
+}
+
+function StatTile({icon, value, label, onPress}) {
+  const c = useColors();
   const styles = useThemedStyles(makeStyles);
   return (
-    <View style={styles.stat}>
+    <Pressable
+      onPress={onPress}
+      style={({pressed}) => [styles.stat, pressed && styles.statPressed]}>
+      <Icon name={icon} size={18} color={c.gold} />
       <Text style={styles.statValue}>{value}</Text>
       <Text style={styles.statLabel}>{label}</Text>
-    </View>
+    </Pressable>
   );
 }
 
-function MenuRow({icon, label, hint, onPress, last}) {
+function MenuRow({icon, label, sub, hint, onPress, last}) {
   const c = useColors();
   const styles = useThemedStyles(makeStyles);
   return (
@@ -189,10 +358,19 @@ function MenuRow({icon, label, hint, onPress, last}) {
         last && styles.menuRowLast,
         pressed && {backgroundColor: c.surfaceAlt},
       ]}>
-      <Text style={styles.menuIcon}>{icon}</Text>
-      <Text style={styles.menuLabel}>{label}</Text>
-      {hint ? <Text style={styles.menuHint}>{hint}</Text> : null}
-      <Text style={styles.menuChevron}>›</Text>
+      <View style={styles.menuIconWrap}>
+        <Icon name={icon} size={20} color={c.gold} />
+      </View>
+      <View style={styles.menuTextWrap}>
+        <Text style={styles.menuLabel}>{label}</Text>
+        {sub ? <Text style={styles.menuSub}>{sub}</Text> : null}
+      </View>
+      {hint ? (
+        <View style={styles.hintPill}>
+          <Text style={styles.hintText}>{hint}</Text>
+        </View>
+      ) : null}
+      <Icon name="chevron-right" size={18} color={c.textDim} />
     </Pressable>
   );
 }
@@ -200,27 +378,112 @@ function MenuRow({icon, label, hint, onPress, last}) {
 const makeStyles = c =>
   StyleSheet.create({
     root: {flex: 1, backgroundColor: c.bg},
-    scroll: {padding: spacing.lg, paddingBottom: spacing.xxl},
-    headerGlow: {position: 'absolute', top: -60, alignSelf: 'center', width: 240, height: 240, borderRadius: 120, backgroundColor: c.gold, opacity: c.isDark ? 0.1 : 0.16},
-    header: {alignItems: 'center', paddingTop: spacing.sm},
-    name: {color: c.text, fontSize: 24, fontWeight: '700', fontFamily: 'serif', marginTop: spacing.md},
-    email: {color: c.textMuted, fontSize: 14, marginTop: 2},
-    badges: {flexDirection: 'row', gap: 6, marginTop: spacing.sm},
-    bio: {color: c.textDim, textAlign: 'center', marginTop: spacing.md, lineHeight: 20},
-    stats: {flexDirection: 'row', backgroundColor: c.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: c.borderSoft, paddingVertical: spacing.md, marginTop: spacing.xl},
-    stat: {flex: 1, alignItems: 'center'},
-    statDivider: {width: 1, backgroundColor: c.border},
-    statValue: {color: c.gold, fontSize: 22, fontWeight: '800'},
-    statLabel: {color: c.textMuted, fontSize: 12, marginTop: 2},
+    safe: {flex: 1},
+    scroll: {padding: spacing.md, paddingBottom: spacing.xxl},
+
+    // Ambient background — opacity & translateY are animated from the component.
+    // Positioned from the true screen top so the arc sits inside the status bar.
+    glowGold: {
+      position: 'absolute',
+      top: -70,
+      right: -60,
+      width: 300,
+      height: 300,
+      borderRadius: 150,
+      backgroundColor: c.gold,
+    },
+    glowCool: {
+      position: 'absolute',
+      top: 210,
+      left: -100,
+      width: 260,
+      height: 260,
+      borderRadius: 130,
+      backgroundColor: c.gold,
+    },
+
+    // Hero
+    hero: {alignItems: 'center', paddingTop: spacing.sm},
+    editBtn: {
+      position: 'absolute',
+      top: 0,
+      right: 0,
+      width: 40,
+      height: 40,
+      borderRadius: radius.pill,
+      borderWidth: 1,
+      borderColor: c.borderSoft,
+      backgroundColor: c.surface,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    editBtnPressed: {backgroundColor: c.surfaceAlt, transform: [{scale: 0.94}]},
+    name: {
+      color: c.text,
+      fontSize: 25,
+      fontWeight: '700',
+      fontFamily: 'serif',
+      marginTop: spacing.md,
+    },
+    email: {color: c.textMuted, fontSize: 14, marginTop: 3},
+    badges: {flexDirection: 'row', gap: 6, marginTop: spacing.md},
+    bio: {
+      color: c.textDim,
+      textAlign: 'center',
+      marginTop: spacing.md,
+      lineHeight: 20,
+      paddingHorizontal: spacing.md,
+    },
+
+    // Stats
+    stats: {
+      flexDirection: 'row',
+      backgroundColor: c.surface,
+      borderRadius: radius.lg,
+      borderWidth: 1,
+      borderColor: c.borderSoft,
+      paddingVertical: spacing.md,
+      marginTop: spacing.xl,
+    },
+    stat: {flex: 1, alignItems: 'center', gap: 5, paddingVertical: spacing.xs, borderRadius: radius.md},
+    statPressed: {opacity: 0.55},
+    statDivider: {width: 1, backgroundColor: c.border, marginVertical: spacing.xs},
+    statValue: {color: c.text, fontSize: 22, fontWeight: '800'},
+    statLabel: {color: c.textMuted, fontSize: 12},
+
+    postBtn: {marginTop: spacing.lg},
+
+    // Section label
+    sectionLabel: {
+      color: c.textDim,
+      fontSize: 12,
+      fontWeight: '700',
+      letterSpacing: 1,
+      textTransform: 'uppercase',
+      marginTop: spacing.xl,
+      marginBottom: spacing.sm,
+      marginLeft: spacing.xs,
+    },
+
+    // Cards
+    card: {
+      backgroundColor: c.surface,
+      borderRadius: radius.lg,
+      borderWidth: 1,
+      borderColor: c.borderSoft,
+      overflow: 'hidden',
+    },
+    cardSpaced: {marginTop: spacing.md},
+
+    // Theme card
     themeCard: {
-      marginTop: spacing.lg,
       backgroundColor: c.surface,
       borderRadius: radius.lg,
       borderWidth: 1,
       borderColor: c.borderSoft,
       padding: spacing.md,
     },
-    themeHead: {marginBottom: spacing.md},
+    themeRow: {flexDirection: 'row', alignItems: 'center', marginBottom: spacing.md},
     themeTitle: {color: c.text, fontSize: 16, fontWeight: '700'},
     themeSub: {color: c.textMuted, fontSize: 12.5, marginTop: 2},
     segment: {
@@ -250,14 +513,47 @@ const makeStyles = c =>
       borderRadius: radius.pill,
     },
     segText: {fontSize: 14, fontWeight: '700', letterSpacing: 0.2},
-    postBtn: {marginTop: spacing.lg},
-    menu: {marginTop: spacing.lg, backgroundColor: c.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: c.borderSoft, overflow: 'hidden'},
-    menuRow: {flexDirection: 'row', alignItems: 'center', paddingHorizontal: spacing.md, height: 56, borderBottomWidth: 1, borderBottomColor: c.borderSoft},
+
+    // Menu rows
+    menuRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.md,
+      borderBottomWidth: 1,
+      borderBottomColor: c.borderSoft,
+    },
     menuRowLast: {borderBottomWidth: 0},
-    menuIcon: {fontSize: 18, width: 30},
-    menuLabel: {flex: 1, color: c.text, fontSize: 15, fontWeight: '500'},
-    menuHint: {color: c.textMuted, fontSize: 14, marginRight: spacing.sm},
-    menuChevron: {color: c.textMuted, fontSize: 22},
+    menuIconWrap: {
+      width: 40,
+      height: 40,
+      borderRadius: radius.md,
+      backgroundColor: c.goldFaint,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginRight: spacing.md,
+    },
+    menuTextWrap: {flex: 1},
+    menuLabel: {color: c.text, fontSize: 15, fontWeight: '600'},
+    menuSub: {color: c.textMuted, fontSize: 12.5, marginTop: 2},
+    hintPill: {
+      minWidth: 24,
+      paddingHorizontal: 8,
+      paddingVertical: 3,
+      borderRadius: radius.pill,
+      backgroundColor: c.surfaceAlt,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginRight: spacing.sm,
+    },
+    hintText: {color: c.textMuted, fontSize: 12, fontWeight: '700'},
+
     signout: {marginTop: spacing.xl},
-    version: {color: c.textMuted, textAlign: 'center', marginTop: spacing.lg, fontSize: 12},
+    version: {
+      color: c.textDim,
+      textAlign: 'center',
+      marginTop: spacing.lg,
+      fontSize: 12,
+      letterSpacing: 1,
+    },
   });

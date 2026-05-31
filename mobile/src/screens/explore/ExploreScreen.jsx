@@ -1,6 +1,5 @@
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {
-  ActivityIndicator,
   Alert,
   Animated,
   Easing,
@@ -24,6 +23,7 @@ import {Logo} from '../../components/ui/Logo';
 import {Icon} from '../../components/ui/Icon';
 import {Button} from '../../components/ui/Button';
 import {BottomSheet} from '../../components/ui/BottomSheet';
+import {Loader} from '../../components/ui/Loader';
 import {AnimatedEntrance} from '../../components/ui/AnimatedEntrance';
 import {flattenPages, usePropertiesFeed} from '../../hooks/useProperties';
 import {useDebounced} from '../../hooks/useDebounced';
@@ -186,8 +186,7 @@ export function ExploreScreen({navigation}) {
     if (isFetchingNextPage) {
       return (
         <View style={styles.footer}>
-          <ActivityIndicator color={c.gold} />
-          <Text style={styles.footerText}>Loading more…</Text>
+          <Loader size={30} label="Loading more" />
         </View>
       );
     }

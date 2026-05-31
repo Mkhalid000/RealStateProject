@@ -1,14 +1,8 @@
 import React, {useCallback, useRef, useState} from 'react';
-import {
-  ActivityIndicator,
-  Dimensions,
-  FlatList,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import {Dimensions, FlatList, StyleSheet, Text, View} from 'react-native';
 import {useIsFocused} from '@react-navigation/native';
 import {EmptyState} from '../../components/ui/EmptyState';
+import {Loader} from '../../components/ui/Loader';
 import {ReelItem} from './ReelItem';
 import {flattenPages} from '../../hooks/useProperties';
 import {useReelFeed} from '../../hooks/useReels';

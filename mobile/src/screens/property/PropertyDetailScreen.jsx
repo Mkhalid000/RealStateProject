@@ -1,9 +1,9 @@
 import React, {useRef, useState} from 'react';
 import {
-  ActivityIndicator,
   Animated,
   Dimensions,
   Image,
+  Keyboard,
   Linking,
   Pressable,
   StyleSheet,
@@ -13,11 +13,17 @@ import {
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {Badge} from '../../components/ui/Badge';
 import {Button} from '../../components/ui/Button';
+import {Input} from '../../components/ui/Input';
 import {Avatar} from '../../components/ui/Avatar';
 import {Icon} from '../../components/ui/Icon';
+import {BottomSheet} from '../../components/ui/BottomSheet';
+import {Loader} from '../../components/ui/Loader';
 import {EmptyState} from '../../components/ui/EmptyState';
 import {useProperty} from '../../hooks/useProperties';
 import {useSavedStore} from '../../store/savedStore';
+import {createLead} from '../../lib/leads';
+import {apiErrorMessage} from '../../lib/api';
+import {useAuthStore} from '../../store/authStore';
 import {coverImage, listingLabel, locationLine, money} from '../../lib/format';
 import {radius, spacing, useColors, useThemedStyles} from '../../theme';
 
@@ -34,12 +40,46 @@ export function PropertyDetailScreen({route, navigation}) {
   const {ids, toggle} = useSavedStore();
   const scrollY = useRef(new Animated.Value(0)).current;
 
+  // ── enquiry → lead ──
+  const user = useAuthStore(s => s.user);
+  const [lead, setLead] = useState({
+    name: user?.fullName || '',
+    email: user?.email || '',
+    phone: user?.phone || '',
+    message: '',
+  });
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [leadError, setLeadError] = useState('');
+  const [enquiryOpen, setEnquiryOpen] = useState(false);
+  const setL = (k, v) => setLead(f => ({...f, [k]: v}));
+
+  async function submitLead() {
+    if (!lead.name.trim() || !(lead.email.trim() || lead.phone.trim())) {
+      setLeadError('Please add your name and an email or phone.');
+      return;
+    }
+    Keyboard.dismiss();
+    setLeadError('');
+    setSending(true);
+    try {
+      await createLead({
+        name: lead.name.trim(),
+        email: lead.email.trim(),
+        phone: lead.phone.trim(),
+        message: lead.message.trim(),
+        propertyId: property.id,
+      });
+      setSent(true);
+    } catch (err) {
+      setLeadError(apiErrorMessage(err, 'Could not send your request.'));
+    } finally {
+      setSending(false);
+    }
+  }
+
   if (isLoading) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color={c.gold} />
-      </View>
-    );
+    return <Loader fullscreen size={52} label="Loading residence" />;
   }
 
   if (isError || !property) {
@@ -343,12 +383,21 @@ export function PropertyDetailScreen({route, navigation}) {
       <SafeAreaView edges={['bottom']} style={styles.ctaBar}>
         <View style={styles.ctaInner}>
           <Pressable
-            style={styles.callBtn}
+            style={styles.iconBtn}
             onPress={() => phone && Linking.openURL(`tel:${phone}`)}>
             <Icon name="phone" size={19} color={c.gold} />
           </Pressable>
+          <Pressable
+            style={styles.iconBtn}
+            onPress={() => {
+              setSent(false);
+              setLeadError('');
+              setEnquiryOpen(true);
+            }}>
+            <Icon name="message-circle" size={19} color={c.gold} />
+          </Pressable>
           <Button
-            title="Message Agent"
+            title="WhatsApp"
             style={styles.ctaBtnPrimary}
             onPress={() => {
               if (property.ownerWhatsapp || phone) {
@@ -360,6 +409,82 @@ export function PropertyDetailScreen({route, navigation}) {
           />
         </View>
       </SafeAreaView>
+
+      {/* enquiry bottom sheet */}
+      <BottomSheet visible={enquiryOpen} onClose={() => setEnquiryOpen(false)}>
+        {sent ? (
+          <View style={styles.sentBox}>
+            <View style={styles.sentIcon}>
+              <Icon name="check" size={28} color={c.gold} strokeWidth={2.6} />
+            </View>
+            <Text style={styles.sentTitle}>Enquiry sent!</Text>
+            <Text style={styles.sentSub}>Our advisor will be in touch shortly.</Text>
+            <Button
+              title="Done"
+              size="lg"
+              onPress={() => setEnquiryOpen(false)}
+              style={styles.leadCta}
+            />
+          </View>
+        ) : (
+          <>
+            <Text style={styles.sheetTitle}>Request a Private Viewing</Text>
+            <Text style={styles.leadSub}>
+              Our advisor will respond within 24 hours.
+            </Text>
+            <Input
+              compact
+              containerStyle={styles.leadGap}
+              label="FULL NAME"
+              icon="user"
+              value={lead.name}
+              onChangeText={v => setL('name', v)}
+              placeholder="Your name"
+            />
+            <Input
+              compact
+              containerStyle={styles.leadGap}
+              label="EMAIL"
+              icon="mail"
+              value={lead.email}
+              onChangeText={v => setL('email', v)}
+              autoCapitalize="none"
+              keyboardType="email-address"
+              placeholder="you@example.com"
+            />
+            <Input
+              compact
+              containerStyle={styles.leadGap}
+              label="PHONE"
+              icon="phone"
+              value={lead.phone}
+              onChangeText={v => setL('phone', v)}
+              keyboardType="phone-pad"
+              placeholder="Your phone number"
+            />
+            <Input
+              compact
+              containerStyle={styles.leadGap}
+              label="MESSAGE"
+              value={lead.message}
+              onChangeText={v => setL('message', v)}
+              placeholder="I'd like a private viewing…"
+              multiline
+              numberOfLines={3}
+              style={styles.leadTextarea}
+            />
+            {leadError ? <Text style={styles.leadError}>{leadError}</Text> : null}
+            <Button
+              title="Request Viewing"
+              size="lg"
+              loading={sending}
+              onPress={submitLead}
+              style={styles.leadCta}
+            />
+            <View style={{height: spacing.sm}} />
+          </>
+        )}
+      </BottomSheet>
     </View>
   );
 }
@@ -605,6 +730,31 @@ const makeStyles = c =>
       alignItems: 'center',
       justifyContent: 'center',
     },
+    sheetTitle: {
+      color: c.text,
+      fontSize: 20,
+      fontWeight: '700',
+      fontFamily: 'serif',
+    },
+    leadSub: {color: c.textMuted, fontSize: 13, marginTop: 2, marginBottom: spacing.md},
+    leadGap: {marginBottom: spacing.sm + 2},
+    leadTextarea: {height: 80, textAlignVertical: 'top', paddingTop: spacing.sm},
+    leadError: {color: c.danger, fontSize: 12.5, marginBottom: spacing.sm},
+    leadCta: {marginTop: spacing.xs},
+    sentBox: {alignItems: 'center', paddingVertical: spacing.lg},
+    sentIcon: {
+      width: 52,
+      height: 52,
+      borderRadius: 26,
+      backgroundColor: c.goldFaint,
+      borderWidth: 1,
+      borderColor: c.goldGlow,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: spacing.sm,
+    },
+    sentTitle: {color: c.text, fontSize: 16, fontWeight: '700'},
+    sentSub: {color: c.textMuted, fontSize: 13, marginTop: 3, textAlign: 'center'},
     ctaBar: {
       position: 'absolute',
       left: 0,
@@ -615,7 +765,7 @@ const makeStyles = c =>
       borderTopColor: c.border,
     },
     ctaInner: {flexDirection: 'row', alignItems: 'center', gap: spacing.sm, padding: spacing.md},
-    callBtn: {
+    iconBtn: {
       width: 54,
       height: 54,
       borderRadius: radius.lg,

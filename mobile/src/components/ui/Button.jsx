@@ -1,5 +1,6 @@
 import React, {useRef} from 'react';
-import {ActivityIndicator, Animated, Pressable, StyleSheet, Text, View} from 'react-native';
+import {Animated, Pressable, StyleSheet, Text, View} from 'react-native';
+import {Loader} from './Loader';
 import {radius, shadow, spacing, useColors, useThemedStyles} from '../../theme';
 
 /**
@@ -57,7 +58,7 @@ export function Button({
           isDisabled && styles.disabled,
         ]}>
         {loading ? (
-          <ActivityIndicator color={labelColor} />
+          <Loader size={24} color={labelColor} />
         ) : (
           <View style={styles.row}>
             {icon ? <Text style={styles.icon}>{icon}</Text> : null}

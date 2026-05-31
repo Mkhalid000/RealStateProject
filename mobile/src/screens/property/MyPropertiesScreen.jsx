@@ -1,6 +1,5 @@
 import React, {useState} from 'react';
 import {
-  ActivityIndicator,
   Alert,
   FlatList,
   Image,
@@ -15,6 +14,7 @@ import {useQueryClient} from '@tanstack/react-query';
 import {Badge} from '../../components/ui/Badge';
 import {Button} from '../../components/ui/Button';
 import {Chip} from '../../components/ui/Chip';
+import {Loader} from '../../components/ui/Loader';
 import {EmptyState} from '../../components/ui/EmptyState';
 import {useMyProperties} from '../../hooks/useProperties';
 import {deleteProperty} from '../../lib/properties';
@@ -75,9 +75,7 @@ export function MyPropertiesScreen({navigation}) {
       </View>
 
       {isLoading ? (
-        <View style={styles.center}>
-          <ActivityIndicator color={c.gold} size="large" />
-        </View>
+        <Loader fullscreen size={48} label="Loading" />
       ) : (
         <FlatList
           data={items}
@@ -103,7 +101,7 @@ export function MyPropertiesScreen({navigation}) {
                   hitSlop={8}
                   onPress={() => confirmDelete(item.id)}>
                   {busyId === item.id ? (
-                    <ActivityIndicator color={c.danger} size="small" />
+                    <Loader size={20} color={c.danger} />
                   ) : (
                     <Text style={styles.delGlyph}>🗑</Text>
                   )}
