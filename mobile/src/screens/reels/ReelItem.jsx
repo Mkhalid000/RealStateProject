@@ -1,15 +1,8 @@
 import React, {useEffect, useRef, useState} from 'react';
-import {
-  ActivityIndicator,
-  Animated,
-  Image,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import {Animated, Image, Pressable, StyleSheet, Text, View} from 'react-native';
 import Video from 'react-native-video';
 import {Avatar} from '../../components/ui/Avatar';
+import {Loader} from '../../components/ui/Loader';
 import {likeReel, markReelViewed, unlikeReel} from '../../lib/reels';
 import {compactCount, money} from '../../lib/format';
 import {colors, radius, spacing} from '../../theme';
@@ -90,7 +83,7 @@ export function ReelItem({reel, height, active, onOpenProperty}) {
 
       {buffering && !paused ? (
         <View style={styles.bufferer} pointerEvents="none">
-          <ActivityIndicator color="#fff" />
+          <Loader size={36} color="#fff" />
         </View>
       ) : null}
 

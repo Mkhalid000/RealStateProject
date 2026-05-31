@@ -41,7 +41,7 @@ export function ReelsScreen({navigation}) {
   if (isLoading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator color={colors.gold} size="large" />
+        <Loader size={48} />
       </View>
     );
   }

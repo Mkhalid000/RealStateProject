@@ -1,6 +1,5 @@
 import React, {useState} from 'react';
 import {
-  ActivityIndicator,
   Alert,
   Image,
   KeyboardAvoidingView,
@@ -17,6 +16,7 @@ import {useQueryClient} from '@tanstack/react-query';
 import {Input} from '../../components/ui/Input';
 import {Button} from '../../components/ui/Button';
 import {Chip} from '../../components/ui/Chip';
+import {Loader} from '../../components/ui/Loader';
 import {createProperty} from '../../lib/properties';
 import {uploadImage} from '../../lib/imagekit';
 import {apiErrorMessage} from '../../lib/api';
@@ -118,7 +118,7 @@ export function PostPropertyScreen({navigation}) {
                 <Image source={{uri: img.url || img.uri}} style={styles.thumbImg} />
                 {img.uploading ? (
                   <View style={styles.thumbOverlay}>
-                    <ActivityIndicator color="#fff" />
+                    <Loader size={28} color="#fff" />
                   </View>
                 ) : (
                   <Pressable style={styles.thumbRemove} onPress={() => removeImage(img.uri)} hitSlop={6}>
