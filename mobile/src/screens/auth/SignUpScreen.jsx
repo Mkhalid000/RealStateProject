@@ -1,6 +1,7 @@
-import React, {useRef, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {
   Animated,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -29,21 +30,44 @@ export function SignUpScreen({navigation}) {
   const [role, setRole] = useState('user');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [pendingMsg, setPendingMsg] = useState('');
+  const [countdown, setCountdown] = useState(10);
   const setUser = useAuthStore(s => s.setUser);
+
+  const goToLogin = () => navigation.navigate('Login');
+
+  // Agent pending: har second countdown ghatao, 0 par Login par wapas.
+  useEffect(() => {
+    if (!pendingMsg) {
+      return;
+    }
+    if (countdown <= 0) {
+      goToLogin();
+      return;
+    }
+    const id = setTimeout(() => setCountdown(c => c - 1), 1000);
+    return () => clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingMsg, countdown]);
 
   async function onSubmit() {
     setError('');
-    if (!fullName || !email || !password) {
-      setError('Naam, email aur password zaroori hain.');
+    if (!fullName || !email || !phone || !password) {
+      setError('Name, email, phone and password are required.');
+      return;
+    }
+    if (phone.replace(/\D/g, '').length !== 10) {
+      setError('Phone number must be exactly 10 digits.');
       return;
     }
     if (password.length < 6) {
-      setError('Password kam se kam 6 characters ka ho.');
+      setError('Password must be at least 6 characters.');
       return;
     }
+    Keyboard.dismiss();
     setLoading(true);
     try {
-      const user = await register({
+      const result = await register({
         email: email.trim(),
         password,
         fullName: fullName.trim(),
@@ -51,7 +75,16 @@ export function SignUpScreen({navigation}) {
         phone: phone.trim(),
         agencyName: role === 'agent' ? agencyName.trim() : undefined,
       });
-      setUser(user);
+      if (result?.pendingVerification) {
+        // Agent account approval pending — login na karo, message dikhao.
+        setCountdown(10);
+        setPendingMsg(
+          result.message ||
+            'Your account is pending admin verification. You can sign in once it is approved.',
+        );
+        return;
+      }
+      setUser(result);
     } catch (e) {
       setError(apiErrorMessage(e, 'Sign up failed. Try again.'));
     } finally {
@@ -59,13 +92,37 @@ export function SignUpScreen({navigation}) {
     }
   }
 
+  if (pendingMsg) {
+    return (
+      <SafeAreaView style={styles.root} edges={['top', 'bottom']}>
+        <View style={styles.glow} />
+        <View style={styles.glowBottom} />
+        <View style={styles.pendingWrap}>
+          <AnimatedEntrance style={styles.overlayCard} offset={10}>
+            <Pressable
+              style={styles.closeBtn}
+              hitSlop={10}
+              onPress={goToLogin}>
+              <Icon name="x" size={18} color={colors.textMuted} strokeWidth={2.2} />
+            </Pressable>
+            <View style={styles.overlayIcon}>
+              <Icon name="check" size={30} color={colors.gold} strokeWidth={2.4} />
+            </View>
+            <Text style={styles.overlayTitle}>Account Created</Text>
+            <Text style={styles.overlayText}>{pendingMsg}</Text>
+            <Text style={styles.overlayHint}>
+              Redirecting to sign in in {countdown}s
+            </Text>
+          </AnimatedEntrance>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.root} edges={['top', 'bottom']}>
       <View style={styles.glow} />
-
-      <Pressable style={styles.back} hitSlop={10} onPress={() => navigation.goBack()}>
-        <Icon name="chevron-left" size={22} color={colors.text} />
-      </Pressable>
+      <View style={styles.glowBottom} />
 
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -76,38 +133,54 @@ export function SignUpScreen({navigation}) {
           keyboardDismissMode="interactive"
           showsVerticalScrollIndicator={false}>
           <AnimatedEntrance style={styles.headerBlock}>
-            <Logo width={148} align="left" />
+            <View style={styles.brandRow}>
+              <Logo width={132} align="left" />
+            </View>
+            <View style={styles.badge}>
+              <View style={styles.badgeDot} />
+              <Text style={styles.badgeText}>JOIN AUREVIA</Text>
+            </View>
             <Text style={styles.title}>Create your account</Text>
-            <Text style={styles.subtitle}>Choose how you’ll use AUREVIA.</Text>
+            <Text style={styles.subtitle}>
+              Set up your profile to unlock a curated world of premium
+              properties.
+            </Text>
           </AnimatedEntrance>
 
-          <AnimatedEntrance delay={110} style={styles.roleRow}>
-            <RoleCard
-              icon="search"
-              label="Buyer"
-              desc="Explore reels, save & post homes"
-              active={role === 'user'}
-              onPress={() => setRole('user')}
-            />
-            <RoleCard
-              icon="briefcase"
-              label="Agent"
-              desc="List properties & create reels"
-              active={role === 'agent'}
-              onPress={() => setRole('agent')}
-            />
+          <AnimatedEntrance delay={110} style={styles.roleSection}>
+            <Text style={styles.sectionLabel}>I'M JOINING AS</Text>
+            <View style={styles.roleRow}>
+              <RoleCard
+                icon="search"
+                label="Buyer"
+                desc="Explore reels, save & post homes"
+                active={role === 'user'}
+                onPress={() => setRole('user')}
+              />
+              <RoleCard
+                icon="briefcase"
+                label="Agent"
+                desc="List properties & create reels"
+                active={role === 'agent'}
+                onPress={() => setRole('agent')}
+              />
+            </View>
           </AnimatedEntrance>
 
-          <AnimatedEntrance delay={200} style={styles.form}>
+          <AnimatedEntrance delay={200} style={styles.card}>
             <Input
+              compact
+              containerStyle={styles.inputGap}
               label="FULL NAME"
               icon="user"
               value={fullName}
               onChangeText={setFullName}
               textContentType="name"
-              placeholder="Aapka naam"
+              placeholder="Your full name"
             />
             <Input
+              compact
+              containerStyle={styles.inputGap}
               label="EMAIL ADDRESS"
               icon="mail"
               value={email}
@@ -119,15 +192,20 @@ export function SignUpScreen({navigation}) {
               placeholder="you@example.com"
             />
             <Input
-              label="PHONE (OPTIONAL)"
+              compact
+              containerStyle={styles.inputGap}
+              label="PHONE"
               icon="phone"
               value={phone}
-              onChangeText={setPhone}
-              keyboardType="phone-pad"
-              placeholder="+91 98765 43210"
+              onChangeText={t => setPhone(t.replace(/\D/g, ''))}
+              keyboardType="number-pad"
+              maxLength={10}
+              placeholder="10-digit mobile number"
             />
             {role === 'agent' ? (
               <Input
+                compact
+                containerStyle={styles.inputGap}
                 label="AGENCY NAME (OPTIONAL)"
                 icon="building"
                 value={agencyName}
@@ -136,6 +214,8 @@ export function SignUpScreen({navigation}) {
               />
             ) : null}
             <Input
+              compact
+              containerStyle={styles.inputGap}
               label="PASSWORD"
               icon="lock"
               value={password}
@@ -154,7 +234,13 @@ export function SignUpScreen({navigation}) {
               </View>
             ) : null}
 
-            <Button title="Create Account" size="lg" onPress={onSubmit} loading={loading} style={styles.cta} />
+            <Button
+              title="Create Account"
+              size="lg"
+              onPress={onSubmit}
+              loading={loading}
+              style={styles.cta}
+            />
             <Text style={styles.terms}>
               By continuing you agree to our Terms & Privacy Policy.
             </Text>
@@ -178,19 +264,22 @@ function RoleCard({icon, label, desc, active, onPress}) {
     <Animated.View style={[styles.roleWrap, {transform: [{scale}]}]}>
       <Pressable
         onPress={onPress}
-        onPressIn={() => Animated.spring(scale, {toValue: 0.97, useNativeDriver: true}).start()}
-        onPressOut={() => Animated.spring(scale, {toValue: 1, useNativeDriver: true}).start()}
+        onPressIn={() =>
+          Animated.spring(scale, {toValue: 0.97, useNativeDriver: true}).start()
+        }
+        onPressOut={() =>
+          Animated.spring(scale, {toValue: 1, useNativeDriver: true}).start()
+        }
         style={[styles.roleCard, active && styles.roleCardActive]}>
-        <View style={[styles.roleIconWrap, active && styles.roleIconActive]}>
-          <Icon name={icon} size={20} color={active ? colors.gold : colors.textDim} />
-        </View>
-        <Text style={[styles.roleLabel, active && styles.roleLabelActive]}>{label}</Text>
-        <Text style={styles.roleDesc}>{desc}</Text>
-        {active ? (
-          <View style={styles.check}>
-            <Icon name="check" size={13} color={colors.bgSoft} strokeWidth={2.6} />
+        <View style={styles.roleHead}>
+          <View style={[styles.roleIconWrap, active && styles.roleIconActive]}>
+            <Icon name={icon} size={18} color={active ? colors.gold : colors.textDim} />
           </View>
-        ) : null}
+          <Text style={[styles.roleLabel, active && styles.roleLabelActive]}>
+            {label}
+          </Text>
+        </View>
+        <Text style={styles.roleDesc}>{desc}</Text>
       </Pressable>
     </Animated.View>
   );
@@ -201,33 +290,73 @@ const styles = StyleSheet.create({
   flex: {flex: 1},
   glow: {
     position: 'absolute',
-    top: -140,
-    left: -90,
+    top: -150,
+    right: -100,
+    width: 320,
+    height: 320,
+    borderRadius: 160,
+    backgroundColor: colors.gold,
+    opacity: 0.12,
+  },
+  glowBottom: {
+    position: 'absolute',
+    bottom: -160,
+    left: -110,
     width: 300,
     height: 300,
     borderRadius: 150,
     backgroundColor: colors.gold,
-    opacity: 0.09,
+    opacity: 0.06,
   },
-  back: {
-    position: 'absolute',
-    top: spacing.sm,
-    left: spacing.md,
-    zIndex: 10,
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+  scroll: {
+    flexGrow: 1,
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.lg,
+  },
+  headerBlock: {marginTop: spacing.lg},
+  brandRow: {marginBottom: spacing.lg},
+  badge: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.surface,
+    alignSelf: 'flex-start',
+    gap: 7,
+    backgroundColor: 'rgba(201,161,74,0.1)',
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: 'rgba(201,161,74,0.28)',
+    borderRadius: radius.pill,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
   },
-  scroll: {flexGrow: 1, paddingHorizontal: spacing.lg, paddingBottom: spacing.lg},
-  headerBlock: {marginTop: 72},
-  title: {color: colors.text, fontSize: 28, fontWeight: '700', fontFamily: 'serif', marginTop: spacing.lg},
-  subtitle: {color: colors.textMuted, marginTop: spacing.xs, fontSize: 14},
-  roleRow: {flexDirection: 'row', gap: spacing.sm, marginTop: spacing.lg},
+  badgeDot: {width: 6, height: 6, borderRadius: 3, backgroundColor: colors.gold},
+  badgeText: {
+    color: colors.goldLight,
+    fontSize: 10.5,
+    fontWeight: '700',
+    letterSpacing: 1.5,
+  },
+  title: {
+    color: colors.text,
+    fontSize: 30,
+    fontWeight: '700',
+    fontFamily: 'serif',
+    marginTop: spacing.md,
+  },
+  subtitle: {
+    color: colors.textMuted,
+    marginTop: spacing.xs,
+    fontSize: 14,
+    lineHeight: 20,
+    maxWidth: '94%',
+  },
+  roleSection: {marginTop: spacing.lg},
+  sectionLabel: {
+    color: colors.textMuted,
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 1.2,
+    marginBottom: spacing.sm,
+  },
+  roleRow: {flexDirection: 'row', gap: spacing.sm},
   roleWrap: {flex: 1},
   roleCard: {
     padding: spacing.md,
@@ -235,34 +364,36 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: colors.border,
     backgroundColor: colors.surface,
-    minHeight: 132,
+    minHeight: 96,
   },
   roleCardActive: {borderColor: colors.gold, backgroundColor: colors.surfaceAlt},
+  roleHead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginBottom: spacing.sm,
+  },
   roleIconWrap: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
+    width: 34,
+    height: 34,
+    borderRadius: 10,
     backgroundColor: colors.white06,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: spacing.sm,
   },
   roleIconActive: {backgroundColor: colors.goldFaint},
-  roleLabel: {color: colors.text, fontWeight: '700', fontSize: 16},
+  roleLabel: {color: colors.text, fontWeight: '700', fontSize: 15},
   roleLabelActive: {color: colors.gold},
-  roleDesc: {color: colors.textMuted, fontSize: 12, marginTop: 3, lineHeight: 16},
-  check: {
-    position: 'absolute',
-    top: spacing.sm,
-    right: spacing.sm,
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: colors.gold,
-    alignItems: 'center',
-    justifyContent: 'center',
+  roleDesc: {color: colors.textMuted, fontSize: 12, lineHeight: 16},
+  card: {
+    marginTop: spacing.lg,
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.lg,
   },
-  form: {marginTop: spacing.lg},
+  inputGap: {marginBottom: spacing.sm + 4},
   errorBox: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -274,10 +405,80 @@ const styles = StyleSheet.create({
     padding: spacing.sm,
     marginBottom: spacing.md,
   },
-  error: {color: colors.danger, fontSize: 13, flex: 1},
+  error: {color: colors.danger, fontSize: 11.5, lineHeight: 16, flex: 1},
   cta: {marginTop: spacing.xs},
-  terms: {color: colors.textMuted, fontSize: 11.5, textAlign: 'center', marginTop: spacing.md, lineHeight: 16},
-  footer: {flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: spacing.lg},
+  terms: {
+    color: colors.textMuted,
+    fontSize: 11.5,
+    textAlign: 'center',
+    marginTop: spacing.md,
+    lineHeight: 16,
+  },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: spacing.lg,
+  },
   footerText: {color: colors.textMuted, fontSize: 14},
   link: {color: colors.gold, fontWeight: '700', fontSize: 14},
+  pendingWrap: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: spacing.lg,
+  },
+  overlayCard: {
+    width: '100%',
+    maxWidth: 360,
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingVertical: spacing.xl,
+    paddingHorizontal: spacing.lg,
+  },
+  closeBtn: {
+    position: 'absolute',
+    top: spacing.sm,
+    right: spacing.sm,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.white06,
+    zIndex: 2,
+  },
+  overlayIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: colors.goldFaint,
+    borderWidth: 1,
+    borderColor: 'rgba(201,161,74,0.28)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.md,
+  },
+  overlayTitle: {
+    color: colors.text,
+    fontSize: 20,
+    fontWeight: '700',
+    fontFamily: 'serif',
+    marginBottom: spacing.sm,
+  },
+  overlayText: {
+    color: colors.textDim,
+    fontSize: 13.5,
+    lineHeight: 20,
+    textAlign: 'center',
+  },
+  overlayHint: {
+    color: colors.gold,
+    fontSize: 12,
+    fontWeight: '600',
+    marginTop: spacing.md,
+  },
 });

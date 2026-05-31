@@ -67,6 +67,12 @@ const PATHS = {
     </>
   ),
   check: <Path d="M20 6L9 17l-5-5" />,
+  x: (
+    <>
+      <Line x1="18" y1="6" x2="6" y2="18" />
+      <Line x1="6" y1="6" x2="18" y2="18" />
+    </>
+  ),
   'chevron-left': <Path d="M15 18l-6-6 6-6" />,
   'arrow-right': (
     <>

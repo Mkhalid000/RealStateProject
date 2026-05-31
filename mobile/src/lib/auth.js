@@ -11,6 +11,10 @@ export async function register({email, password, fullName, role, phone, agencyNa
     ...(phone ? {phone} : {}),
     ...(agencyName ? {agencyName} : {}),
   });
+  // Agent accounts need admin approval — no tokens/user are issued yet.
+  if (data.pendingVerification) {
+    return {pendingVerification: true, message: data.message};
+  }
   await tokenStore.set(data.tokens);
   return data.user;
 }
