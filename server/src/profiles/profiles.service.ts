@@ -25,6 +25,11 @@ export class ProfilesService {
     return {...profile, isFollowing};
   }
 
+  async getMe(userId: string) {
+    const user = await this.prisma.user.findUniqueOrThrow({where: {id: userId}});
+    return {...toPublicProfile(user), email: user.email};
+  }
+
   async updateMe(userId: string, dto: UpdateProfileDto) {
     const user = await this.prisma.user.update({
       where: {id: userId},

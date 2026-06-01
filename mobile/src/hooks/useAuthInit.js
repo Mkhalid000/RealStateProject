@@ -4,12 +4,17 @@ import {tokenStore} from '../lib/tokenStore';
 import {setOnAuthFailure} from '../lib/api';
 import {useAuthStore} from '../store/authStore';
 
+// Roles allowed to use the mobile app. Admins manage things on the website,
+// so an admin session is rejected here and routed to Login.
+const ALLOWED_ROLES = ['user', 'agent'];
+
 /**
- * On mount: if tokens exist, fetch the current user. Also registers a hard-logout
- * handler so a failed token refresh clears the session.
+ * On mount: if tokens exist, fetch the current user and validate their role.
+ * A blocked role or a failed token refresh clears the session and sends the
+ * user straight to Login (rather than the Welcome screen).
  */
 export function useAuthInit() {
-  const {setUser, setInitializing} = useAuthStore();
+  const {setUser, setInitializing, setStartAtLogin} = useAuthStore();
 
   useEffect(() => {
     let active = true;
@@ -17,6 +22,7 @@ export function useAuthInit() {
     setOnAuthFailure(() => {
       if (active) {
         setUser(null);
+        setStartAtLogin(true);
       }
     });
 
@@ -30,11 +36,24 @@ export function useAuthInit() {
       }
       try {
         const me = await fetchMe();
+        // Block disallowed roles (e.g. admin) from the mobile app.
+        if (!ALLOWED_ROLES.includes(me?.role)) {
+          await tokenStore.clear();
+          if (active) {
+            setUser(null);
+            setStartAtLogin(true);
+          }
+          return;
+        }
         if (active) {
           setUser(me);
         }
       } catch {
+        // Expired / invalid token — drop the session and land on Login.
         await tokenStore.clear();
+        if (active) {
+          setStartAtLogin(true);
+        }
       } finally {
         if (active) {
           setInitializing(false);
@@ -45,5 +64,5 @@ export function useAuthInit() {
     return () => {
       active = false;
     };
-  }, [setUser, setInitializing]);
+  }, [setUser, setInitializing, setStartAtLogin]);
 }

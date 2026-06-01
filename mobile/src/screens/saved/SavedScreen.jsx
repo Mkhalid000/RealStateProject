@@ -53,9 +53,9 @@ export function SavedScreen({navigation}) {
 const makeStyles = c =>
   StyleSheet.create({
   root: {flex: 1, backgroundColor: c.bg},
-  header: {paddingHorizontal: spacing.lg, paddingTop: spacing.md, paddingBottom: spacing.sm},
+  header: {paddingHorizontal: spacing.md, paddingTop: spacing.md, paddingBottom: spacing.sm},
   title: {color: c.text, fontSize: 28, fontWeight: '700', fontFamily: 'serif'},
   subtitle: {color: c.textMuted, fontSize: 14, marginTop: 2},
-  list: {paddingHorizontal: spacing.lg, paddingBottom: spacing.xxl, flexGrow: 1},
+  list: {paddingHorizontal: spacing.md, paddingBottom: spacing.xxl, flexGrow: 1},
   card: {marginBottom: spacing.lg},
   });

@@ -1,6 +1,5 @@
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {
-  Alert,
   Animated,
   Easing,
   FlatList,
@@ -227,9 +226,7 @@ export function ExploreScreen({navigation}) {
         <Pressable
           style={styles.bellBtn}
           hitSlop={8}
-          onPress={() =>
-            Alert.alert('Notifications', 'You’re all caught up — no new notifications.')
-          }>
+          onPress={() => navigation.navigate('Notifications')}>
           <Icon name="bell" size={20} color={c.text} />
           <View style={styles.bellDot} />
         </Pressable>

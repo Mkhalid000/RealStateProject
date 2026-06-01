@@ -1,5 +1,5 @@
 import React, {useRef, useState} from 'react';
-import {Animated, Pressable, StyleSheet, Text, TextInput, View} from 'react-native';
+import {Animated, Platform, Pressable, StyleSheet, Text, TextInput, View} from 'react-native';
 import {Icon} from './Icon';
 import {radius, spacing, useColors, useThemedStyles} from '../../theme';
 
@@ -49,6 +49,7 @@ export function Input({
         style={[
           styles.field,
           compact && styles.fieldCompact,
+          rest.multiline && styles.fieldMultiline,
           {borderColor},
           focused && styles.fieldFocused,
         ]}>
@@ -56,7 +57,7 @@ export function Input({
         <TextInput
           placeholderTextColor={c.textMuted}
           secureTextEntry={hidden}
-          style={[styles.input, style]}
+          style={[styles.input, rest.multiline && styles.inputMultiline, style]}
           selectionColor={c.gold}
           onFocus={e => {
             setFocused(true);
@@ -102,9 +103,12 @@ const makeStyles = c =>
       height: 56,
     },
     fieldCompact: {height: 50},
+    // Multiline grows downward and keeps text/placeholder pinned to the top.
+    fieldMultiline: {height: undefined, minHeight: 56, alignItems: 'flex-start', paddingVertical: spacing.sm},
     fieldFocused: {backgroundColor: c.surfaceAlt},
     icon: {marginRight: spacing.sm},
     input: {flex: 1, color: c.text, fontSize: 16, height: '100%'},
+    inputMultiline: {height: undefined, textAlignVertical: 'top', paddingTop: Platform.OS === 'ios' ? 2 : 0},
     eyeBtn: {paddingLeft: spacing.sm},
     error: {color: c.danger, fontSize: 12, marginTop: 5, marginLeft: 2},
   });

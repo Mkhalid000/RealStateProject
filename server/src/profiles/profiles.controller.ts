@@ -7,6 +7,11 @@ import {CurrentUser} from '../common/decorators/current-user.decorator';
 export class ProfilesController {
   constructor(private profiles: ProfilesService) {}
 
+  @Get('me')
+  getMe(@CurrentUser('id') userId: string) {
+    return this.profiles.getMe(userId);
+  }
+
   @Patch('me')
   updateMe(@CurrentUser('id') userId: string, @Body() dto: UpdateProfileDto) {
     return this.profiles.updateMe(userId, dto);

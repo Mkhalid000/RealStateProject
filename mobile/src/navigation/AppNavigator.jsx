@@ -5,6 +5,8 @@ import {PropertyDetailScreen} from '../screens/property/PropertyDetailScreen';
 import {PostPropertyScreen} from '../screens/property/PostPropertyScreen';
 import {MyPropertiesScreen} from '../screens/property/MyPropertiesScreen';
 import {SavedScreen} from '../screens/saved/SavedScreen';
+import {NotificationsScreen} from '../screens/notifications/NotificationsScreen';
+import {HelpSupportScreen} from '../screens/support/HelpSupportScreen';
 import {useSavedStore} from '../store/savedStore';
 import {useColors} from '../theme';
 
@@ -39,6 +41,16 @@ export function AppNavigator() {
       <Stack.Screen name="PostProperty" component={PostPropertyScreen} options={{title: 'Post a Property'}} />
       <Stack.Screen name="MyProperties" component={MyPropertiesScreen} options={{title: 'My Properties'}} />
       <Stack.Screen name="Saved" component={SavedScreen} options={{title: 'Saved'}} />
+      <Stack.Screen
+        name="Notifications"
+        component={NotificationsScreen}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="HelpSupport"
+        component={HelpSupportScreen}
+        options={{headerShown: false}}
+      />
     </Stack.Navigator>
   );
 }

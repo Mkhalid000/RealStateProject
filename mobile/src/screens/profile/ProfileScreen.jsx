@@ -1,5 +1,6 @@
-import React, {useCallback, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {
+  ActivityIndicator,
   Alert,
   Animated,
   Platform,
@@ -11,16 +12,22 @@ import {
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useFocusEffect} from '@react-navigation/native';
+import {launchImageLibrary} from 'react-native-image-picker';
 import {Avatar} from '../../components/ui/Avatar';
 import {Badge} from '../../components/ui/Badge';
 import {Button} from '../../components/ui/Button';
 import {Icon} from '../../components/ui/Icon';
+import {Input} from '../../components/ui/Input';
+import {BottomSheet} from '../../components/ui/BottomSheet';
 import {AnimatedEntrance} from '../../components/ui/AnimatedEntrance';
 import {useAuthStore} from '../../store/authStore';
 import {useSavedStore} from '../../store/savedStore';
 import {useThemeStore} from '../../store/themeStore';
 import {useMyProperties} from '../../hooks/useProperties';
 import {logout} from '../../lib/auth';
+import {getMyProfile, updateMyProfile} from '../../lib/profile';
+import {uploadImage} from '../../lib/imagekit';
+import {apiErrorMessage} from '../../lib/api';
 import {radius, spacing, useColors, useThemedStyles} from '../../theme';
 
 const ROLE_LABEL = {agent: 'Agent', admin: 'Admin', user: 'Member'};
@@ -28,10 +35,12 @@ const ROLE_LABEL = {agent: 'Agent', admin: 'Admin', user: 'Member'};
 export function ProfileScreen({navigation}) {
   const c = useColors();
   const styles = useThemedStyles(makeStyles);
-  const {user, reset} = useAuthStore();
+  const {user, reset, setUser} = useAuthStore();
   const savedCount = useSavedStore(s => s.items.length);
   const {data: mine} = useMyProperties('all');
   const [loading, setLoading] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [avatarUploading, setAvatarUploading] = useState(false);
 
   const myListings = mine?.items ?? [];
   const liveCount = myListings.filter(p => p.verificationStatus === 'verified').length;
@@ -58,6 +67,24 @@ export function ProfileScreen({navigation}) {
 
   const soon = (what) => Alert.alert('Coming soon', `${what} is on its way.`);
 
+  // Pick a new avatar, upload it, then persist immediately.
+  async function changeAvatar() {
+    const res = await launchImageLibrary({mediaType: 'photo', selectionLimit: 1, quality: 0.8});
+    if (res.didCancel || !res.assets?.length) {
+      return;
+    }
+    setAvatarUploading(true);
+    try {
+      const {url} = await uploadImage(res.assets[0].uri);
+      const updated = await updateMyProfile({avatarUrl: url});
+      setUser({...user, ...updated});
+    } catch (e) {
+      Alert.alert('Upload failed', apiErrorMessage(e, 'Could not update photo.'));
+    } finally {
+      setAvatarUploading(false);
+    }
+  }
+
   // Make the status bar translucent while this screen is focused so the gold
   // glow can bleed up behind it; restore the solid bar on blur.
   useFocusEffect(
@@ -74,6 +101,19 @@ export function ProfileScreen({navigation}) {
         }
       };
     }, [c.isDark, c.bg]),
+  );
+
+  // Pull the freshest profile from the API whenever this screen is focused.
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      getMyProfile()
+        .then(p => active && setUser(p))
+        .catch(() => {});
+      return () => {
+        active = false;
+      };
+    }, [setUser]),
   );
 
   // Glow reacts to scroll: at rest it bleeds up into the status-bar area, then
@@ -133,7 +173,19 @@ export function ProfileScreen({navigation}) {
               <Icon name="share-2" size={16} color={c.gold} />
             </Pressable>
 
-            <Avatar uri={user?.avatarUrl} name={user?.fullName} size={96} ring />
+            <Pressable
+              onPress={changeAvatar}
+              disabled={avatarUploading}
+              style={styles.avatarWrap}>
+              <Avatar uri={user?.avatarUrl} name={user?.fullName} size={96} ring />
+              <View style={styles.avatarEditBadge}>
+                {avatarUploading ? (
+                  <ActivityIndicator size="small" color={c.onGold} />
+                ) : (
+                  <Icon name="plus" size={15} color={c.onGold} />
+                )}
+              </View>
+            </Pressable>
             <Text style={styles.name}>{user?.fullName ?? 'No name'}</Text>
             <Text style={styles.email}>{user?.email}</Text>
 
@@ -209,7 +261,7 @@ export function ProfileScreen({navigation}) {
               icon="user"
               label="Edit Profile"
               sub="Name, photo & bio"
-              onPress={() => soon('Profile editing')}
+              onPress={() => setEditOpen(true)}
               last
             />
           </View>
@@ -243,8 +295,8 @@ export function ProfileScreen({navigation}) {
             <MenuRow
               icon="message-circle"
               label="Help & Support"
-              sub="support@aurevia.app"
-              onPress={() => Alert.alert('Support', 'support@aurevia.app')}
+              sub="FAQs, contact & feedback"
+              onPress={() => navigation.navigate('HelpSupport')}
               last
             />
           </View>
@@ -260,7 +312,82 @@ export function ProfileScreen({navigation}) {
           <Text style={styles.version}>AUREVIA · v1.0.0</Text>
         </Animated.ScrollView>
       </SafeAreaView>
+
+      <EditProfileSheet
+        visible={editOpen}
+        onClose={() => setEditOpen(false)}
+        user={user}
+        onSaved={updated => setUser({...user, ...updated})}
+      />
     </View>
+  );
+}
+
+/** Edit-profile bottom sheet: name / phone / bio. (Photo is changed from the
+ * avatar's edit badge on the profile header.) */
+function EditProfileSheet({visible, onClose, user, onSaved}) {
+  const styles = useThemedStyles(makeStyles);
+  const [fullName, setFullName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [bio, setBio] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  // Hydrate fields each time the sheet opens.
+  useEffect(() => {
+    if (visible) {
+      setFullName(user?.fullName ?? '');
+      setPhone(user?.phone ?? '');
+      setBio(user?.bio ?? '');
+    }
+  }, [visible, user]);
+
+  async function save() {
+    setSaving(true);
+    try {
+      const updated = await updateMyProfile({
+        fullName: fullName.trim(),
+        phone: phone.trim(),
+        bio: bio.trim(),
+      });
+      onSaved(updated);
+      onClose();
+    } catch (e) {
+      Alert.alert('Error', apiErrorMessage(e, 'Could not update profile.'));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <BottomSheet visible={visible} onClose={onClose}>
+      <Text style={styles.sheetTitle}>Edit Profile</Text>
+
+      <Input
+        label="FULL NAME"
+        icon="user"
+        value={fullName}
+        onChangeText={setFullName}
+        placeholder="Your name"
+      />
+      <Input
+        label="PHONE"
+        icon="phone"
+        value={phone}
+        onChangeText={setPhone}
+        placeholder="Phone number"
+        keyboardType="phone-pad"
+      />
+      <Input
+        label="BIO"
+        value={bio}
+        onChangeText={setBio}
+        placeholder="A short bio about you"
+        multiline
+        style={styles.bioInput}
+      />
+
+      <Button title="Save Changes" loading={saving} onPress={save} style={styles.saveBtn} />
+    </BottomSheet>
   );
 }
 
@@ -404,6 +531,20 @@ const makeStyles = c =>
 
     // Hero
     hero: {alignItems: 'center', paddingTop: spacing.sm},
+    avatarWrap: {position: 'relative'},
+    avatarEditBadge: {
+      position: 'absolute',
+      right: 0,
+      bottom: 0,
+      width: 30,
+      height: 30,
+      borderRadius: 15,
+      backgroundColor: c.gold,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderWidth: 2.5,
+      borderColor: c.bg,
+    },
     editBtn: {
       position: 'absolute',
       top: 0,
@@ -443,7 +584,7 @@ const makeStyles = c =>
       borderWidth: 1,
       borderColor: c.borderSoft,
       paddingVertical: spacing.md,
-      marginTop: spacing.xl,
+      marginTop: spacing.md,
     },
     stat: {flex: 1, alignItems: 'center', gap: 5, paddingVertical: spacing.xs, borderRadius: radius.md},
     statPressed: {opacity: 0.55},
@@ -556,4 +697,16 @@ const makeStyles = c =>
       fontSize: 12,
       letterSpacing: 1,
     },
+
+    // Edit-profile sheet
+    sheetTitle: {
+      color: c.text,
+      fontSize: 20,
+      fontWeight: '700',
+      fontFamily: 'serif',
+      textAlign: 'center',
+      marginBottom: spacing.lg,
+    },
+    bioInput: {minHeight: 72},
+    saveBtn: {marginTop: spacing.sm},
   });
