@@ -107,7 +107,7 @@ const makeStyles = c =>
     fieldMultiline: {height: undefined, minHeight: 56, alignItems: 'flex-start', paddingVertical: spacing.sm},
     fieldFocused: {backgroundColor: c.surfaceAlt},
     icon: {marginRight: spacing.sm},
-    input: {flex: 1, color: c.text, fontSize: 16, height: '100%'},
+    input: {flex: 1, color: c.text, fontSize: 14, height: '100%'},
     inputMultiline: {height: undefined, textAlignVertical: 'top', paddingTop: Platform.OS === 'ios' ? 2 : 0},
     eyeBtn: {paddingLeft: spacing.sm},
     error: {color: c.danger, fontSize: 12, marginTop: 5, marginLeft: 2},

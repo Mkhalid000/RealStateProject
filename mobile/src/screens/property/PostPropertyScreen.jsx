@@ -226,7 +226,7 @@ export function PostPropertyScreen({navigation}) {
           {step === 2 && <StepDetails  form={form} set={set} styles={styles} c={c} />}
           {step === 3 && <StepAmenities form={form} toggleAmenity={toggleAmenity} styles={styles} c={c} />}
           {step === 4 && <StepPhotos images={images} pickImages={pickImages} removeImage={removeImage} styles={styles} c={c} />}
-          {step === 5 && <StepContact form={form} set={set} styles={styles} c={c} />}
+          {step === 5 && <StepContact form={form} set={set} images={images} styles={styles} c={c} />}
 
           {error ? (
             <View style={styles.errorBox}>
@@ -272,9 +272,9 @@ function StepBasic({form, set, styles, c}) {
     <>
       <Card styles={styles}>
         <Input label="PROPERTY TITLE *" value={form.title} onChangeText={v => set('title', v)}
-          placeholder="e.g. Spacious 3BHK Apartment with Sea View" icon="home" compact />
+          placeholder="e.g. 3BHK Sea-facing Apartment" icon="home" compact />
         <Input label="DESCRIPTION" value={form.description} onChangeText={v => set('description', v)}
-          placeholder="Describe highlights, neighbourhood, key features…"
+          placeholder="Highlights, location, key features…"
           multiline numberOfLines={4} style={styles.textarea} />
       </Card>
 
@@ -333,22 +333,26 @@ function StepLocation({form, set, styles}) {
     <>
       <SLabel top>REGION</SLabel>
       <Card styles={styles}>
-        <Input label="CITY *" value={form.city} onChangeText={v => set('city', v)}
-          placeholder="Mumbai" icon="map-pin" compact />
-        <Input label="LOCALITY / AREA" value={form.locality} onChangeText={v => set('locality', v)}
-          placeholder="Bandra West" compact />
-        <Input label="STATE" value={form.state} onChangeText={v => set('state', v)}
-          placeholder="Maharashtra" compact />
-        <Input label="COUNTRY" value={form.country} onChangeText={v => set('country', v)}
-          placeholder="India" compact />
+        <View style={styles.row2}>
+          <Input label="CITY *" value={form.city} onChangeText={v => set('city', v)}
+            placeholder="Mumbai" icon="map-pin" compact containerStyle={styles.col} />
+          <Input label="LOCALITY" value={form.locality} onChangeText={v => set('locality', v)}
+            placeholder="Bandra West" compact containerStyle={styles.col} />
+        </View>
+        <View style={styles.row2}>
+          <Input label="STATE" value={form.state} onChangeText={v => set('state', v)}
+            placeholder="Maharashtra" compact containerStyle={styles.col} />
+          <Input label="COUNTRY" value={form.country} onChangeText={v => set('country', v)}
+            placeholder="India" compact containerStyle={styles.col} />
+        </View>
       </Card>
 
       <SLabel top>ADDRESS</SLabel>
       <Card styles={styles}>
         <Input label="FULL ADDRESS" value={form.address} onChangeText={v => set('address', v)}
-          placeholder="Building name, street, locality…" compact />
+          placeholder="Street, building name…" compact />
         <Input label="LANDMARK" value={form.landmark} onChangeText={v => set('landmark', v)}
-          placeholder="e.g. Near Bandra Station" compact />
+          placeholder="Near landmark" compact />
         <Input label="PINCODE" value={form.pincode} onChangeText={v => set('pincode', v)}
           placeholder="400050" keyboardType="numeric" compact />
       </Card>
@@ -493,7 +497,7 @@ function StepPhotos({images, pickImages, removeImage, styles, c}) {
   );
 }
 
-function StepContact({form, set, styles, c}) {
+function StepContact({form, set, images, styles, c}) {
   return (
     <>
       <SLabel top>CONTACT DETAILS</SLabel>
@@ -501,13 +505,13 @@ function StepContact({form, set, styles, c}) {
         <Input label="OWNER / CONTACT NAME" value={form.ownerName} onChangeText={v => set('ownerName', v)}
           placeholder="Full name" icon="user" compact />
         <Input label="AGENCY NAME" value={form.agencyName} onChangeText={v => set('agencyName', v)}
-          placeholder="e.g. Aurevia Realty" compact />
+          placeholder="Agency name" compact />
         <Input label="PHONE" value={form.ownerPhone} onChangeText={v => set('ownerPhone', v)}
           placeholder="+91 98765 43210" keyboardType="phone-pad" icon="phone" compact />
         <Input label="WHATSAPP" value={form.ownerWhatsapp} onChangeText={v => set('ownerWhatsapp', v)}
-          placeholder="Leave blank if same as phone" keyboardType="phone-pad" compact />
+          placeholder="Same as phone? Leave blank" keyboardType="phone-pad" compact />
         <Input label="EMAIL" value={form.ownerEmail} onChangeText={v => set('ownerEmail', v)}
-          placeholder="contact@agency.com" keyboardType="email-address"
+          placeholder="Email address" keyboardType="email-address"
           autoCapitalize="none" icon="mail" compact />
       </Card>
 
@@ -591,7 +595,7 @@ function Toggle({label, value, onChange, c}) {
 const makeStyles = c => StyleSheet.create({
   root: {flex: 1, backgroundColor: c.bg},
   flex: {flex: 1},
-  header: {flexDirection: 'row', alignItems: 'center', paddingHorizontal: spacing.md, paddingVertical: spacing.sm},
+  header: {flexDirection: 'row', alignItems: 'center', paddingHorizontal: spacing.sm, paddingTop: 4, paddingBottom: spacing.xs},
   backBtn: {width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center'},
   headerMid: {flex: 1, paddingHorizontal: spacing.sm},
   headerTitle: {color: c.text, fontSize: 17, fontWeight: '700'},
@@ -642,6 +646,8 @@ const makeStyles = c => StyleSheet.create({
 
   // toggles
   togglesRow: {flexDirection: 'row', gap: spacing.sm},
+  row2: {flexDirection: 'row', gap: spacing.sm},
+  col: {flex: 1},
   toggleBtn: {flex: 1, flexDirection: 'row', alignItems: 'center', gap: spacing.sm, padding: spacing.sm, borderRadius: radius.md, borderWidth: 1, borderColor: c.border, backgroundColor: c.surface},
   toggleBtnOn: {borderColor: c.goldGlow, backgroundColor: c.goldFaint},
   toggleTrack: {width: 36, height: 20, borderRadius: 10, backgroundColor: c.border, justifyContent: 'center', paddingHorizontal: 2},
