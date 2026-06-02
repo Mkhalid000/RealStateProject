@@ -132,19 +132,19 @@ export class ReelsService {
       include: {agent: true, property: {include: {agent: true}}},
     });
 
-    // Fan out a "new reel" notification to followers.
-    const followers = await this.prisma.follow.findMany({
-      where: {agentId},
-      select: {followerId: true},
+    // Confirm to the agent that their reel is live.
+    await this.notifications.notify(agentId, NotificationType.NEW_REEL, {
+      reelId: reel.id,
+      self: true,
+      actorName: reel.agent?.fullName,
     });
-    await Promise.all(
-      followers.map(f =>
-        this.notifications.notify(f.followerId, NotificationType.NEW_REEL, {
-          reelId: reel.id,
-          actorId: agentId,
-        }),
-      ),
-    );
+
+    // Tell every other user a new reel was added.
+    await this.notifications.notifyAllExcept(agentId, NotificationType.NEW_REEL, {
+      reelId: reel.id,
+      actorId: agentId,
+      actorName: reel.agent?.fullName,
+    });
 
     return toReel(reel);
   }

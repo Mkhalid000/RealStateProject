@@ -4,8 +4,9 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import {Prisma} from '@prisma/client';
-import {SubscriptionPlan, UserRole, VerificationStatus} from '../shared';
+import {NotificationType, SubscriptionPlan, UserRole, VerificationStatus} from '../shared';
 import {PrismaService} from '../prisma/prisma.service';
+import {NotificationsService} from '../notifications/notifications.service';
 import {
   CreatePropertyDto,
   QueryPropertiesDto,
@@ -17,7 +18,10 @@ const FREE_PLAN_PROPERTY_LIMIT = 5;
 
 @Injectable()
 export class PropertiesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private notifications: NotificationsService,
+  ) {}
 
   async create(userId: string, role: string, dto: CreatePropertyDto) {
     if (role !== UserRole.ADMIN) {
@@ -40,6 +44,22 @@ export class PropertiesService {
       },
       include: {agent: true},
     });
+    // Tell the owner their listing was received (and its initial status).
+    this.notifications.notify(userId, NotificationType.PROPERTY_STATUS, {
+      propertyId: property.id,
+      title: property.title,
+      status: property.verificationStatus,
+    });
+    // If it's already live (admin auto-verify), tell everyone else about it.
+    if (property.isVerified) {
+      this.notifications
+        .notifyAllExcept(userId, NotificationType.NEW_PROPERTY, {
+          propertyId: property.id,
+          title: property.title,
+          actorName: property.agent?.fullName,
+        })
+        .catch(() => {});
+    }
     return toProperty(property);
   }
 
@@ -121,6 +141,22 @@ export class PropertiesService {
       },
       include: {agent: true},
     });
+    // Notify the owner that their listing was approved / rejected.
+    this.notifications.notify(property.agentId, NotificationType.PROPERTY_STATUS, {
+      propertyId: property.id,
+      title: property.title,
+      status,
+    });
+    // Once live (approved), tell everyone else a new property is available.
+    if (status === VerificationStatus.VERIFIED) {
+      this.notifications
+        .notifyAllExcept(property.agentId, NotificationType.NEW_PROPERTY, {
+          propertyId: property.id,
+          title: property.title,
+          actorName: property.agent?.fullName,
+        })
+        .catch(() => {});
+    }
     return toProperty(property);
   }
 

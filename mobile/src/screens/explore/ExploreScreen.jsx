@@ -27,6 +27,7 @@ import {AnimatedEntrance} from '../../components/ui/AnimatedEntrance';
 import {flattenPages, usePropertiesFeed} from '../../hooks/useProperties';
 import {useDebounced} from '../../hooks/useDebounced';
 import {useAuthStore} from '../../store/authStore';
+import {useUnreadCount} from '../../hooks/useNotifications';
 import {radius, spacing, useColors, useThemedStyles} from '../../theme';
 
 const LISTING_TABS = [
@@ -81,6 +82,8 @@ export function ExploreScreen({navigation}) {
   const c = useColors();
   const styles = useThemedStyles(makeStyles);
   const user = useAuthStore(s => s.user);
+  const {data: unread} = useUnreadCount();
+  const unreadCount = unread?.count ?? 0;
 
   const [search, setSearch] = useState('');
   const q = useDebounced(search.trim(), 400);
@@ -228,7 +231,13 @@ export function ExploreScreen({navigation}) {
           hitSlop={8}
           onPress={() => navigation.navigate('Notifications')}>
           <Icon name="bell" size={20} color={c.text} />
-          <View style={styles.bellDot} />
+          {unreadCount > 0 ? (
+            <View style={styles.bellBadge}>
+              <Text style={styles.bellBadgeText}>
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </Text>
+            </View>
+          ) : null}
         </Pressable>
       </View>
 
@@ -603,17 +612,21 @@ const makeStyles = c =>
       alignItems: 'center',
       justifyContent: 'center',
     },
-    bellDot: {
+    bellBadge: {
       position: 'absolute',
-      top: 10,
-      right: 11,
-      width: 9,
-      height: 9,
-      borderRadius: 5,
+      top: 5,
+      right: 5,
+      minWidth: 17,
+      height: 17,
+      borderRadius: 9,
       backgroundColor: c.gold,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: 4,
       borderWidth: 1.5,
       borderColor: c.surface,
     },
+    bellBadgeText: {color: c.onGold, fontSize: 9.5, fontWeight: '800'},
     list: {paddingHorizontal: spacing.md, paddingBottom: spacing.xxl},
     headerWrap: {paddingTop: spacing.xs},
     hello: {color: c.textMuted, fontSize: 14, marginTop: spacing.sm},

@@ -8,6 +8,12 @@ node_modules/
 **/.env
 !**/.env.example
 
+# firebase service account (push notifications)
+firebase-service-account.json
+**/firebase-service-account.json
+google-services.json
+**/google-services.json
+
 # build outputs
 dist/
 build/

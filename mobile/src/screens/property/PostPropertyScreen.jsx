@@ -93,6 +93,7 @@ export function PostPropertyScreen({navigation}) {
       await createProperty(payload);
       qc.invalidateQueries({queryKey: ['my-properties']});
       qc.invalidateQueries({queryKey: ['properties']});
+      qc.invalidateQueries({queryKey: ['notifications']});
       Alert.alert('Submitted ✓', 'Aapki listing review ke liye bhej di gayi hai. Verify hone par live ho jayegi.', [
         {text: 'OK', onPress: () => navigation.goBack()},
       ]);

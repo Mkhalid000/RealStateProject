@@ -1,95 +1,101 @@
-import React, {useState} from 'react';
-import {Image, Pressable, ScrollView, StyleSheet, Text, View} from 'react-native';
+import React from 'react';
+import {
+  Image,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {Icon} from '../../components/ui/Icon';
+import {Loader} from '../../components/ui/Loader';
 import {EmptyState} from '../../components/ui/EmptyState';
 import {AnimatedEntrance} from '../../components/ui/AnimatedEntrance';
+import {
+  useMarkAllRead,
+  useNotifications,
+} from '../../hooks/useNotifications';
 import {radius, spacing, useColors, useThemedStyles} from '../../theme';
 
-const img = id =>
-  `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=200&q=70`;
-
-/** Static demo notifications until the backend feed is wired in. */
-const SEED = [
-  {
-    id: '1',
-    type: 'property',
-    title: 'Listing approved',
-    body: 'Your property “Luxury 4BHK Villa — Jubilee Hills” is now live.',
-    time: '2m ago',
-    unread: true,
-    image: img('1600596542815-ffad4c1539a9'),
-  },
-  {
-    id: '2',
-    type: 'reel',
-    title: 'New reel posted',
-    body: 'Aurevia Luxury Estates shared a new reel of a sea-facing penthouse.',
-    time: '1h ago',
-    unread: true,
-    image: img('1600607687939-ce8a6c25118c'),
-  },
-  {
-    id: '3',
-    type: 'property',
-    title: 'Property under review',
-    body: '“2BHK Apartment — Bandra West” was submitted and is pending verification.',
-    time: '3h ago',
-    unread: true,
-    image: img('1600585154340-be6161a56a0c'),
-  },
-  {
-    id: '4',
-    type: 'saved',
-    title: 'Price drop on a saved home',
-    body: 'A property you saved dropped by 8%. Check it out before it’s gone.',
-    time: 'Yesterday',
-    unread: false,
-    image: img('1600566753086-00f18fb6b3ea'),
-  },
-  {
-    id: '5',
-    type: 'reel',
-    title: 'Trending reel',
-    body: 'A villa tour you might like is trending in Hyderabad right now.',
-    time: '2d ago',
-    unread: false,
-    image: img('1613490493576-7fde63acd811'),
-  },
-  {
-    id: '6',
-    type: 'system',
-    title: 'Welcome to AUREVIA',
-    body: 'Discover, save and post premium properties — all in one place.',
-    time: '5d ago',
-    unread: false,
-    image: null,
-  },
-];
-
 const META = {
-  property: {icon: 'home'},
-  reel: {icon: 'film'},
-  saved: {icon: 'heart'},
+  property_status: {icon: 'home'},
+  new_property: {icon: 'home'},
+  new_reel: {icon: 'film'},
+  like: {icon: 'heart'},
+  comment: {icon: 'message-circle'},
+  follow: {icon: 'user'},
+  message: {icon: 'message-circle'},
   system: {icon: 'sparkles'},
 };
+
+/** Build a human title/body from a stored notification. */
+function present(n) {
+  const p = n.payload || {};
+  const title = p.title || 'Property';
+  switch (n.type) {
+    case 'property_status': {
+      if (p.status === 'verified') {
+        return {head: 'Listing approved', body: `“${title}” is now live.`};
+      }
+      if (p.status === 'rejected') {
+        return {
+          head: 'Listing rejected',
+          body: `“${title}” wasn’t approved. Review & resubmit.`,
+        };
+      }
+      return {
+        head: 'Listing submitted',
+        body: `“${title}” is pending admin verification.`,
+      };
+    }
+    case 'new_property':
+      return {
+        head: 'New property listed',
+        body: p.actorName
+          ? `${p.actorName} just listed “${title}”.`
+          : `A new property “${title}” was listed.`,
+      };
+    case 'new_reel':
+      return p.self
+        ? {head: 'Reel posted', body: 'Your reel is now live.'}
+        : {head: 'New reel posted', body: 'A new property reel was shared.'};
+    case 'like':
+      return {head: 'New like', body: 'Someone liked your reel.'};
+    case 'comment':
+      return {head: 'New comment', body: 'Someone commented on your reel.'};
+    case 'follow':
+      return {head: 'New follower', body: 'You have a new follower.'};
+    case 'message':
+      return {head: 'New message', body: 'You have a new message.'};
+    default:
+      return {head: 'AUREVIA', body: 'You have a new notification.'};
+  }
+}
+
+function timeAgo(iso) {
+  const d = (Date.now() - new Date(iso).getTime()) / 1000;
+  if (d < 60) return 'just now';
+  if (d < 3600) return `${Math.floor(d / 60)}m ago`;
+  if (d < 86400) return `${Math.floor(d / 3600)}h ago`;
+  if (d < 604800) return `${Math.floor(d / 86400)}d ago`;
+  return new Date(iso).toLocaleDateString();
+}
 
 export function NotificationsScreen({navigation}) {
   const c = useColors();
   const styles = useThemedStyles(makeStyles);
-  const [items, setItems] = useState(SEED);
+  const {data: items = [], isLoading, isError, refetch, isRefetching} =
+    useNotifications();
+  const markAll = useMarkAllRead();
 
-  const unreadCount = items.filter(n => n.unread).length;
-  const markAllRead = () => setItems(list => list.map(n => ({...n, unread: false})));
+  const unreadCount = items.filter(n => !n.readAt).length;
 
   return (
     <SafeAreaView style={styles.root} edges={['top']}>
-      {/* header */}
       <View style={styles.header}>
-        <Pressable
-          style={styles.iconBtn}
-          hitSlop={8}
-          onPress={() => navigation.goBack()}>
+        <Pressable style={styles.iconBtn} hitSlop={8} onPress={() => navigation.goBack()}>
           <Icon name="chevron-left" size={22} color={c.text} strokeWidth={2.2} />
         </Pressable>
         <View style={styles.headerCenter}>
@@ -99,7 +105,7 @@ export function NotificationsScreen({navigation}) {
           ) : null}
         </View>
         {unreadCount > 0 ? (
-          <Pressable hitSlop={8} onPress={markAllRead}>
+          <Pressable hitSlop={8} onPress={() => markAll.mutate()}>
             <Text style={styles.markAll}>Mark all</Text>
           </Pressable>
         ) : (
@@ -107,30 +113,49 @@ export function NotificationsScreen({navigation}) {
         )}
       </View>
 
-      {items.length === 0 ? (
+      {isLoading ? (
+        <Loader fullscreen />
+      ) : items.length === 0 ? (
         <EmptyState
           icon="🔔"
-          title="No notifications"
-          subtitle="You’re all caught up. New updates will show up here."
+          title={isError ? 'Couldn’t load' : 'No notifications'}
+          subtitle={
+            isError
+              ? 'Check your connection and try again.'
+              : 'You’re all caught up. New updates will show here.'
+          }
+          actionLabel={isError ? 'Retry' : undefined}
+          onAction={isError ? refetch : undefined}
         />
       ) : (
         <ScrollView
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.list}>
+          contentContainerStyle={styles.list}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefetching}
+              onRefresh={refetch}
+              tintColor={c.gold}
+              colors={[c.gold]}
+            />
+          }>
           {items.map((n, i) => {
             const meta = META[n.type] || META.system;
+            const {head, body} = present(n);
+            const image = n.payload?.image || null;
+            const unread = !n.readAt;
             return (
-              <AnimatedEntrance key={n.id} delay={Math.min(i, 8) * 45}>
+              <AnimatedEntrance key={n.id} delay={Math.min(i, 8) * 40}>
                 <Pressable
-                  style={[styles.row, n.unread && styles.rowUnread]}
-                  onPress={() =>
-                    setItems(list =>
-                      list.map(x => (x.id === n.id ? {...x, unread: false} : x)),
-                    )
-                  }>
+                  style={[styles.row, unread && styles.rowUnread]}
+                  onPress={() => {
+                    if (n.payload?.propertyId) {
+                      navigation.navigate('PropertyDetail', {id: n.payload.propertyId});
+                    }
+                  }}>
                   <View style={styles.thumbWrap}>
-                    {n.image ? (
-                      <Image source={{uri: n.image}} style={styles.thumb} />
+                    {image ? (
+                      <Image source={{uri: image}} style={styles.thumb} />
                     ) : (
                       <View style={[styles.thumb, styles.thumbFallback]}>
                         <Icon name={meta.icon} size={20} color={c.gold} />
@@ -143,14 +168,14 @@ export function NotificationsScreen({navigation}) {
                   <View style={styles.rowBody}>
                     <View style={styles.rowTop}>
                       <Text style={styles.rowTitle} numberOfLines={1}>
-                        {n.title}
+                        {head}
                       </Text>
-                      {n.unread ? <View style={styles.unreadDot} /> : null}
+                      {unread ? <View style={styles.unreadDot} /> : null}
                     </View>
                     <Text style={styles.rowText} numberOfLines={2}>
-                      {n.body}
+                      {body}
                     </Text>
-                    <Text style={styles.rowTime}>{n.time}</Text>
+                    <Text style={styles.rowTime}>{timeAgo(n.createdAt)}</Text>
                   </View>
                 </Pressable>
               </AnimatedEntrance>
@@ -166,6 +191,7 @@ export function NotificationsScreen({navigation}) {
 const makeStyles = c =>
   StyleSheet.create({
     root: {flex: 1, backgroundColor: c.bg},
+    center: {flex: 1, alignItems: 'center', justifyContent: 'center'},
     header: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -201,12 +227,7 @@ const makeStyles = c =>
       backgroundColor: c.isDark ? c.surfaceAlt : c.surface,
     },
     thumbWrap: {width: 54, height: 54},
-    thumb: {
-      width: 54,
-      height: 54,
-      borderRadius: 12,
-      backgroundColor: c.surface2,
-    },
+    thumb: {width: 54, height: 54, borderRadius: 12, backgroundColor: c.surface2},
     thumbFallback: {
       backgroundColor: c.goldFaint,
       alignItems: 'center',

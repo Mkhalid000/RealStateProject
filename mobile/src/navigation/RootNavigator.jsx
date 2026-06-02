@@ -10,6 +10,7 @@ import {AuthNavigator} from './AuthNavigator';
 import {AppNavigator} from './AppNavigator';
 import {SplashScreen} from '../screens/SplashScreen';
 import {useColors} from '../theme';
+import {navigationRef} from '../../App';
 
 export function RootNavigator() {
   useAuthInit();
@@ -40,7 +41,7 @@ export function RootNavigator() {
   }
 
   return (
-    <NavigationContainer theme={navTheme}>
+    <NavigationContainer ref={navigationRef} theme={navTheme}>
       {user ? <AppNavigator /> : <AuthNavigator />}
     </NavigationContainer>
   );
