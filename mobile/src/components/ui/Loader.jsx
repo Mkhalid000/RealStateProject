@@ -1,5 +1,5 @@
 import React, {useEffect, useRef} from 'react';
-import {Animated, Easing, StyleSheet, Text, View} from 'react-native';
+import {Animated, Dimensions, Easing, StyleSheet, Text, View} from 'react-native';
 import Svg, {Circle, Defs, LinearGradient, Stop} from 'react-native-svg';
 import {Logo} from './Logo';
 import {spacing, useColors, useThemedStyles} from '../../theme';
@@ -203,7 +203,8 @@ const makeStyles = c =>
     dot: {backgroundColor: c.gold},
     inline: {alignItems: 'center', justifyContent: 'center', gap: spacing.sm},
     fullscreen: {
-      flex: 1,
+      width: Dimensions.get('window').width,
+      height: Dimensions.get('window').height,
       alignItems: 'center',
       justifyContent: 'center',
       backgroundColor: c.bg,

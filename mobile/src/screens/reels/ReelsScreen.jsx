@@ -1,12 +1,12 @@
 import React, {useCallback, useRef, useState} from 'react';
-import {Dimensions, FlatList, StyleSheet, Text, View} from 'react-native';
+import {Dimensions, FlatList, StyleSheet, View} from 'react-native';
+import {SafeAreaView} from 'react-native-safe-area-context';
 import {useIsFocused} from '@react-navigation/native';
 import {EmptyState} from '../../components/ui/EmptyState';
 import {Loader} from '../../components/ui/Loader';
 import {ReelItem} from './ReelItem';
 import {flattenPages} from '../../hooks/useProperties';
 import {useReelFeed} from '../../hooks/useReels';
-import {colors} from '../../theme';
 
 export function ReelsScreen({navigation}) {
   const isFocused = useIsFocused();
@@ -17,7 +17,11 @@ export function ReelsScreen({navigation}) {
     useReelFeed();
   const items = flattenPages(data);
 
-  const viewabilityConfig = useRef({itemVisiblePercentThreshold: 80}).current;
+  const viewabilityConfig = useRef({
+    itemVisiblePercentThreshold: 80,
+    minimumViewTime: 100,
+  }).current;
+
   const onViewableItemsChanged = useRef(({viewableItems}) => {
     if (viewableItems.length > 0) {
       setActiveIndex(viewableItems[0].index ?? 0);
@@ -30,20 +34,27 @@ export function ReelsScreen({navigation}) {
         reel={item}
         height={height}
         active={isFocused && index === activeIndex}
-        onOpenProperty={id =>
-          navigation.navigate('PropertyDetail', {id})
-        }
+        onOpenProperty={id => navigation.navigate('PropertyDetail', {id})}
       />
     ),
     [height, isFocused, activeIndex, navigation],
   );
 
+  const keyExtractor = useCallback(r => r.id, []);
+
+  const getItemLayout = useCallback(
+    (_, index) => ({length: height, offset: height * index, index}),
+    [height],
+  );
+
+  const onEndReached = useCallback(() => {
+    if (hasNextPage) {
+      fetchNextPage();
+    }
+  }, [hasNextPage, fetchNextPage]);
+
   if (isLoading) {
-    return (
-      <View style={styles.center}>
-        <Loader size={48} />
-      </View>
-    );
+    return <Loader fullscreen />;
   }
 
   if (isError || items.length === 0) {
@@ -51,11 +62,11 @@ export function ReelsScreen({navigation}) {
       <View style={styles.center}>
         <EmptyState
           icon="🎬"
-          title={isError ? 'Couldn’t load reels' : 'No reels yet'}
+          title={isError ? "Couldn't load reels" : 'No reels yet'}
           subtitle={
             isError
               ? 'Check your connection and try again.'
-              : 'Agents haven’t posted any reels yet. Check back soon.'
+              : "Agents haven't posted any reels yet. Check back soon."
           }
           actionLabel="Refresh"
           onAction={refetch}
@@ -70,33 +81,34 @@ export function ReelsScreen({navigation}) {
       onLayout={e => setHeight(e.nativeEvent.layout.height)}>
       <FlatList
         data={items}
-        keyExtractor={r => r.id}
+        keyExtractor={keyExtractor}
         renderItem={renderItem}
         pagingEnabled
         showsVerticalScrollIndicator={false}
         snapToInterval={height}
         snapToAlignment="start"
         decelerationRate="fast"
+        // Performance
         windowSize={3}
-        maxToRenderPerBatch={3}
-        initialNumToRender={2}
+        maxToRenderPerBatch={2}
+        updateCellsBatchingPeriod={50}
+        initialNumToRender={1}
         removeClippedSubviews
-        getItemLayout={(_, index) => ({length: height, offset: height * index, index})}
+        getItemLayout={getItemLayout}
+        // Viewability
         viewabilityConfig={viewabilityConfig}
         onViewableItemsChanged={onViewableItemsChanged}
+        // Infinite scroll
         onEndReachedThreshold={0.5}
-        onEndReached={() => hasNextPage && fetchNextPage()}
+        onEndReached={onEndReached}
+        // Stability
+        disableIntervalMomentum
       />
-      <View style={styles.titleOverlay} pointerEvents="none">
-        <Text style={styles.title}>Reels</Text>
-      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   root: {flex: 1, backgroundColor: '#000'},
-  center: {flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center'},
-  titleOverlay: {position: 'absolute', top: 12, left: 0, right: 0, alignItems: 'center'},
-  title: {color: '#fff', fontSize: 18, fontWeight: '700', fontFamily: 'serif', textShadowColor: 'rgba(0,0,0,0.6)', textShadowRadius: 6},
+  center: {flex: 1, backgroundColor: '#1B1818', alignItems: 'center', justifyContent: 'center'},
 });

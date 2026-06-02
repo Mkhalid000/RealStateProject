@@ -86,6 +86,34 @@ const PATHS = {
       <Path d="M13.73 21a2 2 0 0 1-3.46 0" />
     </>
   ),
+  pause: (
+    <>
+      <Rect x="6" y="4" width="4" height="16" />
+      <Rect x="14" y="4" width="4" height="16" />
+    </>
+  ),
+  'volume-2': (
+    <>
+      <Path d="M11 5L6 9H2v6h4l5 4V5z" />
+      <Path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+      <Path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+    </>
+  ),
+  'volume-x': (
+    <>
+      <Path d="M11 5L6 9H2v6h4l5 4V5z" />
+      <Line x1="23" y1="9" x2="17" y2="15" />
+      <Line x1="17" y1="9" x2="23" y2="15" />
+    </>
+  ),
+  'user-plus': (
+    <>
+      <Path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+      <Circle cx="9" cy="7" r="4" />
+      <Line x1="19" y1="8" x2="19" y2="14" />
+      <Line x1="16" y1="11" x2="22" y2="11" />
+    </>
+  ),
   lock: (
     <>
       <Rect x="3" y="11" width="18" height="11" rx="2" />
