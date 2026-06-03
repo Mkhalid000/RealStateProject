@@ -6,6 +6,7 @@ import {PostPropertyScreen} from '../screens/property/PostPropertyScreen';
 import {MyPropertiesScreen} from '../screens/property/MyPropertiesScreen';
 import {SavedScreen} from '../screens/saved/SavedScreen';
 import {NotificationsScreen} from '../screens/notifications/NotificationsScreen';
+import {CreateReelScreen} from '../screens/reels/CreateReelScreen';
 import {HelpSupportScreen} from '../screens/support/HelpSupportScreen';
 import {useSavedStore} from '../store/savedStore';
 import {useColors} from '../theme';
@@ -44,6 +45,11 @@ export function AppNavigator() {
       <Stack.Screen
         name="Notifications"
         component={NotificationsScreen}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="CreateReel"
+        component={CreateReelScreen}
         options={{headerShown: false}}
       />
       <Stack.Screen

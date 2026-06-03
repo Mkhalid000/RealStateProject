@@ -1,5 +1,16 @@
 import {api} from './api';
 
+/** Create a new reel (agent/admin only). */
+export async function createReel({videoUrl, thumbnailUrl, caption, propertyId}) {
+  const {data} = await api.post('/reels', {
+    videoUrl,
+    ...(thumbnailUrl ? {thumbnailUrl} : {}),
+    ...(caption ? {caption} : {}),
+    ...(propertyId ? {propertyId} : {}),
+  });
+  return data;
+}
+
 /** Public reels feed (vertical video). */
 export async function fetchReelFeed(params = {}) {
   const {data} = await api.get('/reels/feed', {params});

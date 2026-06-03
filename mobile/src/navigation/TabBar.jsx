@@ -126,9 +126,9 @@ function AddActionsSheet({visible, onClose, navigation}) {
     navigation.navigate(screen);
   };
 
-  const comingSoon = () => {
+  const goCreateReel = () => {
     onClose();
-    Alert.alert('Coming soon', 'Reel creation is on its way.');
+    navigation.navigate('CreateReel');
   };
 
   return (
@@ -147,7 +147,7 @@ function AddActionsSheet({visible, onClose, navigation}) {
         <Icon name="chevron-right" size={20} color={c.textMuted} />
       </Pressable>
 
-      <Pressable style={styles.action} onPress={comingSoon}>
+      <Pressable style={styles.action} onPress={goCreateReel}>
         <View style={[styles.actionIcon, {backgroundColor: c.goldFaint}]}>
           <Icon name="film" size={22} color={c.gold} />
         </View>

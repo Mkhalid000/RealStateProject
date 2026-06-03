@@ -10,6 +10,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import {WebView} from 'react-native-webview';
 import Video from 'react-native-video';
 import {Avatar} from '../../components/ui/Avatar';
 import {Icon} from '../../components/ui/Icon';
@@ -26,6 +27,27 @@ import {
 import {useAuthStore} from '../../store/authStore';
 import {compactCount, money} from '../../lib/format';
 import {colors, radius, spacing} from '../../theme';
+
+/** Returns an iframe embed URL for YouTube/Vimeo, or null for direct files. */
+function getEmbedUrl(url) {
+  if (!url) return null;
+
+  // YouTube: youtube.com/watch?v=ID  or  youtu.be/ID
+  const ytMatch = url.match(
+    /(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/,
+  );
+  if (ytMatch) {
+    return `https://www.youtube.com/embed/${ytMatch[1]}?autoplay=1&playsinline=1&controls=1&rel=0`;
+  }
+
+  // Vimeo: vimeo.com/ID
+  const vmMatch = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+  if (vmMatch) {
+    return `https://player.vimeo.com/video/${vmMatch[1]}?autoplay=1&playsinline=1`;
+  }
+
+  return null; // direct file — use react-native-video
+}
 
 /** A single full-screen reel: looping video + gradient scrim + actions. */
 export function ReelItem({reel, height, active, onOpenProperty}) {
@@ -90,6 +112,7 @@ export function ReelItem({reel, height, active, onOpenProperty}) {
 
   const agent = reel.agent;
   const property = reel.property;
+  const embedUrl = getEmbedUrl(reel.videoUrl);
 
   return (
     <View style={[styles.page, {height}]}>
@@ -98,7 +121,18 @@ export function ReelItem({reel, height, active, onOpenProperty}) {
         style={StyleSheet.absoluteFill}
         onPress={onTapVideo}
         onLongPress={() => toggleLike(true)}>
-        {reel.videoUrl ? (
+        {embedUrl && active ? (
+          // YouTube / Vimeo — use WebView embed player
+          <WebView
+            source={{uri: embedUrl}}
+            style={StyleSheet.absoluteFill}
+            allowsInlineMediaPlayback
+            mediaPlaybackRequiresUserAction={false}
+            javaScriptEnabled
+            domStorageEnabled
+            onLoad={onLoad}
+          />
+        ) : reel.videoUrl && !embedUrl ? (
           <Video
             source={{uri: reel.videoUrl}}
             style={StyleSheet.absoluteFill}
@@ -129,6 +163,14 @@ export function ReelItem({reel, height, active, onOpenProperty}) {
         ) : (
           <View style={[StyleSheet.absoluteFill, styles.noVideo]} />
         )}
+        {/* Show thumbnail under WebView while loading */}
+        {embedUrl && reel.thumbnailUrl && buffering ? (
+          <Image
+            source={{uri: reel.thumbnailUrl}}
+            style={[StyleSheet.absoluteFill, {zIndex: -1}]}
+            resizeMode="cover"
+          />
+        ) : null}
       </Pressable>
 
       {/* ── buffering spinner ── */}
