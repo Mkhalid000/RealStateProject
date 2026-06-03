@@ -29,6 +29,14 @@ export function useMyProperties(verification = 'all') {
   });
 }
 
+export function usePropertiesByAgent(agentId) {
+  return useQuery({
+    queryKey: ['agent-properties', agentId],
+    queryFn: () => fetchProperties({agentId, limit: 50}),
+    enabled: !!agentId,
+  });
+}
+
 /** Flattens infinite-query pages into one item array. */
 export function flattenPages(data) {
   return data?.pages?.flatMap(p => p.items ?? []) ?? [];

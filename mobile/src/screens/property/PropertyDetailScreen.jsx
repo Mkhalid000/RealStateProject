@@ -1,4 +1,4 @@
-import React, {useRef, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {
   Animated,
   Dimensions,
@@ -6,8 +6,10 @@ import {
   Keyboard,
   Linking,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
@@ -24,6 +26,7 @@ import {useSavedStore} from '../../store/savedStore';
 import {createLead} from '../../lib/leads';
 import {apiErrorMessage} from '../../lib/api';
 import {useAuthStore} from '../../store/authStore';
+import {useRecentStore} from '../../store/recentStore';
 import {coverImage, listingLabel, locationLine, money} from '../../lib/format';
 import {radius, spacing, useColors, useThemedStyles} from '../../theme';
 
@@ -52,7 +55,14 @@ export function PropertyDetailScreen({route, navigation}) {
   const [sent, setSent] = useState(false);
   const [leadError, setLeadError] = useState('');
   const [enquiryOpen, setEnquiryOpen] = useState(false);
+  const [emiOpen, setEmiOpen] = useState(false);
   const setL = (k, v) => setLead(f => ({...f, [k]: v}));
+
+  const pushRecent = useRecentStore(s => s.push);
+  useEffect(() => {
+    if (property) pushRecent(property);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [property?.id]);
 
   async function submitLead() {
     if (!lead.name.trim() || !(lead.email.trim() || lead.phone.trim())) {
@@ -263,6 +273,22 @@ export function PropertyDetailScreen({route, navigation}) {
                 ))}
               </View>
             ) : null}
+
+            {/* EMI Calculator shortcut */}
+            {property.listingType !== 'rent' ? (
+              <Pressable
+                style={({pressed}) => [styles.emiRow, pressed && {opacity: 0.7}]}
+                onPress={() => setEmiOpen(true)}>
+                <View style={styles.emiIconWrap}>
+                  <Icon name="calculator" size={15} color={c.gold} />
+                </View>
+                <View style={{flex: 1}}>
+                  <Text style={styles.emiLabel}>EMI Calculator</Text>
+                  <Text style={styles.emiSub}>Estimate your monthly payment</Text>
+                </View>
+                <Icon name="chevron-right" size={16} color={c.textDim} />
+              </Pressable>
+            ) : null}
           </View>
 
           {specs.length ? (
@@ -337,7 +363,9 @@ export function PropertyDetailScreen({route, navigation}) {
 
           {agent ? (
             <Section title="Listed by">
-              <View style={styles.agentCard}>
+              <Pressable
+                style={styles.agentCard}
+                onPress={() => navigation.navigate('AgentProfile', {agent, propertyId: property.id})}>
                 <View style={styles.agentRow}>
                   <Avatar uri={agent.avatarUrl} name={agent.fullName} size={52} ring />
                   <View style={{flex: 1}}>
@@ -360,7 +388,7 @@ export function PropertyDetailScreen({route, navigation}) {
                 {agent.bio ? (
                   <Text style={styles.agentBio}>{agent.bio}</Text>
                 ) : null}
-              </View>
+              </Pressable>
             </Section>
           ) : null}
         </View>
@@ -485,6 +513,87 @@ export function PropertyDetailScreen({route, navigation}) {
           </>
         )}
       </BottomSheet>
+
+      {/* EMI Calculator sheet */}
+      <EmiSheet
+        visible={emiOpen}
+        onClose={() => setEmiOpen(false)}
+        price={property?.price}
+        currency={property?.currency}
+      />
+    </View>
+  );
+}
+
+function EmiSheet({visible, onClose, price, currency = 'USD'}) {
+  const c = useColors();
+  const styles = useThemedStyles(makeStyles);
+  const [rate, setRate] = useState('8.5');
+  const [tenure, setTenure] = useState('20');
+  const [downPct, setDownPct] = useState('20');
+
+  const principal = Math.max(0, (Number(price) || 0) * (1 - Number(downPct) / 100));
+  const r = Number(rate) / 12 / 100;
+  const n = Number(tenure) * 12;
+  const emi = r > 0 && n > 0
+    ? (principal * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1)
+    : principal / (n || 1);
+  const totalPayment = emi * n;
+  const totalInterest = totalPayment - principal;
+
+  return (
+    <BottomSheet visible={visible} onClose={onClose}>
+      <Text style={styles.sheetTitle}>EMI Calculator</Text>
+      <Text style={styles.emiSheetSub}>
+        Price: {money(price, currency)}
+      </Text>
+
+      <ScrollView showsVerticalScrollIndicator={false}>
+        {/* Result card */}
+        <View style={styles.emiResultCard}>
+          <Text style={styles.emiResultLabel}>Monthly EMI</Text>
+          <Text style={styles.emiResultValue}>{money(emi, currency)}</Text>
+          <View style={styles.emiBreakRow}>
+            <EmiBreak label="Principal" value={money(principal, currency)} c={c} />
+            <EmiBreak label="Total Interest" value={money(totalInterest, currency)} c={c} accent />
+            <EmiBreak label="Total Payment" value={money(totalPayment, currency)} c={c} />
+          </View>
+        </View>
+
+        {/* Inputs */}
+        <EmiInput label="Down Payment (%)" value={downPct} onChangeText={setDownPct} keyboardType="numeric" />
+        <EmiInput label="Interest Rate (% p.a.)" value={rate} onChangeText={setRate} keyboardType="numeric" />
+        <EmiInput label="Loan Tenure (years)" value={tenure} onChangeText={setTenure} keyboardType="numeric" />
+
+        <View style={{height: spacing.md}} />
+      </ScrollView>
+    </BottomSheet>
+  );
+}
+
+function EmiInput({label, value, onChangeText, keyboardType}) {
+  const c = useColors();
+  const styles = useThemedStyles(makeStyles);
+  return (
+    <View style={styles.emiInputWrap}>
+      <Text style={styles.emiInputLabel}>{label}</Text>
+      <TextInput
+        style={styles.emiInput}
+        value={value}
+        onChangeText={onChangeText}
+        keyboardType={keyboardType}
+        selectTextOnFocus
+        placeholderTextColor={c.textDim}
+      />
+    </View>
+  );
+}
+
+function EmiBreak({label, value, c, accent}) {
+  return (
+    <View style={{alignItems: 'center', flex: 1}}>
+      <Text style={{color: accent ? c.gold : c.textMuted, fontSize: 11, fontWeight: '600'}}>{label}</Text>
+      <Text style={{color: accent ? c.gold : c.text, fontSize: 13, fontWeight: '700', marginTop: 2}}>{value}</Text>
     </View>
   );
 }
@@ -775,4 +884,53 @@ const makeStyles = c =>
       justifyContent: 'center',
     },
     ctaBtnPrimary: {flex: 1},
+
+    // EMI row in price card
+    emiRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.sm,
+      marginTop: spacing.md,
+      paddingTop: spacing.md,
+      borderTopWidth: 1,
+      borderTopColor: c.borderSoft,
+    },
+    emiIconWrap: {
+      width: 36,
+      height: 36,
+      borderRadius: radius.md,
+      backgroundColor: c.goldFaint,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    emiLabel: {color: c.text, fontSize: 14, fontWeight: '700'},
+    emiSub: {color: c.textMuted, fontSize: 12, marginTop: 1},
+
+    // EMI sheet
+    emiSheetSub: {color: c.textMuted, fontSize: 13, marginBottom: spacing.md},
+    emiResultCard: {
+      backgroundColor: c.goldFaint,
+      borderRadius: radius.lg,
+      borderWidth: 1,
+      borderColor: 'rgba(201,137,59,0.3)',
+      padding: spacing.md,
+      alignItems: 'center',
+      marginBottom: spacing.md,
+    },
+    emiResultLabel: {color: c.gold, fontSize: 12, fontWeight: '700', letterSpacing: 0.6, textTransform: 'uppercase'},
+    emiResultValue: {color: c.text, fontSize: 32, fontWeight: '800', fontFamily: 'serif', marginTop: 4, marginBottom: spacing.md},
+    emiBreakRow: {flexDirection: 'row', width: '100%', borderTopWidth: 1, borderTopColor: 'rgba(201,137,59,0.2)', paddingTop: spacing.sm, gap: 4},
+    emiInputWrap: {marginBottom: spacing.sm},
+    emiInputLabel: {color: c.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 0.6, textTransform: 'uppercase', marginBottom: 6},
+    emiInput: {
+      height: 46,
+      borderRadius: radius.md,
+      borderWidth: 1,
+      borderColor: c.borderSoft,
+      backgroundColor: c.surface,
+      paddingHorizontal: spacing.md,
+      color: c.text,
+      fontSize: 16,
+      fontWeight: '600',
+    },
   });

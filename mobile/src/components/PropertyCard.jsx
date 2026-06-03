@@ -21,8 +21,9 @@ import {useSavedStore} from '../store/savedStore';
 
 /** Premium property card used across Explore / Saved / Profile lists.
  * Pass `statusBadge` to overlay a verification status on the image.
- * Pass `onDelete` to show a trash icon inline with the type chip. */
-export function PropertyCard({property, onPress, style, statusBadge, onDelete}) {
+ * Pass `onDelete` to show a trash icon inline with the type chip.
+ * Pass `onCompare` to show a compare toggle button. */
+export function PropertyCard({property, onPress, style, statusBadge, onDelete, onCompare, compareSelected}) {
   const c = useColors();
   const styles = useThemedStyles(makeStyles);
   const scale = useRef(new Animated.Value(1)).current;
@@ -184,6 +185,14 @@ export function PropertyCard({property, onPress, style, statusBadge, onDelete}) 
                   hitSlop={8}
                   onPress={onDelete}>
                   <Icon name="trash-2" size={15} color={c.danger} />
+                </Pressable>
+              ) : null}
+              {onCompare ? (
+                <Pressable
+                  style={({pressed}) => [styles.compareBtn, compareSelected && styles.compareBtnActive, pressed && {opacity: 0.7}]}
+                  hitSlop={8}
+                  onPress={onCompare}>
+                  <Icon name="layers" size={13} color={compareSelected ? c.onGold : c.textDim} />
                 </Pressable>
               ) : null}
             </View>
@@ -385,6 +394,17 @@ const makeStyles = c =>
       alignItems: 'center',
       justifyContent: 'center',
     },
+    compareBtn: {
+      width: 30,
+      height: 30,
+      borderRadius: radius.sm,
+      backgroundColor: c.surfaceAlt,
+      borderWidth: 1,
+      borderColor: c.borderSoft,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    compareBtnActive: {backgroundColor: c.gold, borderColor: c.gold},
     // Status overlay on image
     statusTag: {
       flexDirection: 'row',

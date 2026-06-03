@@ -3,6 +3,7 @@ import {
   Animated,
   Easing,
   FlatList,
+  Image,
   Platform,
   Pressable,
   RefreshControl,
@@ -28,6 +29,10 @@ import {flattenPages, usePropertiesFeed} from '../../hooks/useProperties';
 import {useDebounced} from '../../hooks/useDebounced';
 import {useAuthStore} from '../../store/authStore';
 import {useUnreadCount} from '../../hooks/useNotifications';
+import {useRecentStore} from '../../store/recentStore';
+import {useCompareStore} from '../../store/compareStore';
+import {useSavedSearchStore} from '../../store/savedSearchStore';
+import {coverImage, money} from '../../lib/format';
 import {radius, spacing, useColors, useThemedStyles} from '../../theme';
 
 const LISTING_TABS = [
@@ -95,6 +100,30 @@ export function ExploreScreen({navigation}) {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [draft, setDraft] = useState(DEFAULTS);
 
+  // Recently viewed
+  const recentItems = useRecentStore(s => s.items);
+  const loadRecent = useRecentStore(s => s.load);
+  const recentLoaded = useRecentStore(s => s.loaded);
+
+  // Compare
+  const compareItems = useCompareStore(s => s.items);
+  const compareToggle = useCompareStore(s => s.toggle);
+  const compareIsSelected = useCompareStore(s => s.isSelected);
+  const compareIsFull = useCompareStore(s => s.isFull);
+  const compareClear = useCompareStore(s => s.clear);
+
+  // Saved searches
+  const savedSearches = useSavedSearchStore(s => s.searches);
+  const loadSavedSearches = useSavedSearchStore(s => s.load);
+  const removeSavedSearch = useSavedSearchStore(s => s.remove);
+  const saveSearch = useSavedSearchStore(s => s.save);
+  const savedSearchLoaded = useSavedSearchStore(s => s.loaded);
+
+  useEffect(() => {
+    if (!recentLoaded) loadRecent();
+    if (!savedSearchLoaded) loadSavedSearches();
+  }, [recentLoaded, loadRecent, savedSearchLoaded, loadSavedSearches]);
+
   const priceRange = PRICE_RANGES.find(p => p.key === applied.priceKey) || PRICE_RANGES[0];
 
   const filters = useMemo(
@@ -147,9 +176,6 @@ export function ExploreScreen({navigation}) {
 
   const header = (
     <View style={styles.headerWrap}>
-      {/* <Text style={styles.hello}>
-        Hello{user?.fullName ? `, ${user.fullName.split(' ')[0]}` : ''}
-      </Text> */}
       <Text style={styles.heading}>Find your{'\n'}perfect space</Text>
 
       {/* Search + Filters trigger */}
@@ -171,7 +197,7 @@ export function ExploreScreen({navigation}) {
           ) : null}
         </View>
 
-        <Pressable style={styles.filterBtn} onPress={openSheet}>
+        <Pressable style={[styles.filterBtn, activeCount > 0 && styles.filterBtnActive]} onPress={openSheet}>
           <Icon name="sliders" size={20} color={activeCount ? c.onGold : c.text} />
           {activeCount ? (
             <View style={styles.filterDot}>
@@ -181,6 +207,59 @@ export function ExploreScreen({navigation}) {
         </Pressable>
       </View>
 
+      {/* Saved searches */}
+      {savedSearches.length > 0 && (
+        <View style={styles.savedSection}>
+          <View style={styles.savedHeader}>
+            <Icon name="bookmark" size={13} color={c.gold} />
+            <Text style={styles.savedTitle}>Saved Searches</Text>
+          </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.savedRow}>
+            {savedSearches.map(s => (
+              <Pressable
+                key={s.id}
+                style={styles.savedChip}
+                onPress={() => {
+                  if (s.filters.query) setSearch(s.filters.query);
+                  setApplied({...DEFAULTS, ...s.filters});
+                }}>
+                <Text style={styles.savedChipText} numberOfLines={1}>{s.label}</Text>
+                <Pressable onPress={() => removeSavedSearch(s.id)} hitSlop={6}>
+                  <Icon name="x" size={11} color={c.textMuted} />
+                </Pressable>
+              </Pressable>
+            ))}
+          </ScrollView>
+        </View>
+      )}
+
+      {/* Recently Viewed */}
+      {recentItems.length > 0 && (
+        <View style={styles.recentSection}>
+          <View style={styles.recentHeader}>
+            <Text style={styles.recentTitle}>Recently Viewed</Text>
+            <Pressable onPress={() => useRecentStore.getState().clear()} hitSlop={8}>
+              <Text style={styles.recentClear}>Clear</Text>
+            </Pressable>
+          </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.recentRow}>
+            {recentItems.slice(0, 8).map(p => (
+              <Pressable
+                key={p.id}
+                style={styles.recentCard}
+                onPress={() => navigation.navigate('PropertyDetail', {id: p.id})}>
+                <View style={styles.recentImgWrap}>
+                  {coverImage(p) ? (
+                    <Image source={{uri: coverImage(p)}} style={styles.recentImg} />
+                  ) : null}
+                </View>
+                <Text style={styles.recentCardTitle} numberOfLines={1}>{p.title}</Text>
+                <Text style={styles.recentCardPrice}>{money(p.price, p.currency)}</Text>
+              </Pressable>
+            ))}
+          </ScrollView>
+        </View>
+      )}
     </View>
   );
 
@@ -262,9 +341,9 @@ export function ExploreScreen({navigation}) {
               <PropertyCard
                 property={item}
                 style={styles.card}
-                onPress={() =>
-                  navigation.navigate('PropertyDetail', {id: item.id, title: item.title})
-                }
+                onPress={() => navigation.navigate('PropertyDetail', {id: item.id, title: item.title})}
+                onCompare={() => compareToggle(item)}
+                compareSelected={compareIsSelected(item.id)}
               />
             </AnimatedEntrance>
           )}
@@ -317,9 +396,36 @@ export function ExploreScreen({navigation}) {
         draft={draft}
         setDraft={setDraft}
         onClose={() => setSheetOpen(false)}
-        onApply={applyDraft}
+        onApply={() => {
+          applyDraft();
+          // Save search if any filter is active
+          const hasFilter = draft.listingType || draft.type || draft.bhk != null || draft.priceKey !== 'any' || q;
+          if (hasFilter) {
+            saveSearch({...draft, query: search.trim(), priceRange: PRICE_RANGES.find(p => p.key === draft.priceKey)});
+          }
+        }}
         onReset={() => setDraft(DEFAULTS)}
       />
+
+      {/* Floating compare bar */}
+      {compareItems.length > 0 && (
+        <Pressable
+          style={styles.compareBar}
+          onPress={() => navigation.navigate('Compare')}>
+          <View style={styles.compareBarLeft}>
+            <Icon name="layers" size={16} color={c.onGold} />
+            <Text style={styles.compareBarText}>
+              Compare {compareItems.length} {compareItems.length === 1 ? 'property' : 'properties'}
+            </Text>
+          </View>
+          <View style={styles.compareBarRight}>
+            <Text style={styles.compareBarAction}>View →</Text>
+            <Pressable onPress={compareClear} hitSlop={8} style={styles.compareBarX}>
+              <Icon name="x" size={14} color={c.onGold} />
+            </Pressable>
+          </View>
+        </Pressable>
+      )}
     </View>
   );
 }
@@ -685,6 +791,59 @@ const makeStyles = c =>
       borderColor: c.bg,
     },
     filterDotText: {color: c.onGold, fontSize: 11, fontWeight: '800'},
+    filterBtnActive: {backgroundColor: c.gold, borderColor: c.gold},
+
+    // Saved searches
+    savedSection: {marginTop: spacing.md},
+    savedHeader: {flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: spacing.sm},
+    savedTitle: {color: c.textDim, fontSize: 12, fontWeight: '700', letterSpacing: 0.5, textTransform: 'uppercase'},
+    savedRow: {gap: spacing.sm, paddingBottom: 2},
+    savedChip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      height: 32,
+      paddingHorizontal: spacing.sm,
+      borderRadius: radius.pill,
+      backgroundColor: c.surface,
+      borderWidth: 1,
+      borderColor: c.borderSoft,
+      maxWidth: 180,
+    },
+    savedChipText: {color: c.text, fontSize: 12.5, fontWeight: '600', flex: 1},
+
+    // Recently viewed
+    recentSection: { },
+    recentHeader: {flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.sm},
+    recentTitle: {color: c.text, fontSize: 15, fontWeight: '700'},
+    recentClear: {color: c.textMuted, fontSize: 12, fontWeight: '600'},
+    recentRow: {gap: spacing.sm, paddingBottom: 2},
+    recentCard: {width: 130, backgroundColor: c.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: c.borderSoft, overflow: 'hidden'},
+    recentImgWrap: {height: 80, backgroundColor: c.surface2},
+    recentImg: {width: '100%', height: '100%'},
+    recentCardTitle: {color: c.text, fontSize: 11.5, fontWeight: '600', padding: spacing.sm, paddingBottom: 2},
+    recentCardPrice: {color: c.gold, fontSize: 11, fontWeight: '700', paddingHorizontal: spacing.sm, paddingBottom: spacing.sm},
+
+    // Compare floating bar
+    compareBar: {
+      position: 'absolute',
+      bottom: spacing.lg,
+      left: spacing.md,
+      right: spacing.md,
+      backgroundColor: c.gold,
+      borderRadius: radius.pill,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: spacing.md,
+      paddingVertical: 12,
+      ...require('../../theme').shadow.card,
+    },
+    compareBarLeft: {flexDirection: 'row', alignItems: 'center', gap: 8},
+    compareBarText: {color: c.onGold, fontSize: 14, fontWeight: '700'},
+    compareBarRight: {flexDirection: 'row', alignItems: 'center', gap: spacing.sm},
+    compareBarAction: {color: c.onGold, fontSize: 13, fontWeight: '700'},
+    compareBarX: {width: 24, height: 24, borderRadius: 12, backgroundColor: 'rgba(0,0,0,0.15)', alignItems: 'center', justifyContent: 'center'},
     resultsLabel: {
       color: c.textMuted,
       fontSize: 13,

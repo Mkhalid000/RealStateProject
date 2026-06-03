@@ -8,6 +8,8 @@ import {SavedScreen} from '../screens/saved/SavedScreen';
 import {NotificationsScreen} from '../screens/notifications/NotificationsScreen';
 import {CreateReelScreen} from '../screens/reels/CreateReelScreen';
 import {HelpSupportScreen} from '../screens/support/HelpSupportScreen';
+import {CompareScreen} from '../screens/property/CompareScreen';
+import {AgentProfileScreen} from '../screens/agent/AgentProfileScreen';
 import {useSavedStore} from '../store/savedStore';
 import {useColors} from '../theme';
 
@@ -55,6 +57,16 @@ export function AppNavigator() {
       <Stack.Screen
         name="HelpSupport"
         component={HelpSupportScreen}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="Compare"
+        component={CompareScreen}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="AgentProfile"
+        component={AgentProfileScreen}
         options={{headerShown: false}}
       />
     </Stack.Navigator>
