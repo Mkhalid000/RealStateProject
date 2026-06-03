@@ -1,8 +1,28 @@
 import {useEffect} from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {fetchMe} from '../lib/auth';
 import {tokenStore} from '../lib/tokenStore';
 import {setOnAuthFailure} from '../lib/api';
 import {useAuthStore} from '../store/authStore';
+
+const LAST_USER_KEY = 'rr_last_user';
+
+const lastUserStore = {
+  async get() {
+    try {
+      const v = await AsyncStorage.getItem(LAST_USER_KEY);
+      return v ? JSON.parse(v) : null;
+    } catch { return null; }
+  },
+  async set(user) {
+    try {
+      await AsyncStorage.setItem(LAST_USER_KEY, JSON.stringify(user));
+    } catch {}
+  },
+  async clear() {
+    try { await AsyncStorage.removeItem(LAST_USER_KEY); } catch {}
+  },
+};
 
 // Roles allowed to use the mobile app. Admins manage things on the website,
 // so an admin session is rejected here and routed to Login.
@@ -47,12 +67,22 @@ export function useAuthInit() {
         }
         if (active) {
           setUser(me);
+          lastUserStore.set(me); // cache for offline/network-error fallback
         }
-      } catch {
-        // Expired / invalid token — drop the session and land on Login.
-        await tokenStore.clear();
-        if (active) {
-          setStartAtLogin(true);
+      } catch (err) {
+        const status = err?.response?.status;
+        if (status === 401 || status === 403) {
+          // Genuinely expired / revoked token — clear everything and go to Login.
+          await tokenStore.clear();
+          await lastUserStore.clear();
+          if (active) setStartAtLogin(true);
+        } else {
+          // Network error / server unreachable — tokens are still on-device and
+          // likely valid. Use a minimal cached identity so the user is not kicked
+          // out just because of a connectivity blip. Profile will refresh on the
+          // next successful API call (e.g. ProfileScreen useFocusEffect).
+          const cached = await lastUserStore.get();
+          if (active && cached) setUser(cached);
         }
       } finally {
         if (active) {

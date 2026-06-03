@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {api} from './api';
 import {tokenStore} from './tokenStore';
 import {useSavedStore} from '../store/savedStore';
@@ -33,6 +34,7 @@ export async function logout() {
     // ignore network errors on logout
   }
   await tokenStore.clear();
+  await AsyncStorage.removeItem('rr_last_user').catch(() => {});
   useSavedStore.getState().reset();
 }
 
