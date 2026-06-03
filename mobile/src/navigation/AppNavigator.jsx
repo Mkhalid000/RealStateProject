@@ -40,7 +40,7 @@ export function AppNavigator() {
         options={{headerShown: false}}
       />
       <Stack.Screen name="PostProperty" component={PostPropertyScreen} options={{headerShown: false}} />
-      <Stack.Screen name="MyProperties" component={MyPropertiesScreen} options={{title: 'My Properties'}} />
+      <Stack.Screen name="MyProperties" component={MyPropertiesScreen} options={{headerShown: false}} />
       <Stack.Screen name="Saved" component={SavedScreen} options={{title: 'Saved'}} />
       <Stack.Screen
         name="Notifications"

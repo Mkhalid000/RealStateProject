@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useFocusEffect} from '@react-navigation/native';
-import {launchImageLibrary} from 'react-native-image-picker';
+import ImageCropPicker from 'react-native-image-crop-picker';
 import {Avatar} from '../../components/ui/Avatar';
 import {Badge} from '../../components/ui/Badge';
 import {Button} from '../../components/ui/Button';
@@ -40,21 +40,16 @@ export function ProfileScreen({navigation}) {
   const {data: mine} = useMyProperties('all');
   const [loading, setLoading] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  const [signOutOpen, setSignOutOpen] = useState(false);
   const [avatarUploading, setAvatarUploading] = useState(false);
 
   const myListings = mine?.items ?? [];
   const liveCount = myListings.filter(p => p.verificationStatus === 'verified').length;
   const isAgent = user?.role === 'agent';
 
-  function confirmSignOut() {
-    Alert.alert('Sign out', 'Are you sure you want to sign out?', [
-      {text: 'Cancel', style: 'cancel'},
-      {text: 'Sign out', style: 'destructive', onPress: doSignOut},
-    ]);
-  }
-
   async function doSignOut() {
     setLoading(true);
+    setSignOutOpen(false);
     try {
       await logout();
       reset();
@@ -67,15 +62,28 @@ export function ProfileScreen({navigation}) {
 
   const soon = (what) => Alert.alert('Coming soon', `${what} is on its way.`);
 
-  // Pick a new avatar, upload it, then persist immediately.
+  // Pick a new avatar, force a square crop, upload it, then persist immediately.
   async function changeAvatar() {
-    const res = await launchImageLibrary({mediaType: 'photo', selectionLimit: 1, quality: 0.8});
-    if (res.didCancel || !res.assets?.length) {
+    let image;
+    try {
+      image = await ImageCropPicker.openPicker({
+        mediaType: 'photo',
+        cropping: true,
+        cropperCircleOverlay: true,
+        width: 400,
+        height: 400,
+        compressImageQuality: 0.8,
+        cropperToolbarTitle: 'Crop Photo',
+      });
+    } catch (e) {
+      // User cancelled or dismissed — not an error.
+      if (e?.code === 'E_PICKER_CANCELLED') return;
+      Alert.alert('Error', e.message ?? 'Could not open photo library.');
       return;
     }
     setAvatarUploading(true);
     try {
-      const {url} = await uploadImage(res.assets[0].uri);
+      const {url} = await uploadImage(image.path);
       const updated = await updateMyProfile({avatarUrl: url});
       setUser({...user, ...updated});
     } catch (e) {
@@ -306,10 +314,10 @@ export function ProfileScreen({navigation}) {
           title="Sign out"
           variant="danger"
           loading={loading}
-          onPress={confirmSignOut}
+          onPress={() => setSignOutOpen(true)}
           style={styles.signout}
         />
-          <Text style={styles.version}>AUREVIA · v1.0.0</Text>
+          <Text style={styles.version}>AUREVIA · v1.2.4</Text>
         </Animated.ScrollView>
       </SafeAreaView>
 
@@ -319,7 +327,52 @@ export function ProfileScreen({navigation}) {
         user={user}
         onSaved={updated => setUser({...user, ...updated})}
       />
+
+      <SignOutSheet
+        visible={signOutOpen}
+        loading={loading}
+        onClose={() => setSignOutOpen(false)}
+        onConfirm={doSignOut}
+      />
     </View>
+  );
+}
+
+function SignOutSheet({visible, loading, onClose, onConfirm}) {
+  const c = useColors();
+  const styles = useThemedStyles(makeStyles);
+  return (
+    <BottomSheet visible={visible} onClose={onClose}>
+      {/* Icon */}
+      <View style={styles.soIconWrap}>
+        <View style={styles.soIconCircle}>
+          <Icon name="x-circle" size={32} color={c.danger} />
+        </View>
+      </View>
+
+      {/* Text */}
+      <Text style={styles.soTitle}>Sign Out?</Text>
+      <Text style={styles.soSub}>
+        Are you sure you want to sign out of your account?
+      </Text>
+
+      {/* Actions */}
+      <View style={styles.soActions}>
+        <Button
+          title="Cancel"
+          variant="secondary"
+          onPress={onClose}
+          style={styles.soBtn}
+        />
+        <Button
+          title="Sign Out"
+          variant="danger"
+          loading={loading}
+          onPress={onConfirm}
+          style={styles.soBtn}
+        />
+      </View>
+    </BottomSheet>
   );
 }
 
@@ -697,6 +750,41 @@ const makeStyles = c =>
       fontSize: 12,
       letterSpacing: 1,
     },
+
+    // Sign-out sheet
+    soIconWrap: {alignItems: 'center', marginBottom: spacing.md},
+    soIconCircle: {
+      width: 72,
+      height: 72,
+      borderRadius: 36,
+      backgroundColor: 'rgba(239,107,107,0.12)',
+      borderWidth: 1.5,
+      borderColor: 'rgba(239,107,107,0.3)',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    soTitle: {
+      color: c.text,
+      fontSize: 22,
+      fontWeight: '700',
+      fontFamily: 'serif',
+      textAlign: 'center',
+      marginBottom: spacing.sm,
+    },
+    soSub: {
+      color: c.textMuted,
+      fontSize: 14,
+      textAlign: 'center',
+      lineHeight: 21,
+      paddingHorizontal: spacing.md,
+      marginBottom: spacing.xl,
+    },
+    soActions: {
+      flexDirection: 'row',
+      gap: spacing.sm,
+      marginBottom: spacing.sm,
+    },
+    soBtn: {flex: 1},
 
     // Edit-profile sheet
     sheetTitle: {

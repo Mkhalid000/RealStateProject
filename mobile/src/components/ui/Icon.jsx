@@ -234,6 +234,34 @@ const PATHS = {
     </>
   ),
   check: <Path d="M20 6L9 17l-5-5" />,
+  'check-circle': (
+    <>
+      <Path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+      <Path d="M22 4L12 14.01l-3-3" />
+    </>
+  ),
+  'x-circle': (
+    <>
+      <Circle cx="12" cy="12" r="10" />
+      <Line x1="15" y1="9" x2="9" y2="15" />
+      <Line x1="9" y1="9" x2="15" y2="15" />
+    </>
+  ),
+  clock: (
+    <>
+      <Circle cx="12" cy="12" r="10" />
+      <Path d="M12 6v6l4 2" />
+    </>
+  ),
+  'trash-2': (
+    <>
+      <Path d="M3 6h18" />
+      <Path d="M19 6l-1 14H6L5 6" />
+      <Path d="M8 6V4h8v2" />
+      <Line x1="10" y1="11" x2="10" y2="17" />
+      <Line x1="14" y1="11" x2="14" y2="17" />
+    </>
+  ),
   sun: (
     <>
       <Circle cx="12" cy="12" r="4" />

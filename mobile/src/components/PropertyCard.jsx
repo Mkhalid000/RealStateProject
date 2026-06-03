@@ -19,8 +19,10 @@ import {
 } from '../lib/format';
 import {useSavedStore} from '../store/savedStore';
 
-/** Premium property card used across Explore / Saved / Profile lists. */
-export function PropertyCard({property, onPress, style}) {
+/** Premium property card used across Explore / Saved / Profile lists.
+ * Pass `statusBadge` to overlay a verification status on the image.
+ * Pass `onDelete` to show a trash icon inline with the type chip. */
+export function PropertyCard({property, onPress, style, statusBadge, onDelete}) {
   const c = useColors();
   const styles = useThemedStyles(makeStyles);
   const scale = useRef(new Animated.Value(1)).current;
@@ -96,7 +98,7 @@ export function PropertyCard({property, onPress, style}) {
           <View style={styles.scrimTop} pointerEvents="none" />
           <View style={styles.scrimBottom} pointerEvents="none" />
 
-          {/* top row: listing + featured / heart */}
+          {/* top row: listing + featured + status / heart */}
           <View style={styles.topRow} pointerEvents="box-none">
             <View style={styles.tags}>
               <View style={styles.tag}>
@@ -108,18 +110,27 @@ export function PropertyCard({property, onPress, style}) {
                   <Text style={styles.featuredText}>Featured</Text>
                 </View>
               ) : null}
+              {statusBadge ? (
+                <View style={styles.statusTag}>
+                  <View style={[styles.statusDot, {backgroundColor: statusBadge.color}]} />
+                  <Icon name={statusBadge.icon} size={11} color={statusBadge.color} />
+                  <Text style={[styles.statusTagText, {color: statusBadge.color}]}>{statusBadge.label}</Text>
+                </View>
+              ) : null}
             </View>
 
-            <Animated.View style={{transform: [{scale: heart}]}}>
-              <Pressable style={styles.fav} hitSlop={8} onPress={onHeart}>
-                <Icon
-                  name="heart"
-                  size={18}
-                  color={saved ? c.danger : '#fff'}
-                  strokeWidth={2}
-                />
-              </Pressable>
-            </Animated.View>
+            {!onDelete ? (
+              <Animated.View style={{transform: [{scale: heart}]}}>
+                <Pressable style={styles.fav} hitSlop={8} onPress={onHeart}>
+                  <Icon
+                    name="heart"
+                    size={18}
+                    color={saved ? c.danger : '#fff'}
+                    strokeWidth={2}
+                  />
+                </Pressable>
+              </Animated.View>
+            ) : null}
           </View>
 
           {/* paging dots */}
@@ -160,12 +171,22 @@ export function PropertyCard({property, onPress, style}) {
               <Icon name="home" size={12} color={c.gold} />
               <Text style={styles.typeChipText}>{typeLabel}</Text>
             </View>
-            {property.isVerified ? (
-              <View style={styles.verified}>
-                <Icon name="check" size={11} color={c.success} strokeWidth={2.6} />
-                <Text style={styles.verifiedText}>Verified</Text>
-              </View>
-            ) : null}
+            <View style={styles.typeRowRight}>
+              {property.isVerified ? (
+                <View style={styles.verified}>
+                  <Icon name="check" size={11} color={c.success} strokeWidth={2.6} />
+                  <Text style={styles.verifiedText}>Verified</Text>
+                </View>
+              ) : null}
+              {onDelete ? (
+                <Pressable
+                  style={({pressed}) => [styles.deleteBtn, pressed && {opacity: 0.55}]}
+                  hitSlop={8}
+                  onPress={onDelete}>
+                  <Icon name="trash-2" size={15} color={c.danger} />
+                </Pressable>
+              ) : null}
+            </View>
           </View>
 
           <Text style={styles.title} numberOfLines={1}>
@@ -353,8 +374,31 @@ const makeStyles = c =>
       paddingVertical: 4,
     },
     typeChipText: {color: c.gold, fontSize: 11.5, fontWeight: '700'},
+    typeRowRight: {flexDirection: 'row', alignItems: 'center', gap: 8},
     verified: {flexDirection: 'row', alignItems: 'center', gap: 4},
     verifiedText: {color: c.success, fontSize: 11.5, fontWeight: '700'},
+    deleteBtn: {
+      width: 30,
+      height: 30,
+      borderRadius: radius.sm,
+      backgroundColor: 'rgba(239,107,107,0.12)',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    // Status overlay on image
+    statusTag: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      backgroundColor: 'rgba(15,12,12,0.62)',
+      borderWidth: 1,
+      borderColor: 'rgba(255,255,255,0.16)',
+      borderRadius: radius.pill,
+      paddingHorizontal: 9,
+      paddingVertical: 5,
+    },
+    statusDot: {width: 5, height: 5, borderRadius: 3},
+    statusTagText: {fontSize: 10.5, fontWeight: '700', letterSpacing: 0.4},
     title: {color: c.text, fontSize: 17.5, fontWeight: '700', letterSpacing: 0.1},
     locationRow: {flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 5},
     location: {color: c.textMuted, fontSize: 13, flex: 1},
