@@ -1,4 +1,5 @@
-import {useEffect, useRef, useState} from 'react';
+import {useCallback, useEffect, useRef, useState} from 'react';
+import {apiFetch} from '../../lib/api';
 import {NavLink, Outlet, useNavigate, useLocation, Link} from 'react-router-dom';
 import {useAuth} from '../../context/AuthContext';
 
@@ -40,21 +41,13 @@ function pageTitle(pathname) {
   if (pathname.startsWith('/admin/properties')) return {title: 'Properties', sub: 'Manage all property listings'};
   if (pathname.startsWith('/admin/reels')) return {title: 'Reels', sub: 'Manage property video reels'};
   if (pathname.startsWith('/admin/boosts')) return {title: 'Boosts', sub: 'Track promotions and revenue'};
+  if (pathname.startsWith('/admin/leads')) return {title: 'Leads', sub: 'Enquiries from buyers and renters'};
   return {title: 'Dashboard', sub: ''};
 }
 
-/* sample notifications (UI) */
-const NOTES = [
-  {id: 1, icon: 'home', color: '#f2a65a', title: 'New property pending review', time: '12 min ago'},
-  {id: 2, icon: 'user', color: '#8b5cf6', title: 'Arjun Mehta joined as an agent', time: '1 hour ago'},
-  {id: 3, icon: 'zap', color: '#10b981', title: 'A reel boost was activated', time: '3 hours ago'},
-];
+const TYPE_COLOR = {like: '#ec4899', comment: '#3b82f6', message: '#8b5cf6', follow: '#10b981', new_reel: '#f59e0b', property_status: '#f2a65a', new_property: '#f2a65a'};
+const relTime = d => { if (!d) return ''; const s = Math.round((Date.now() - new Date(d)) / 1000); if (s < 60) return 'just now'; if (s < 3600) return `${Math.floor(s/60)}m ago`; if (s < 86400) return `${Math.floor(s/3600)}h ago`; return `${Math.floor(s/86400)}d ago`; };
 
-const NOTE_ICON = {
-  home: <path d="M3 11l9-8 9 8M5 10v10h14V10"/>,
-  user: <><circle cx="12" cy="8" r="4"/><path d="M4 20a8 8 0 0 1 16 0"/></>,
-  zap: <path d="M13 2L4 14h7l-1 8 9-12h-7z"/>,
-};
 
 /* dropdown wrapper with click-outside */
 function Dropdown({trigger, children, align = 'right', width = 230}) {
@@ -85,6 +78,19 @@ export default function AdminLayout() {
   const navigate = useNavigate();
   const {pathname} = useLocation();
   const [leadsOpen, setLeadsOpen] = useState(pathname.startsWith('/admin/leads'));
+  const [notes, setNotes]     = useState([]);
+  const [unread, setUnread]   = useState(0);
+
+  const loadNotes = useCallback(() => {
+    apiFetch('/notifications').then(r => { const arr = Array.isArray(r) ? r : r?.items ?? []; setNotes(arr.slice(0, 5)); }).catch(() => {});
+    apiFetch('/notifications/unread-count').then(r => setUnread(r?.count ?? 0)).catch(() => {});
+  }, []);
+
+  useEffect(() => { loadNotes(); const t = setInterval(loadNotes, 30000); return () => clearInterval(t); }, [loadNotes]);
+
+  function markAllRead() {
+    apiFetch('/notifications/read-all', {method: 'PATCH'}).then(() => { setUnread(0); loadNotes(); }).catch(() => {});
+  }
 
   function onLogout() {
     logout();
@@ -174,27 +180,30 @@ export default function AdminLayout() {
             <Dropdown width={320} trigger={open => (
               <button className="tb-btn" title="Notifications" style={open ? {background: '#f5f6fa', borderColor: '#d6d9e0'} : undefined}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-                <span style={{position: 'absolute', top: 8, right: 9, width: 7, height: 7, borderRadius: '50%', background: '#e0654f', border: '1.5px solid #fff'}} />
+                {unread > 0 && <span style={{position: 'absolute', top: 8, right: 9, width: 7, height: 7, borderRadius: '50%', background: '#e0654f', border: '1.5px solid #fff'}} />}
               </button>
             )}>
               <div style={{padding: '10px 12px 8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
-                <span style={{fontSize: 13.5, fontWeight: 700, color: '#11111b'}}>Notifications</span>
-                <span style={{fontSize: 11, color: '#d98a3e', fontWeight: 600, cursor: 'pointer'}}>Mark all read</span>
+                <span style={{fontSize: 13.5, fontWeight: 700, color: '#11111b'}}>Notifications {unread > 0 ? `(${unread})` : ''}</span>
+                {unread > 0 && <span style={{fontSize: 11, color: '#d98a3e', fontWeight: 600, cursor: 'pointer'}} onClick={markAllRead}>Mark all read</span>}
               </div>
               <div className="dd-divider" />
-              {NOTES.map(n => (
+              {notes.length ? notes.map(n => (
                 <div key={n.id} className="dd-item" style={{alignItems: 'flex-start', cursor: 'default'}}>
-                  <span style={{width: 32, height: 32, borderRadius: 8, background: `${n.color}15`, color: n.color, display: 'grid', placeItems: 'center', flexShrink: 0}}>
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">{NOTE_ICON[n.icon]}</svg>
+                  <span style={{width: 32, height: 32, borderRadius: 8, background: `${TYPE_COLOR[n.type] || '#6366f1'}15`, color: TYPE_COLOR[n.type] || '#6366f1', display: 'grid', placeItems: 'center', flexShrink: 0, fontSize: 13, fontWeight: 700}}>
+                    {(n.type || 'N').charAt(0).toUpperCase()}
                   </span>
                   <span style={{flex: 1}}>
-                    <span style={{display: 'block', fontSize: 13, color: '#11111b', lineHeight: 1.35}}>{n.title}</span>
-                    <span style={{display: 'block', fontSize: 11.5, color: '#a0a3b1', marginTop: 2}}>{n.time}</span>
+                    <span style={{display: 'block', fontSize: 13, color: '#11111b', lineHeight: 1.35}}>{n.title || n.body || n.type}</span>
+                    <span style={{display: 'block', fontSize: 11.5, color: '#a0a3b1', marginTop: 2}}>{relTime(n.createdAt)}</span>
                   </span>
+                  {!n.isRead && <span style={{width: 7, height: 7, borderRadius: '50%', background: '#f2a65a', flexShrink: 0, marginTop: 5}} />}
                 </div>
-              ))}
+              )) : (
+                <div style={{padding: '20px 16px', textAlign: 'center', color: '#a0a3b1', fontSize: 13}}>No notifications yet</div>
+              )}
               <div className="dd-divider" />
-              <button className="dd-item" style={{justifyContent: 'center', color: '#636274', fontWeight: 600}}>View all notifications</button>
+              <button className="dd-item" style={{justifyContent: 'center', color: '#636274', fontWeight: 600}} onClick={() => navigate('/admin/leads/website')}>View all leads</button>
             </Dropdown>
 
             {/* Profile */}

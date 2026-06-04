@@ -1,4 +1,4 @@
-import {useCallback, useEffect, useState} from 'react';
+import {useCallback, useEffect, useRef, useState} from 'react';
 import {apiFetch} from '../../lib/api';
 import {createTheme, ThemeProvider} from '@mui/material/styles';
 import TextField from '@mui/material/TextField';
@@ -67,6 +67,15 @@ export default function Users() {
   const [showAdd, setShowAdd] = useState(false);
   const [view, setView] = useState('grid'); // 'grid' | 'table'
   const [openMenu, setOpenMenu] = useState(null); // user id whose menu is open
+  const menuRef = useRef(null);
+
+  // Click-outside closes the three-dot menu
+  useEffect(() => {
+    if (!openMenu) return;
+    const handler = e => { if (menuRef.current && !menuRef.current.contains(e.target)) setOpenMenu(null); };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [openMenu]);
   const [confirm, setConfirm] = useState(null); // {title, body, onYes}
 
   useEffect(() => {
@@ -240,11 +249,10 @@ export default function Users() {
                 return (
                   <div
                     key={u.id}
-                    className="relative flex flex-col items-center rounded-2xl border border-line bg-surface p-5 text-center shadow-sm transition hover:shadow-md"
-                    onMouseLeave={() => setOpenMenu(null)}>
+                    className="relative flex flex-col items-center rounded-2xl border border-line bg-surface p-5 text-center shadow-sm transition hover:shadow-md">
 
                     {/* Three-dot menu button */}
-                    <div className="absolute right-2.5 top-2.5">
+                    <div ref={openMenu === u.id ? menuRef : null} className="absolute right-2.5 top-2.5">
                       <button
                         onClick={e => { e.stopPropagation(); setOpenMenu(openMenu === u.id ? null : u.id); }}
                         className="grid h-7 w-7 place-items-center rounded-lg text-muted transition hover:bg-bg hover:text-fg">
