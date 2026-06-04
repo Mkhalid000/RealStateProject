@@ -35,6 +35,7 @@ export function ReelsScreen({navigation}) {
         height={height}
         active={isFocused && index === activeIndex}
         onOpenProperty={id => navigation.navigate('PropertyDetail', {id})}
+        onOpenAgent={agent => navigation.navigate('AgentProfile', {agent})}
       />
     ),
     [height, isFocused, activeIndex, navigation],

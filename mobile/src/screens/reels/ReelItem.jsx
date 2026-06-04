@@ -50,7 +50,7 @@ function getEmbedUrl(url) {
 }
 
 /** A single full-screen reel: looping video + gradient scrim + actions. */
-export function ReelItem({reel, height, active, onOpenProperty}) {
+export function ReelItem({reel, height, active, onOpenProperty, onOpenAgent}) {
   const currentUser = useAuthStore(s => s.user);
   const [paused, setPaused] = useState(true);
   const [muted, setMuted] = useState(false);
@@ -261,7 +261,10 @@ export function ReelItem({reel, height, active, onOpenProperty}) {
 
       {/* ── bottom meta ── */}
       <View style={styles.bottom}>
-        <View style={styles.agentRow}>
+        <Pressable
+          style={styles.agentRow}
+          onPress={() => agent && onOpenAgent?.(agent)}
+          hitSlop={8}>
           <Avatar uri={agent?.avatarUrl} name={agent?.fullName} size={38} ring />
           <View style={styles.agentText}>
             <Text style={styles.agentName} numberOfLines={1}>
@@ -275,7 +278,7 @@ export function ReelItem({reel, height, active, onOpenProperty}) {
               </View>
             ) : null}
           </View>
-        </View>
+        </Pressable>
 
         {reel.caption ? (
           <Text style={styles.caption} numberOfLines={2}>

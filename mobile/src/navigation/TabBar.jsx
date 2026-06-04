@@ -165,8 +165,6 @@ function AddActionsSheet({visible, onClose, navigation}) {
 
 const AI_PROMPTS = [
   {icon: 'search', title: 'Find me a home', desc: 'Tell AI your budget & needs'},
-  {icon: 'map-pin', title: 'Best areas to buy', desc: 'Get neighbourhood insights'},
-  {icon: 'tag', title: 'Estimate a price', desc: 'What should this property cost?'},
   {icon: 'home', title: 'Buy vs rent advice', desc: 'See what suits you better'},
 ];
 
