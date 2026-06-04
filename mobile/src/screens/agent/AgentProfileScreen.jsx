@@ -1,21 +1,14 @@
 import React from 'react';
-import {
-  FlatList,
-  Linking,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import {FlatList, Pressable, StyleSheet, Text, View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {usePropertiesByAgent} from '../../hooks/useProperties';
 import {Avatar} from '../../components/ui/Avatar';
-import {Badge} from '../../components/ui/Badge';
 import {Icon} from '../../components/ui/Icon';
 import {PropertyCard} from '../../components/PropertyCard';
 import {AnimatedEntrance} from '../../components/ui/AnimatedEntrance';
 import {EmptyState} from '../../components/ui/EmptyState';
 import {Loader} from '../../components/ui/Loader';
+import {maskPhone} from '../../lib/format';
 import {radius, spacing, useColors, useThemedStyles} from '../../theme';
 
 export function AgentProfileScreen({route, navigation}) {
@@ -68,23 +61,26 @@ export function AgentProfileScreen({route, navigation}) {
                 <StatItem value={listings.filter(p => p.verificationStatus === 'verified').length} label="Live" />
               </View>
 
-              {/* Contact buttons */}
+              {/* Masked phone display */}
               {phone ? (
-                <View style={styles.contactRow}>
-                  <Pressable
-                    style={styles.contactBtn}
-                    onPress={() => Linking.openURL(`tel:${phone}`)}>
-                    <Icon name="phone" size={16} color={c.gold} />
-                    <Text style={styles.contactBtnText}>Call</Text>
-                  </Pressable>
-                  <Pressable
-                    style={styles.contactBtn}
-                    onPress={() => Linking.openURL(`https://wa.me/${phone.replace(/[^0-9]/g, '')}`)}>
-                    <Icon name="message-circle" size={16} color={c.gold} />
-                    <Text style={styles.contactBtnText}>WhatsApp</Text>
-                  </Pressable>
+                <View style={styles.maskedPhone}>
+                  <Icon name="phone" size={13} color={c.textMuted} />
+                  <Text style={styles.maskedPhoneText}>{maskPhone(phone)}</Text>
                 </View>
               ) : null}
+
+              {/* Chat only */}
+              <Pressable
+                style={styles.chatBtn}
+                onPress={() =>
+                  navigation.navigate('Chat', {
+                    agentId: agent?.id,
+                    recipient: agent,
+                  })
+                }>
+                <Icon name="message-circle" size={17} color={c.onGold} />
+                <Text style={styles.chatBtnText}>Send Message</Text>
+              </Pressable>
             </View>
 
             <Text style={styles.sectionTitle}>
@@ -154,20 +150,25 @@ const makeStyles = c =>
     statValue: {color: c.text, fontSize: 22, fontWeight: '800'},
     statLabel: {color: c.textMuted, fontSize: 12, marginTop: 2},
 
-    contactRow: {flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md, width: '100%'},
-    contactBtn: {
-      flex: 1,
+    maskedPhone: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 5,
+      marginTop: spacing.sm,
+    },
+    maskedPhoneText: {color: c.textMuted, fontSize: 13, letterSpacing: 1},
+    chatBtn: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
-      gap: 6,
-      height: 42,
+      gap: 8,
+      height: 46,
+      width: '100%',
       borderRadius: radius.pill,
-      borderWidth: 1.5,
-      borderColor: c.gold,
-      backgroundColor: c.goldFaint,
+      backgroundColor: c.gold,
+      marginTop: spacing.md,
     },
-    contactBtnText: {color: c.gold, fontSize: 14, fontWeight: '700'},
+    chatBtnText: {color: c.onGold, fontSize: 15, fontWeight: '700'},
 
     sectionTitle: {color: c.text, fontSize: 16, fontWeight: '700', marginBottom: spacing.md},
     card: {marginBottom: spacing.md},

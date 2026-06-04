@@ -10,6 +10,9 @@ import {CreateReelScreen} from '../screens/reels/CreateReelScreen';
 import {HelpSupportScreen} from '../screens/support/HelpSupportScreen';
 import {CompareScreen} from '../screens/property/CompareScreen';
 import {AgentProfileScreen} from '../screens/agent/AgentProfileScreen';
+import {MapScreen} from '../screens/explore/MapScreen';
+import {InboxScreen} from '../screens/inbox/InboxScreen';
+import {ChatScreen} from '../screens/inbox/ChatScreen';
 import {useSavedStore} from '../store/savedStore';
 import {useColors} from '../theme';
 
@@ -67,6 +70,21 @@ export function AppNavigator() {
       <Stack.Screen
         name="AgentProfile"
         component={AgentProfileScreen}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="Map"
+        component={MapScreen}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="Inbox"
+        component={InboxScreen}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="Chat"
+        component={ChatScreen}
         options={{headerShown: false}}
       />
     </Stack.Navigator>

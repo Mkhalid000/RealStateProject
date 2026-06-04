@@ -17,6 +17,12 @@ export class ChatController {
     return this.chat.startConversation(userId, dto.agentId);
   }
 
+  /** Total unread message count across all conversations. */
+  @Get('conversations/unread-count')
+  unreadCount(@CurrentUser('id') userId: string) {
+    return this.chat.totalUnread(userId);
+  }
+
   @Get('conversations/:id/messages')
   messages(@CurrentUser('id') userId: string, @Param('id') id: string) {
     return this.chat.listMessages(userId, id);

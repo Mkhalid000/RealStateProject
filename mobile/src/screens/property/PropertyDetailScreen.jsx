@@ -27,7 +27,7 @@ import {createLead} from '../../lib/leads';
 import {apiErrorMessage} from '../../lib/api';
 import {useAuthStore} from '../../store/authStore';
 import {useRecentStore} from '../../store/recentStore';
-import {coverImage, listingLabel, locationLine, money} from '../../lib/format';
+import {coverImage, listingLabel, locationLine, maskPhone, money} from '../../lib/format';
 import {radius, spacing, useColors, useThemedStyles} from '../../theme';
 
 const {width} = Dimensions.get('window');
@@ -56,6 +56,7 @@ export function PropertyDetailScreen({route, navigation}) {
   const [leadError, setLeadError] = useState('');
   const [enquiryOpen, setEnquiryOpen] = useState(false);
   const [emiOpen, setEmiOpen] = useState(false);
+  const [qrOpen, setQrOpen] = useState(false);
   const setL = (k, v) => setLead(f => ({...f, [k]: v}));
 
   const pushRecent = useRecentStore(s => s.push);
@@ -377,6 +378,9 @@ export function PropertyDetailScreen({route, navigation}) {
                       {property.agencyName ||
                         (agent.role === 'agent' ? 'Verified Agent' : 'Owner')}
                     </Text>
+                    {phone ? (
+                      <Text style={styles.agentPhone}>{maskPhone(phone)}</Text>
+                    ) : null}
                   </View>
                   <Pressable
                     style={styles.agentCall}
@@ -398,7 +402,7 @@ export function PropertyDetailScreen({route, navigation}) {
       <SafeAreaView style={styles.heroBar} edges={['top']}>
         <RoundBtn icon="chevron-left" onPress={() => navigation.goBack()} />
         <View style={styles.heroBarRight}>
-          <RoundBtn icon="share-2" onPress={() => {}} />
+          <RoundBtn icon="share-2" onPress={() => setQrOpen(true)} />
           <RoundBtn
             icon="heart"
             tint={saved ? c.danger : '#fff'}
@@ -514,6 +518,13 @@ export function PropertyDetailScreen({route, navigation}) {
         )}
       </BottomSheet>
 
+      {/* QR Share sheet */}
+      <QrSheet
+        visible={qrOpen}
+        onClose={() => setQrOpen(false)}
+        property={property}
+      />
+
       {/* EMI Calculator sheet */}
       <EmiSheet
         visible={emiOpen}
@@ -597,6 +608,35 @@ function EmiBreak({label, value, c, accent}) {
     </View>
   );
 }
+
+// ── QR Share ────────────────────────────────────────────────────────────────
+function QrSheet({visible, onClose, property}) {
+  const c = useColors();
+  const styles = useThemedStyles(makeStyles);
+  const QRCode = require('react-native-qrcode-svg').default;
+  const deepLink = `aurevia://property/${property?.id}`;
+
+  return (
+    <BottomSheet visible={visible} onClose={onClose}>
+      <Text style={styles.sheetTitle}>Share Property</Text>
+      <Text style={styles.qrSub}>Scan to open on any device</Text>
+      <View style={styles.qrWrap}>
+        {property?.id ? (
+          <QRCode
+            value={deepLink}
+            size={200}
+            color={c.text}
+            backgroundColor={c.surface}
+            logo={undefined}
+          />
+        ) : null}
+      </View>
+      <Text style={styles.qrLink} numberOfLines={1}>{deepLink}</Text>
+      <View style={{height: spacing.md}} />
+    </BottomSheet>
+  );
+}
+
 
 /** Swipeable hero gallery. */
 function ScrollViewGallery({images, onIndex, styles}) {
@@ -820,6 +860,7 @@ const makeStyles = c =>
     agentRow: {flexDirection: 'row', alignItems: 'center', gap: spacing.md},
     agentName: {color: c.text, fontSize: 16, fontWeight: '700'},
     agentRole: {color: c.textMuted, fontSize: 13, marginTop: 2},
+    agentPhone: {color: c.textDim, fontSize: 12, letterSpacing: 1, marginTop: 2},
     agentBio: {
       color: c.textDim,
       fontSize: 13,
@@ -921,6 +962,12 @@ const makeStyles = c =>
     emiResultValue: {color: c.text, fontSize: 32, fontWeight: '800', fontFamily: 'serif', marginTop: 4, marginBottom: spacing.md},
     emiBreakRow: {flexDirection: 'row', width: '100%', borderTopWidth: 1, borderTopColor: 'rgba(201,137,59,0.2)', paddingTop: spacing.sm, gap: 4},
     emiInputWrap: {marginBottom: spacing.sm},
+    // QR sheet
+    qrSub: {color: c.textMuted, fontSize: 13, textAlign: 'center', marginBottom: spacing.lg},
+    qrWrap: {alignSelf: 'center', padding: spacing.md, backgroundColor: c.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: c.borderSoft, marginBottom: spacing.md},
+    qrLink: {color: c.textDim, fontSize: 11, textAlign: 'center', letterSpacing: 0.3},
+
+
     emiInputLabel: {color: c.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 0.6, textTransform: 'uppercase', marginBottom: 6},
     emiInput: {
       height: 46,

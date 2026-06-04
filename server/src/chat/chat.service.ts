@@ -22,42 +22,69 @@ export class ChatService {
     if (currentUserId === agentId) {
       throw new ForbiddenException('Cannot message yourself');
     }
-    // Normalise: the buyer is `userId`, the agent is `agentId`. If the current
-    // user is the agent, the other party is the user.
     const other = await this.prisma.user.findUnique({where: {id: agentId}});
-    if (!other) {
-      throw new NotFoundException('User not found');
-    }
+    if (!other) throw new NotFoundException('User not found');
 
     const userId = currentUserId;
     const existing = await this.prisma.conversation.findFirst({
-      where: {
-        OR: [
-          {userId, agentId},
-          {userId: agentId, agentId: userId},
-        ],
-      },
+      where: {OR: [{userId, agentId}, {userId: agentId, agentId: userId}]},
       include: {user: true, agent: true},
     });
-    if (existing) {
-      return existing;
-    }
-    return this.prisma.conversation.create({
+    if (existing) return this.attachUnread(existing, currentUserId);
+
+    const created = await this.prisma.conversation.create({
       data: {userId, agentId},
       include: {user: true, agent: true},
     });
+    return this.attachUnread(created, currentUserId);
   }
 
   async listConversations(currentUserId: string) {
-    return this.prisma.conversation.findMany({
+    const convs = await this.prisma.conversation.findMany({
       where: {OR: [{userId: currentUserId}, {agentId: currentUserId}]},
-      include: {user: true, agent: true},
+      include: {
+        user: true,
+        agent: true,
+        messages: {orderBy: {createdAt: 'desc'}, take: 1},
+      },
       orderBy: [{lastMessageAt: 'desc'}, {createdAt: 'desc'}],
     });
+    return convs.map(c => this.attachUnread(c, currentUserId));
+  }
+
+  /** Total unread count across all conversations — for the topbar badge. */
+  async totalUnread(currentUserId: string) {
+    const convs = await this.prisma.conversation.findMany({
+      where: {OR: [{userId: currentUserId}, {agentId: currentUserId}]},
+      select: {id: true, userId: true, agentId: true, userReadAt: true, agentReadAt: true},
+    });
+
+    let total = 0;
+    for (const conv of convs) {
+      const isUser = conv.userId === currentUserId;
+      const readAt = isUser ? conv.userReadAt : conv.agentReadAt;
+      const count = await this.prisma.message.count({
+        where: {
+          conversationId: conv.id,
+          senderId: {not: currentUserId},
+          ...(readAt ? {createdAt: {gt: readAt}} : {}),
+        },
+      });
+      total += count;
+    }
+    return {count: total};
   }
 
   async listMessages(currentUserId: string, conversationId: string) {
-    await this.assertParticipant(currentUserId, conversationId);
+    const conv = await this.assertParticipant(currentUserId, conversationId);
+
+    // Mark as read — update the correct participant's readAt
+    const isUser = conv.userId === currentUserId;
+    await this.prisma.conversation.update({
+      where: {id: conversationId},
+      data: isUser ? {userReadAt: new Date()} : {agentReadAt: new Date()},
+    });
+
     return this.prisma.message.findMany({
       where: {conversationId},
       orderBy: {createdAt: 'asc'},
@@ -74,15 +101,20 @@ export class ChatService {
     const message = await this.prisma.message.create({
       data: {conversationId, senderId: currentUserId, text: dto.text},
     });
+
+    // Update lastMessage and mark sender as read (they just sent it)
+    const isUser = conv.userId === currentUserId;
     await this.prisma.conversation.update({
       where: {id: conversationId},
-      data: {lastMessage: dto.text, lastMessageAt: message.createdAt},
+      data: {
+        lastMessage: dto.text,
+        lastMessageAt: message.createdAt,
+        ...(isUser ? {userReadAt: message.createdAt} : {agentReadAt: message.createdAt}),
+      },
     });
 
-    // Realtime to the conversation room + notify the other participant.
     this.realtime.emitToConversation(conversationId, 'message', message);
-    const recipientId =
-      conv.userId === currentUserId ? conv.agentId : conv.userId;
+    const recipientId = conv.userId === currentUserId ? conv.agentId : conv.userId;
     await this.notifications.notify(recipientId, NotificationType.MESSAGE, {
       conversationId,
       actorId: currentUserId,
@@ -96,12 +128,29 @@ export class ChatService {
     const conv = await this.prisma.conversation.findUnique({
       where: {id: conversationId},
     });
-    if (!conv) {
-      throw new NotFoundException('Conversation not found');
-    }
+    if (!conv) throw new NotFoundException('Conversation not found');
     if (conv.userId !== userId && conv.agentId !== userId) {
       throw new ForbiddenException('Not a participant');
     }
     return conv;
+  }
+
+  /** Attach computed unreadCount to a conversation object. */
+  private attachUnread(conv: any, currentUserId: string) {
+    const isUser = conv.userId === currentUserId;
+    const readAt: Date | null = isUser ? conv.userReadAt : conv.agentReadAt;
+
+    // Count unread from the messages array if included (avoids extra DB call)
+    // For list endpoints we pass {messages: last 1} — for full unread we need a count query.
+    // We'll use a simple heuristic: if lastMessageAt > readAt and lastMessage was not by us → 1+ unread
+    const hasUnread =
+      conv.lastMessageAt &&
+      (!readAt || conv.lastMessageAt > readAt);
+
+    const {userReadAt, agentReadAt, messages, ...rest} = conv;
+    return {
+      ...rest,
+      unreadCount: hasUnread ? 1 : 0, // simplified; full count via totalUnread
+    };
   }
 }

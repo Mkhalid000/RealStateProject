@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "reverse": "adb reverse tcp:4000 tcp:4000 & adb reverse tcp:8081 tcp:8081",
+    "reverse": "adb reverse tcp:4000 tcp:4000 && adb reverse tcp:8081 tcp:8081",
     "preandroid": "npm run reverse",
     "android": "react-native run-android",
     "ios": "react-native run-ios",
@@ -27,6 +27,8 @@
     "react-native-element-dropdown": "^2.12.4",
     "react-native-image-crop-picker": "^0.51.1",
     "react-native-image-picker": "^8.2.1",
+    "react-native-maps": "^1.27.2",
+    "react-native-qrcode-svg": "^6.3.21",
     "react-native-safe-area-context": "^5.8.0",
     "react-native-screens": "^4.25.2",
     "react-native-svg": "^15.15.5",

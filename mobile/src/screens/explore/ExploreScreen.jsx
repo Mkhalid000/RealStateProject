@@ -29,11 +29,13 @@ import {flattenPages, usePropertiesFeed} from '../../hooks/useProperties';
 import {useDebounced} from '../../hooks/useDebounced';
 import {useAuthStore} from '../../store/authStore';
 import {useUnreadCount} from '../../hooks/useNotifications';
+import {useUnreadMessageCount} from '../../hooks/useMessages';
 import {useRecentStore} from '../../store/recentStore';
 import {useCompareStore} from '../../store/compareStore';
 import {useSavedSearchStore} from '../../store/savedSearchStore';
 import {coverImage, money} from '../../lib/format';
 import {radius, spacing, useColors, useThemedStyles} from '../../theme';
+
 
 const LISTING_TABS = [
   {key: undefined, label: 'All'},
@@ -89,6 +91,8 @@ export function ExploreScreen({navigation}) {
   const user = useAuthStore(s => s.user);
   const {data: unread} = useUnreadCount();
   const unreadCount = unread?.count ?? 0;
+  const {data: unreadMsg} = useUnreadMessageCount();
+  const unreadMsgCount = unreadMsg?.count ?? 0;
 
   const [search, setSearch] = useState('');
   const q = useDebounced(search.trim(), 400);
@@ -123,6 +127,7 @@ export function ExploreScreen({navigation}) {
     if (!recentLoaded) loadRecent();
     if (!savedSearchLoaded) loadSavedSearches();
   }, [recentLoaded, loadRecent, savedSearchLoaded, loadSavedSearches]);
+
 
   const priceRange = PRICE_RANGES.find(p => p.key === applied.priceKey) || PRICE_RANGES[0];
 
@@ -196,6 +201,12 @@ export function ExploreScreen({navigation}) {
             </Pressable>
           ) : null}
         </View>
+
+        <Pressable
+          style={styles.mapToggleBtn}
+          onPress={() => navigation.navigate('Map')}>
+          <Icon name="map-pin" size={18} color={c.text} />
+        </Pressable>
 
         <Pressable style={[styles.filterBtn, activeCount > 0 && styles.filterBtnActive]} onPress={openSheet}>
           <Icon name="sliders" size={20} color={activeCount ? c.onGold : c.text} />
@@ -305,19 +316,37 @@ export function ExploreScreen({navigation}) {
       <SafeAreaView style={styles.safe} edges={['top']}>
       <View style={styles.topbar}>
         <Logo width={128} align="left" />
-        <Pressable
-          style={styles.bellBtn}
-          hitSlop={8}
-          onPress={() => navigation.navigate('Notifications')}>
-          <Icon name="bell" size={20} color={c.text} />
-          {unreadCount > 0 ? (
-            <View style={styles.bellBadge}>
-              <Text style={styles.bellBadgeText}>
-                {unreadCount > 9 ? '9+' : unreadCount}
-              </Text>
-            </View>
-          ) : null}
-        </Pressable>
+        <View style={styles.topbarRight}>
+          {/* Inbox */}
+          <Pressable
+            style={styles.bellBtn}
+            hitSlop={8}
+            onPress={() => navigation.navigate('Inbox')}>
+            <Icon name="message-circle" size={20} color={c.text} />
+            {unreadMsgCount > 0 ? (
+              <View style={styles.bellBadge}>
+                <Text style={styles.bellBadgeText}>
+                  {unreadMsgCount > 9 ? '9+' : unreadMsgCount}
+                </Text>
+              </View>
+            ) : null}
+          </Pressable>
+
+          {/* Notifications */}
+          <Pressable
+            style={styles.bellBtn}
+            hitSlop={8}
+            onPress={() => navigation.navigate('Notifications')}>
+            <Icon name="bell" size={20} color={c.text} />
+            {unreadCount > 0 ? (
+              <View style={styles.bellBadge}>
+                <Text style={styles.bellBadgeText}>
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </Text>
+              </View>
+            ) : null}
+          </Pressable>
+        </View>
       </View>
 
       {isLoading ? (
@@ -426,6 +455,7 @@ export function ExploreScreen({navigation}) {
           </View>
         </Pressable>
       )}
+
     </View>
   );
 }
@@ -708,6 +738,7 @@ const makeStyles = c =>
       paddingTop: spacing.sm,
       paddingBottom: spacing.xs,
     },
+    topbarRight: {flexDirection: 'row', alignItems: 'center', gap: spacing.xs},
     bellBtn: {
       width: 44,
       height: 44,
@@ -744,7 +775,7 @@ const makeStyles = c =>
       lineHeight: 34,
       marginTop: 2,
     },
-    searchRow: {flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md, marginBottom: spacing.md},
+    searchRow: {flexDirection: 'row', gap: spacing.xs, marginTop: spacing.md, marginBottom: spacing.md},
     searchBar: {
       flex: 1,
       flexDirection: 'row',
@@ -792,6 +823,16 @@ const makeStyles = c =>
     },
     filterDotText: {color: c.onGold, fontSize: 11, fontWeight: '800'},
     filterBtnActive: {backgroundColor: c.gold, borderColor: c.gold},
+    mapToggleBtn: {
+      width: 45,
+      height: 45,
+      borderRadius: radius.md,
+      backgroundColor: c.surface,
+      borderWidth: 1,
+      borderColor: c.border,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
 
     // Saved searches
     savedSection: {marginTop: spacing.md},

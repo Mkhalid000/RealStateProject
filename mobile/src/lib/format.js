@@ -48,4 +48,12 @@ export function compactCount(n = 0) {
   return `${n}`;
 }
 
+/** Masks a phone number showing only the last 3 digits: *******978 */
+export function maskPhone(phone) {
+  if (!phone) return '';
+  const digits = String(phone).replace(/[^0-9]/g, '');
+  const last3 = digits.slice(-3);
+  return `*******${last3}`;
+}
+
 export {FALLBACK_IMG};
