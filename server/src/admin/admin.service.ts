@@ -11,8 +11,10 @@ const USER_SELECT = {
   role: true,
   fullName: true,
   phone: true,
+  avatarUrl: true,
   isVerified: true,
   verificationStatus: true,
+  isActive: true,
   createdAt: true,
 } satisfies Prisma.UserSelect;
 
@@ -119,6 +121,19 @@ export class AdminService {
       where: {id: userId},
       data: {role: role as any},
       select: {id: true, role: true},
+    });
+  }
+
+  async deleteUser(id: string) {
+    await this.prisma.user.delete({where: {id}}).catch(() => null);
+    return {success: true};
+  }
+
+  async toggleUserActive(id: string, isActive: boolean) {
+    return this.prisma.user.update({
+      where: {id},
+      data: {isActive},
+      select: USER_SELECT,
     });
   }
 

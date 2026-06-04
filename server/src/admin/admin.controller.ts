@@ -60,6 +60,16 @@ export class AdminController {
     return this.admin.setRole(id, body.role);
   }
 
+  @Delete('users/:id')
+  deleteUser(@Param('id') id: string) {
+    return this.admin.deleteUser(id);
+  }
+
+  @Patch('users/:id/active')
+  toggleActive(@Param('id') id: string, @Body() body: {isActive: boolean}) {
+    return this.admin.toggleUserActive(id, body.isActive);
+  }
+
   @Delete('reels/:id')
   deleteReel(@Param('id') id: string) {
     return this.admin.deleteReel(id);

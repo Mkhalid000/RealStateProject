@@ -97,6 +97,7 @@ model User {
   socialLinks        Json?
   isVerified         Boolean            @default(false)
   verificationStatus VerificationStatus @default(pending)
+  isActive           Boolean            @default(true)
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
 

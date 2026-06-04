@@ -13,6 +13,8 @@ import {AgentProfileScreen} from '../screens/agent/AgentProfileScreen';
 import {MapScreen} from '../screens/explore/MapScreen';
 import {InboxScreen} from '../screens/inbox/InboxScreen';
 import {ChatScreen} from '../screens/inbox/ChatScreen';
+import {AIScreen} from '../screens/ai/AIScreen';
+import {QRScannerScreen} from '../screens/scanner/QRScannerScreen';
 import {useSavedStore} from '../store/savedStore';
 import {useColors} from '../theme';
 
@@ -80,6 +82,16 @@ export function AppNavigator() {
       <Stack.Screen
         name="Inbox"
         component={InboxScreen}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="AIChat"
+        component={AIScreen}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="QRScanner"
+        component={QRScannerScreen}
         options={{headerShown: false}}
       />
       <Stack.Screen

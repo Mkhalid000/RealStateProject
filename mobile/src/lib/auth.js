@@ -34,7 +34,12 @@ export async function logout() {
     // ignore network errors on logout
   }
   await tokenStore.clear();
-  await AsyncStorage.removeItem('rr_last_user').catch(() => {});
+  await AsyncStorage.multiRemove([
+    'rr_last_user',
+    '@ai_chat_sessions',
+    '@recent_properties',
+    '@saved_searches',
+  ]).catch(() => {});
   useSavedStore.getState().reset();
 }
 

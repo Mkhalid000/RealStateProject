@@ -70,6 +70,10 @@ export class AuthService {
     if (!ok) {
       throw new UnauthorizedException('Invalid credentials');
     }
+    // Block deactivated accounts
+    if (user.isActive === false) {
+      throw new ForbiddenException('Your account has been deactivated. Please contact support.');
+    }
     // Agents must be verified by an admin before they can sign in.
     if (user.role === UserRole.AGENT && !user.isVerified) {
       if (user.verificationStatus === (VerificationStatus.REJECTED as any)) {

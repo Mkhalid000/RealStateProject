@@ -1,5 +1,5 @@
 import React, {useEffect, useRef, useState} from 'react';
-import {Alert, Animated, Pressable, StyleSheet, Text, View} from 'react-native';
+import {Animated, Pressable, StyleSheet, Text, View} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {Icon} from '../components/ui/Icon';
 import {BottomSheet} from '../components/ui/BottomSheet';
@@ -24,12 +24,10 @@ export function TabBar({state, navigation}) {
   const role = useAuthStore(s => s.user?.role);
   const isAgent = role === 'agent' || role === 'admin';
   const [addOpen, setAddOpen] = useState(false);
-  const [aiOpen, setAiOpen] = useState(false);
 
   // Agents get a "+" create action; everyone else gets an AI assistant.
-  // Both sit in a floating center button.
   const centerIcon = isAgent ? 'plus' : 'sparkles';
-  const onCenterPress = () => (isAgent ? setAddOpen(true) : setAiOpen(true));
+  const onCenterPress = () => isAgent ? setAddOpen(true) : navigation.navigate('AIChat');
 
   // Split routes so the FAB can sit dead-center.
   const routes = state.routes;
@@ -82,7 +80,6 @@ export function TabBar({state, navigation}) {
         onClose={() => setAddOpen(false)}
         navigation={navigation}
       />
-      <AiAssistantSheet visible={aiOpen} onClose={() => setAiOpen(false)} />
     </View>
   );
 }
@@ -163,55 +160,6 @@ function AddActionsSheet({visible, onClose, navigation}) {
   );
 }
 
-const AI_PROMPTS = [
-  {icon: 'search', title: 'Find me a home', desc: 'Tell AI your budget & needs'},
-  {icon: 'home', title: 'Buy vs rent advice', desc: 'See what suits you better'},
-];
-
-function AiAssistantSheet({visible, onClose}) {
-  const c = useColors();
-  const styles = useThemedStyles(makeStyles);
-
-  const ask = () => {
-    onClose();
-    Alert.alert('AUREVIA AI', 'Your AI property assistant is coming soon.');
-  };
-
-  return (
-    <BottomSheet visible={visible} onClose={onClose}>
-      <View style={styles.aiHead}>
-        <View style={styles.aiBadge}>
-          <Icon name="sparkles" size={20} color={c.onGold} />
-        </View>
-        <View style={{flex: 1}}>
-          <Text style={styles.sheetTitle}>AUREVIA AI</Text>
-          <Text style={styles.sheetSub}>Your personal property assistant</Text>
-        </View>
-      </View>
-
-      {AI_PROMPTS.map(p => (
-        <Pressable key={p.title} style={styles.action} onPress={ask}>
-          <View style={[styles.actionIcon, {backgroundColor: c.goldFaint}]}>
-            <Icon name={p.icon} size={20} color={c.gold} />
-          </View>
-          <View style={styles.actionText}>
-            <Text style={styles.actionTitle}>{p.title}</Text>
-            <Text style={styles.actionDesc}>{p.desc}</Text>
-          </View>
-          <Icon name="chevron-right" size={20} color={c.textMuted} />
-        </Pressable>
-      ))}
-
-      <Pressable style={styles.aiAsk} onPress={ask}>
-        <Icon name="sparkles" size={16} color={c.onGold} />
-        <Text style={styles.aiAskText}>Ask AUREVIA AI anything</Text>
-      </Pressable>
-
-      <View style={{height: spacing.sm}} />
-    </BottomSheet>
-  );
-}
-
 const makeStyles = c =>
   StyleSheet.create({
     bar: {
@@ -252,31 +200,6 @@ const makeStyles = c =>
     // ----- sheets -----
     sheetTitle: {color: c.text, fontSize: 20, fontWeight: '700', fontFamily: 'serif'},
     sheetSub: {color: c.textMuted, fontSize: 13, marginTop: 2, marginBottom: spacing.md},
-    aiHead: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: spacing.sm,
-      marginBottom: spacing.md,
-    },
-    aiBadge: {
-      width: 44,
-      height: 44,
-      borderRadius: 14,
-      backgroundColor: c.gold,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    aiAsk: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: 8,
-      backgroundColor: c.gold,
-      borderRadius: radius.lg,
-      paddingVertical: spacing.md,
-      marginTop: spacing.xs,
-    },
-    aiAskText: {color: c.onGold, fontSize: 15, fontWeight: '800', letterSpacing: 0.2},
     action: {
       flexDirection: 'row',
       alignItems: 'center',

@@ -298,6 +298,19 @@ export function ProfileScreen({navigation}) {
 
         {/* ---------- Support ---------- */}
         <AnimatedEntrance delay={280}>
+          <SectionLabel>Tools</SectionLabel>
+          <View style={styles.card}>
+            <MenuRow
+              icon="scan"
+              label="Scan QR Code"
+              sub="Open any AUREVIA property by scanning its QR"
+              onPress={() => navigation.navigate('QRScanner')}
+              last
+            />
+          </View>
+        </AnimatedEntrance>
+
+        <AnimatedEntrance delay={310}>
           <SectionLabel>Support</SectionLabel>
           <View style={styles.card}>
             <MenuRow
