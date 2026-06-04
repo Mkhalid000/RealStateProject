@@ -1,5 +1,6 @@
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {
+  Alert,
   Animated,
   Easing,
   FlatList,
@@ -371,7 +372,13 @@ export function ExploreScreen({navigation}) {
                 property={item}
                 style={styles.card}
                 onPress={() => navigation.navigate('PropertyDetail', {id: item.id, title: item.title})}
-                onCompare={() => compareToggle(item)}
+                onCompare={() => {
+                  if (!compareIsSelected(item.id) && compareIsFull()) {
+                    Alert.alert('Compare limit', 'You can compare up to 3 properties at a time.');
+                    return;
+                  }
+                  compareToggle(item);
+                }}
                 compareSelected={compareIsSelected(item.id)}
               />
             </AnimatedEntrance>

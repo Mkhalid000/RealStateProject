@@ -37,12 +37,15 @@ export function ChatScreen({route, navigation}) {
     queryFn: () => fetchMessages(convId),
     enabled: !!convId,
     refetchInterval: 4000,
-    onSuccess: () => {
-      // Refresh unread counts since messages are now marked as read on the server
+  });
+
+  // v5: use useEffect to react to data changes instead of onSuccess
+  useEffect(() => {
+    if (data) {
       qc.invalidateQueries({queryKey: ['chat-unread-count']});
       qc.invalidateQueries({queryKey: ['conversations']});
-    },
-  });
+    }
+  }, [data, qc]);
 
   const messages = Array.isArray(data) ? data : [];
 

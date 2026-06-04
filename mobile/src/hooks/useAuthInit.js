@@ -72,7 +72,7 @@ export function useAuthInit() {
       } catch (err) {
         const status = err?.response?.status;
         if (status === 401 || status === 403) {
-          // Genuinely expired / revoked token — clear everything and go to Login.
+          // 401 = expired token, 403 = deactivated account — clear everything.
           await tokenStore.clear();
           await lastUserStore.clear();
           if (active) setStartAtLogin(true);
