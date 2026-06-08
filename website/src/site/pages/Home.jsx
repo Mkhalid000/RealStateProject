@@ -1,5 +1,5 @@
 import {lazy, Suspense, useEffect, useRef, useState} from 'react';
-import {Link} from 'react-router-dom';
+import {Link, useNavigate} from 'react-router-dom';
 import {gsap, ScrollTrigger} from '../../lib/gsap';
 import {apiFetch} from '../../lib/api';
 import {Reveal} from '../components/Reveal';
@@ -30,7 +30,7 @@ const SHOWCASE = [
 const STATS = [
   {value: 120, suffix: '+', label: 'Private Listings'},
   {value: 18, suffix: '', label: 'Global Cities'},
-  {value: 1.4, prefix: '$', suffix: 'M', decimals: 1, label: 'Property Sold'},
+  {value: 1.4, prefix: '₹', suffix: 'M', decimals: 1, label: 'Property Sold'},
   {value: 10, suffix: '', label: 'Years of Trust'},
 ];
 
@@ -47,6 +47,17 @@ export default function Home() {
   const track = useRef(null);
   const [featured, setFeatured] = useState([]);
   const [tIndex, setTIndex] = useState(0);
+  const [searchQ, setSearchQ] = useState('');
+  const [searchType, setSearchType] = useState('');
+  const navigate = useNavigate();
+
+  function handleSearch(e) {
+    e.preventDefault();
+    const sp = new URLSearchParams();
+    if (searchQ.trim()) sp.set('q', searchQ.trim());
+    if (searchType) sp.set('type', searchType);
+    navigate(sp.toString() ? `/properties?${sp.toString()}` : '/properties');
+  }
 
   useEffect(() => {
     apiFetch('/properties?limit=6')
@@ -142,23 +153,33 @@ export default function Home() {
           </p>
 
           {/* floating glass search */}
-          <div className="hero-fade glass mt-10 flex max-w-2xl flex-col gap-3 rounded-2xl p-3 shadow-soft sm:flex-row sm:items-center">
+          <form
+            onSubmit={handleSearch}
+            className="hero-fade glass mt-10 flex max-w-2xl flex-col gap-3 rounded-2xl !bg-white/85 p-3 shadow-soft sm:flex-row sm:items-center">
             <input
-              className="flex-1 bg-transparent px-4 py-3 text-sm text-white outline-none placeholder:text-white/50"
+              value={searchQ}
+              onChange={e => setSearchQ(e.target.value)}
+              className="flex-1 bg-transparent px-4 py-3 text-sm text-ink outline-none placeholder:text-ink/50"
               placeholder="Search by city, type, or address…"
             />
-            <select className="bg-transparent px-4 py-3 text-sm text-white/80 outline-none [&>option]:text-ink">
+            <select
+              value={searchType}
+              onChange={e => setSearchType(e.target.value)}
+              className="bg-transparent px-4 py-3 text-sm text-ink outline-none [&>option]:text-ink">
               <option value="">Any type</option>
-              <option value="house">House</option>
               <option value="apartment">Apartment</option>
+              <option value="villa">Villa</option>
+              <option value="plot">Plot</option>
               <option value="commercial">Commercial</option>
+              <option value="office">Office</option>
+              <option value="shop">Shop</option>
             </select>
-            <Link
-              to="/properties"
+            <button
+              type="submit"
               className="sheen rounded-xl bg-gold px-7 py-3 text-center text-xs uppercase tracking-[0.16em] text-ink transition-colors hover:bg-gold-light">
               Search
-            </Link>
-          </div>
+            </button>
+          </form>
         </div>
 
         {/* scroll indicator */}

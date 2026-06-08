@@ -220,7 +220,7 @@ export default function Reels() {
               </div>
               {reel.caption && <p className="mt-3 max-w-sm text-sm leading-relaxed text-white/90 drop-shadow">{reel.caption}</p>}
               {reel.property && (
-                <Link to={`/properties/${reel.property.id}`}
+                <Link to={`/properties/${reel.property.id}/${reel.property.slug}`}
                   className="pointer-events-auto mt-3 inline-flex items-center gap-2 rounded-full bg-white/15 px-3.5 py-2 text-xs font-semibold text-white backdrop-blur transition hover:bg-white/25">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M3 11l9-8 9 8M5 10v10h14V10"/></svg>
                   {reel.property.title} · <span className="text-gold-light">{money(reel.property.price, reel.property.currency)}</span>

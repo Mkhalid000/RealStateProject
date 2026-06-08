@@ -39,7 +39,7 @@ function PropertyRow({p}) {
   const area = p.carpetArea ?? p.superBuiltUpArea;
   return (
     <Link
-      to={`/properties/${p.id}`}
+      to={`/properties/${p.id}/${p.slug}`}
       className="group flex flex-col overflow-hidden rounded-2xl border border-line bg-surface shadow-card transition-colors hover:border-gold/50 sm:flex-row">
       <div className="relative aspect-[4/3] w-full shrink-0 overflow-hidden sm:aspect-auto sm:w-72">
         {img ? (

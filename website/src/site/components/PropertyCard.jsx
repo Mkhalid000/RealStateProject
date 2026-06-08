@@ -66,7 +66,7 @@ export function PropertyCard({property}) {
   return (
     <Link
       ref={cardRef}
-      to={`/properties/${property.id}`}
+      to={`/properties/${property.id}/${property.slug}`}
       onMouseMove={onMove}
       onMouseLeave={onLeave}
       className="group relative block overflow-hidden rounded-2xl border border-line bg-surface shadow-card transition-[border-color,box-shadow] duration-500 hover:border-gold/50 hover:shadow-glow [transform-style:preserve-3d] will-change-transform">

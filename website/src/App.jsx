@@ -79,7 +79,7 @@ export default function App() {
         <Route element={<PublicLayout />}>
           <Route path="/" element={<Home />} />
           <Route path="/properties" element={<Properties />} />
-          <Route path="/properties/:id" element={<PropertyDetail />} />
+          <Route path="/properties/:id/:slug?" element={<PropertyDetail />} />
           <Route path="/post-property" element={<PostProperty />} />
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />

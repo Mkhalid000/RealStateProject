@@ -1,5 +1,5 @@
 import {useCallback, useEffect, useState} from 'react';
-import {Link} from 'react-router-dom';
+import {Link, useNavigate} from 'react-router-dom';
 import {apiFetch} from '../../lib/api';
 import {parseVideo, embedSrc} from '../../lib/video';
 import {createTheme, ThemeProvider} from '@mui/material/styles';
@@ -19,10 +19,24 @@ import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
 import Skeleton from '@mui/material/Skeleton';
 import Dialog from '@mui/material/Dialog';
+import ToggleButton from '@mui/material/ToggleButton';
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 
 const LIMIT = 10;
 const fmtDate = d => (d ? new Date(d).toLocaleDateString('en-US', {day: '2-digit', month: 'short', year: 'numeric'}) : '—');
 const fmtCount = n => (n >= 1000 ? (n / 1000).toFixed(n >= 10000 ? 0 : 1) + 'k' : String(n ?? 0));
+const money = (p, c) =>
+  new Intl.NumberFormat('en-US', {style: 'currency', currency: c || 'USD', maximumFractionDigits: 0}).format(Number(p) || 0);
+
+const I = {
+  eye: <><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></>,
+  heart: <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.6z" />,
+  comment: <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />,
+  home: <path d="M3 11l9-8 9 8M5 10v10h14V10" />,
+};
+const Svg = ({d, size = 13}) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">{d}</svg>
+);
 
 const muiTheme = createTheme({
   palette: {primary: {main: '#f2a65a', dark: '#d98a3e', contrastText: '#211d1d'}, text: {primary: '#11111b', secondary: '#636274'}},
@@ -40,9 +54,11 @@ const headSx = {
 const cellSx = {borderBottom: '1px solid #f0f1f5', py: 1.5};
 
 export default function Reels() {
+  const navigate = useNavigate();
   const [rows, setRows] = useState([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
+  const [view, setView] = useState('grid');
   const [qInput, setQInput] = useState('');
   const [q, setQ] = useState('');
   const [boosted, setBoosted] = useState('all');
@@ -122,10 +138,105 @@ export default function Reels() {
         </TextField>
         <div className="flex-1" />
         <span className="text-sm text-muted">{total} {total === 1 ? 'reel' : 'reels'}</span>
+        <ToggleButtonGroup
+          size="small"
+          exclusive
+          value={view}
+          onChange={(e, v) => v && setView(v)}
+          sx={{'& .MuiToggleButton-root': {borderColor: '#e2e4eb', px: 1.2}, '& .Mui-selected': {backgroundColor: 'rgba(242,166,90,0.12) !important', color: '#d98a3e'}}}>
+          <ToggleButton value="grid" aria-label="grid view">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          </ToggleButton>
+          <ToggleButton value="table" aria-label="table view">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M3 5h18M3 12h18M3 19h18"/></svg>
+          </ToggleButton>
+        </ToggleButtonGroup>
       </div>
 
       {error ? <div className="mb-4 rounded-lg border border-danger/30 bg-danger/10 px-4 py-2.5 text-sm text-danger">{error}</div> : null}
 
+      {/* ── GRID VIEW ── */}
+      {view === 'grid' && (
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {loading ? (
+            Array.from({length: 6}).map((_, i) => (
+              <div key={i} className="overflow-hidden rounded-2xl border border-line bg-surface">
+                <Skeleton variant="rectangular" height={220} animation="wave" />
+                <div className="p-4">
+                  <Skeleton variant="text" width="70%" animation="wave" />
+                  <Skeleton variant="text" width="40%" animation="wave" />
+                </div>
+              </div>
+            ))
+          ) : rows.length ? (
+            rows.map(r => {
+              const poster = r.thumbnailUrl || parseVideo(r.videoUrl).poster;
+              const p = r.property;
+              return (
+                <div key={r.id} className="group overflow-hidden rounded-2xl border border-line bg-surface shadow-sm transition hover:shadow-md">
+                  <div className="relative h-56 w-full cursor-pointer bg-ink" onClick={() => setPreview(r)}>
+                    {poster ? <img src={poster} alt="" className="h-full w-full object-cover" /> : null}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                    <span className="absolute inset-0 grid place-items-center text-white/90 transition-transform group-hover:scale-110">
+                      <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                    </span>
+                    {r.isBoosted && (
+                      <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full bg-gold px-2.5 py-1 text-[11px] font-semibold text-ink">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg>Boosted
+                      </span>
+                    )}
+                    <div className="absolute right-2 top-2" onClick={e => e.stopPropagation()}>
+                      <IconButton size="small" disabled={busy === r.id} onClick={e => openMenu(e, r)} sx={{backgroundColor: 'rgba(255,255,255,0.9)', '&:hover': {backgroundColor: '#fff'}}}>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#11111b" strokeWidth="2"><circle cx="12" cy="5" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="12" cy="19" r="1.4"/></svg>
+                      </IconButton>
+                    </div>
+                    <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-white">
+                      <span className="truncate text-[13px] font-medium">{r.caption || <span className="text-white/60">No caption</span>}</span>
+                      <span className="shrink-0 text-[11px] text-white/70">{fmtDate(r.createdAt)}</span>
+                    </div>
+                  </div>
+
+                  <div className="p-4">
+                    <div className="text-[13px] font-medium text-fg">{r.agent?.fullName || '—'}</div>
+                    <div className="text-[11.5px] text-muted">{r.agent?.email || ''}</div>
+
+                    <div className="mt-3 flex items-center gap-4 border-t border-line pt-3 text-[12px] text-muted">
+                      <span className="inline-flex items-center gap-1.5"><Svg d={I.eye} />{fmtCount(r.viewCount)}</span>
+                      <span className="inline-flex items-center gap-1.5"><Svg d={I.heart} />{r.likeCount}</span>
+                      <span className="inline-flex items-center gap-1.5"><Svg d={I.comment} />{r.commentCount}</span>
+                    </div>
+
+                    {p && (
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/admin/properties/${p.id}`)}
+                        className="group/p mt-3 flex w-full items-start gap-3 rounded-xl border border-line bg-bg p-2.5 text-left transition hover:border-gold/50 hover:bg-gold/5">
+                        {p.imageUrls?.[0] ? (
+                          <img src={p.imageUrls[0]} alt="" className="h-12 w-16 shrink-0 rounded-lg object-cover" />
+                        ) : (
+                          <div className="grid h-12 w-16 shrink-0 place-items-center rounded-lg border border-line bg-surface"><Svg d={I.home} size={16} /></div>
+                        )}
+                        <div className="min-w-0">
+                          <div className="truncate text-[12.5px] font-semibold text-fg group-hover/p:text-gold-dark">↳ {p.title}</div>
+                          <div className="mt-0.5 line-clamp-2 text-[11px] leading-snug text-muted">
+                            {p.description || 'No description provided.'}
+                          </div>
+                          <div className="mt-1 text-[11px] font-semibold text-gold-dark">{money(p.price, p.currency)}</div>
+                        </div>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })
+          ) : (
+            <div className="col-span-full rounded-2xl border border-line bg-surface py-12 text-center text-muted">No reels match these filters.</div>
+          )}
+        </div>
+      )}
+
+      {/* ── TABLE VIEW ── */}
+      {view === 'table' && (
       <TableContainer component={Paper} variant="outlined" sx={{borderColor: '#e2e4eb', borderRadius: '16px', overflow: 'hidden'}}>
         <Table>
           <TableHead>
@@ -195,6 +306,7 @@ export default function Reels() {
           </TableBody>
         </Table>
       </TableContainer>
+      )}
 
       <Menu anchorEl={menu.anchor} open={Boolean(menu.anchor)} onClose={closeMenu} anchorOrigin={{vertical: 'bottom', horizontal: 'right'}} transformOrigin={{vertical: 'top', horizontal: 'right'}}>
         <MenuItem onClick={() => { const r = menu.row; closeMenu(); setPreview(r); }} sx={{fontSize: 14}}>Preview</MenuItem>
