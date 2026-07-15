@@ -24,7 +24,7 @@ async function bootstrap() {
   app.enableCors({origin: origins.length ? origins : true, credentials: true});
 
   const port = config.get<number>('PORT') ?? 4000;
-  await app.listen(port);
+  await app.listen(port, '0.0.0.0');
   // eslint-disable-next-line no-console
   console.log(`RealReels API running on http://localhost:${port}/api`);
 }

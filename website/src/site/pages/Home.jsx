@@ -6,7 +6,7 @@ import {Reveal} from '../components/Reveal';
 import {Counter} from '../components/Counter';
 import {Marquee} from '../components/Marquee';
 import {MagneticButton} from '../components/MagneticButton';
-import {PropertyCard} from '../components/PropertyCard';
+import {PropertyCard, PropertyCardSkeleton} from '../components/PropertyCard';
 
 // three.js is heavy — load it only on the home page, as its own chunk.
 const Hero3D = lazy(() =>
@@ -46,6 +46,7 @@ export default function Home() {
   const showcaseSection = useRef(null);
   const track = useRef(null);
   const [featured, setFeatured] = useState([]);
+  const [loadingFeatured, setLoadingFeatured] = useState(true);
   const [tIndex, setTIndex] = useState(0);
   const [searchQ, setSearchQ] = useState('');
   const [searchType, setSearchType] = useState('');
@@ -61,11 +62,12 @@ export default function Home() {
 
   useEffect(() => {
     apiFetch('/properties?limit=6')
-      .then(r => {
-        setFeatured(r.items || []);
+      .then(r => setFeatured(r.items || []))
+      .catch(() => setFeatured([]))
+      .finally(() => {
+        setLoadingFeatured(false);
         ScrollTrigger.refresh();
-      })
-      .catch(() => setFeatured([]));
+      });
   }, []);
 
   useEffect(() => {
@@ -222,19 +224,40 @@ export default function Home() {
           </div>
         </Reveal>
 
-        {featured.length > 0 ? (
+        {loadingFeatured ? (
+          <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {Array.from({length: 6}).map((_, i) => (
+              <PropertyCardSkeleton key={i} />
+            ))}
+          </div>
+        ) : featured.length > 0 ? (
           <Reveal stagger={0.1} className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {featured.map(p => (
               <PropertyCard key={p.id} property={p} />
             ))}
           </Reveal>
         ) : (
-          <p className="mt-12 text-muted">
-            No listings yet — start the backend and add properties from the admin panel.
-          </p>
+          <Reveal className="mt-14 rounded-2xl border border-line bg-surface2/20 py-20 text-center">
+            <div className="mx-auto mb-5 grid h-16 w-16 place-items-center rounded-full bg-surface2 text-muted">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z" />
+                <path d="M9.5 12.5h5M4 4l16 16" />
+              </svg>
+            </div>
+            <p className="font-serif text-2xl">No residences yet</p>
+            <p className="mx-auto mt-2 max-w-sm text-sm text-muted">
+              Our collection is being curated. Please check back shortly, or speak
+              to an advisor about off-market opportunities.
+            </p>
+            <Link
+              to="/contact"
+              className="mt-7 inline-flex rounded-full border border-gold/60 bg-gold/10 px-7 py-3 text-xs font-semibold uppercase tracking-[0.16em] text-gold transition-colors hover:bg-gold hover:text-ink">
+              Speak to an Advisor
+            </Link>
+          </Reveal>
         )}
 
-        {featured.length > 0 && (
+        {!loadingFeatured && featured.length > 0 && (
           <div className="mt-10 flex justify-end">
             <Link
               to="/properties"

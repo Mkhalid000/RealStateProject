@@ -27,6 +27,34 @@ const Spec = ({d, children}) => (
   </span>
 );
 
+export function PropertyCardSkeleton() {
+  return (
+    <div className="relative overflow-hidden rounded-2xl border border-line bg-surface shadow-card">
+      <div className="relative aspect-[4/3] bg-surface2/60">
+        <div className="absolute left-4 top-4 flex gap-2">
+          <span className="h-5 w-20 rounded-full bg-surface2" />
+          <span className="h-5 w-16 rounded-full bg-surface2" />
+        </div>
+        <span className="absolute right-4 top-4 h-9 w-9 rounded-full bg-surface2" />
+        <span className="absolute bottom-4 left-4 h-7 w-32 rounded-md bg-surface2" />
+      </div>
+
+      <div className="p-5">
+        <div className="h-4 w-3/5 rounded-full bg-surface2" />
+        <div className="mt-3 h-3 w-2/5 rounded-full bg-surface2/70" />
+        <div className="mt-5 flex gap-5 border-t border-line pt-4">
+          <div className="h-3 w-16 rounded-full bg-surface2/70" />
+          <div className="h-3 w-16 rounded-full bg-surface2/70" />
+          <div className="h-3 w-16 rounded-full bg-surface2/70" />
+        </div>
+      </div>
+
+      {/* sweeping shimmer */}
+      <span className="pointer-events-none absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-fg/[0.07] to-transparent" />
+    </div>
+  );
+}
+
 export function PropertyCard({property}) {
   const [fav, setFav] = useState(false);
   const [idx, setIdx] = useState(0);

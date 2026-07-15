@@ -126,3 +126,28 @@ dependencies {
         implementation jscFlavor
     }
 }
+
+// react-native-video's Java source is written against androidx.media3 1.8.0's
+// DefaultLoadControl API. react-native-vision-camera (via media3-muxer) pulls
+// in media3 1.9.0, and Gradle's "highest version wins" resolution bumps every
+// media3 artifact to 1.9.0 at runtime — but RNVideo's compiled bytecode still
+// calls the 1.8.0 constructor, causing a NoSuchMethodError crash on play.
+// Force all media3 artifacts to 1.8.0 so compile-time and runtime match.
+configurations.all {
+    resolutionStrategy {
+        force "androidx.media3:media3-exoplayer:1.8.0"
+        force "androidx.media3:media3-common:1.8.0"
+        force "androidx.media3:media3-ui:1.8.0"
+        force "androidx.media3:media3-datasource:1.8.0"
+        force "androidx.media3:media3-datasource-okhttp:1.8.0"
+        force "androidx.media3:media3-database:1.8.0"
+        force "androidx.media3:media3-decoder:1.8.0"
+        force "androidx.media3:media3-extractor:1.8.0"
+        force "androidx.media3:media3-container:1.8.0"
+        force "androidx.media3:media3-session:1.8.0"
+        force "androidx.media3:media3-exoplayer-dash:1.8.0"
+        force "androidx.media3:media3-exoplayer-hls:1.8.0"
+        force "androidx.media3:media3-exoplayer-smoothstreaming:1.8.0"
+        force "androidx.media3:media3-muxer:1.8.0"
+    }
+}

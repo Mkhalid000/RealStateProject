@@ -10,6 +10,7 @@ import {CursorGlow} from './site/components/CursorGlow';
 import {ScrollProgress} from './site/components/ScrollProgress';
 import {Loader} from './site/components/Loader';
 import {PageTransition} from './site/components/PageTransition';
+import {PostPropertyBanner} from './site/components/PostPropertyBanner';
 import Home from './site/pages/Home';
 import Properties from './site/pages/Properties';
 import PropertyDetail from './site/pages/PropertyDetail';
@@ -66,6 +67,7 @@ function PublicLayout() {
         <Outlet />
       </main>
       <Footer />
+      <PostPropertyBanner />
     </>
   );
 }
