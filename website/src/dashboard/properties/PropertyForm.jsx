@@ -40,7 +40,7 @@ const EMPTY = {
   latitude: '', longitude: '',
   bhk: '', bathrooms: '', balconies: '', superBuiltUpArea: '', carpetArea: '', plotArea: '',
   floorNumber: '', totalFloors: '', propertyAge: '', furnishing: '', facing: '',
-  amenities: [], imageUrls: [], videoUrl: '', virtualTourUrl: '', modelUrl: '',
+  amenities: [], imageUrls: [], videoUrl: '', virtualTourUrl: '', modelUrl: '', brochureUrl: '',
   ownerName: '', ownerPhone: '', ownerWhatsapp: '', ownerEmail: '', agencyName: '',
 };
 
@@ -315,6 +315,15 @@ export default function PropertyForm() {
     } finally {
       setUploading(false);
     }
+  }
+
+  async function handleBrochure(file) {
+    if (!file) return;
+    // `accept` only filters the picker — the user can still force any file through.
+    const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+    if (!isPdf) return setError('Brochure must be a PDF file.');
+    setError('');
+    await handleSingle(file, 'brochureUrl', 'property-brochures');
   }
 
   function validateStep() {
@@ -771,7 +780,33 @@ export default function PropertyForm() {
                 </div>
               </Grid>
               <div style={{marginTop: 16}}>
-                <Input label="360° Virtual Tour URL" placeholder="https://my360tour.com/property/xyz" value={form.virtualTourUrl} onChange={e => set('virtualTourUrl', e.target.value)} />
+                <Grid cols={2}>
+                  <Input label="360° Virtual Tour URL" placeholder="https://my360tour.com/property/xyz" value={form.virtualTourUrl} onChange={e => set('virtualTourUrl', e.target.value)} />
+                  <div>
+                    <label style={{display: 'block', fontSize: 12, fontWeight: 700, color: '#636274', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 6}}>Brochure (PDF) — optional</label>
+                    <label style={{
+                      display: 'flex', alignItems: 'center', gap: 10,
+                      padding: '10px 14px', border: '1.5px dashed #e2e4eb',
+                      borderRadius: 9, cursor: 'pointer', background: '#fafafa',
+                    }}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a0a3b1" strokeWidth="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 15h6M9 11h2"/></svg>
+                      <span style={{fontSize: 13, color: '#636274'}}>{form.brochureUrl ? 'Change brochure' : 'Upload brochure'}</span>
+                      <input type="file" accept="application/pdf,.pdf" hidden onChange={e => handleBrochure(e.target.files[0])} />
+                    </label>
+                    {form.brochureUrl && (
+                      <p style={{fontSize: 11.5, color: '#10b981', marginTop: 6, display: 'flex', alignItems: 'center', gap: 8}}>
+                        ✓ Brochure uploaded
+                        <a href={form.brochureUrl} target="_blank" rel="noreferrer" style={{color: '#636274', textDecoration: 'underline'}}>preview</a>
+                        <button
+                          type="button"
+                          onClick={() => set('brochureUrl', '')}
+                          style={{border: 0, background: 'none', color: '#e0654f', cursor: 'pointer', padding: 0, fontSize: 11.5}}>
+                          remove
+                        </button>
+                      </p>
+                    )}
+                  </div>
+                </Grid>
               </div>
             </Section>
           </div>
@@ -817,6 +852,7 @@ export default function PropertyForm() {
                   ['City', form.city || '—'],
                   ['BHK', form.bhk || '—'],
                   ['Photos', `${form.imageUrls.length} uploaded`],
+                  ['Brochure', form.brochureUrl ? 'Attached' : 'None'],
                 ].map(([k, v]) => (
                   <div key={k} style={{display: 'flex', gap: 8, alignItems: 'baseline'}}>
                     <span style={{fontSize: 12, color: '#a0a3b1', minWidth: 56}}>{k}</span>

@@ -301,6 +301,7 @@ export class PropertiesService {
       videoUrl: dto.videoUrl,
       virtualTourUrl: dto.virtualTourUrl,
       modelUrl: dto.modelUrl,
+      brochureUrl: dto.brochureUrl,
       ownerName: dto.ownerName,
       ownerPhone: dto.ownerPhone,
       ownerWhatsapp: dto.ownerWhatsapp,

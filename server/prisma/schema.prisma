@@ -193,6 +193,7 @@ model Property {
   videoUrl       String?
   virtualTourUrl String?
   modelUrl       String?
+  brochureUrl    String?
 
   // Step 6 — owner / agent
   ownerName     String?

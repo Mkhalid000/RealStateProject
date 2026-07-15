@@ -72,6 +72,7 @@ export interface Property {
   videoUrl: string | null;
   virtualTourUrl: string | null;
   modelUrl: string | null;
+  brochureUrl: string | null;
 
   // owner / agent
   ownerName: string | null;

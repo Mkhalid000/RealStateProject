@@ -158,14 +158,35 @@ export default function PropertyDetail() {
   const hasMap = Boolean((p.latitude && p.longitude) || p.address || p.city);
   const mapSrc = `https://maps.google.com/maps?q=${mapQuery}&z=15&output=embed`;
   const mapHref = `https://www.google.com/maps/search/?api=1&query=${mapQuery}`;
+  // ImageKit serves the PDF inline by default; ik-attachment flips the
+  // Content-Disposition so the link actually downloads (a plain `download`
+  // attribute is ignored cross-origin).
+  const brochureHref = p.brochureUrl
+    ? `${p.brochureUrl}${p.brochureUrl.includes('?') ? '&' : '?'}ik-attachment=true`
+    : null;
 
   return (
     <div className="relative mx-auto max-w-7xl px-6 pb-28 pt-28">
-      {/* breadcrumb */}
-      <Link to="/properties" className="mb-5 inline-flex items-center gap-2 text-sm text-muted transition-colors hover:text-gold">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
-        Back to Properties
-      </Link>
+      {/* breadcrumb + brochure */}
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <Link to="/properties" className="inline-flex items-center gap-2 text-sm text-muted transition-colors hover:text-gold">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
+          Back to Properties
+        </Link>
+
+        {brochureHref && (
+          <a
+            href={brochureHref}
+            target="_blank"
+            rel="noreferrer"
+            className="group inline-flex items-center gap-2 rounded-full border border-gold/60 bg-gold/10 px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.16em] text-gold transition-colors hover:bg-gold hover:text-ink">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="transition-transform duration-300 group-hover:translate-y-0.5">
+              <path d="M12 3v12M7 10l5 5 5-5M5 21h14" />
+            </svg>
+            Download Brochure
+          </a>
+        )}
+      </div>
 
       {/* gallery */}
       <ImageReveal key={active} src={images[active]} alt={p.title} className="rounded-2xl" imgClassName="h-[62vh]" />
@@ -187,8 +208,8 @@ export default function PropertyDetail() {
         <div>
           <Reveal>
             <div className="flex flex-wrap items-center gap-2.5">
-              <span className="rounded-full border border-gold/50 bg-gold/20 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.15em] text-gray-700">{p.type}</span>
-              <span className={`rounded-full border px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.15em] ${p.listingType === 'rent' ? 'border-sky-400/50 bg-sky-500/25 text-gray-500' : 'border-sage/50 bg-sage/25 text-gray-500'}`}>{forLabel}</span>
+              <span className="rounded-full border border-gold/50 bg-gold/20 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.15em] text-fg">{p.type}</span>
+              <span className={`rounded-full border px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.15em] text-fg ${p.listingType === 'rent' ? 'border-sky-400/50 bg-sky-500/25' : 'border-sage/50 bg-sage/25'}`}>{forLabel}</span>
               {p.featured && (
                 <span className="inline-flex items-center gap-1 rounded-full bg-gold px-4 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-ink">
                   <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17.8 5.9 20.4l1.4-6.8L2.2 9l6.9-.7z" /></svg>
@@ -219,7 +240,7 @@ export default function PropertyDetail() {
           {/* description */}
           <Reveal y={30}>
             <div className="mt-10">
-              <h4 className="text-lg uppercase tracking-luxe text-black text-bold">Overview</h4>
+              <h4 className="text-lg font-bold uppercase tracking-luxe text-fg">Overview</h4>
               <p className="mt-4 whitespace-pre-line leading-relaxed text-fg/80">
                 {p.description || 'A truly exceptional residence. Contact our advisors for full details and private viewings.'}
               </p>
@@ -229,7 +250,7 @@ export default function PropertyDetail() {
           {/* full details */}
           <Reveal y={30}>
             <div className="mt-10">
-              <h4 className="text-lg uppercase tracking-luxe text-black text-bold">Property Details</h4>
+              <h4 className="text-lg font-bold uppercase tracking-luxe text-fg">Property Details</h4>
               <div className="mt-4 grid gap-x-12 sm:grid-cols-2">
                 <div>
                   <Detail label="Listing" value={forLabel} />
@@ -339,7 +360,7 @@ export default function PropertyDetail() {
       {p.amenities?.length > 0 && (
         <Reveal y={30}>
           <div className="mt-16">
-            <h4 className="text-lg uppercase tracking-luxe text-black text-bold">Amenities &amp; Features</h4>
+            <h4 className="text-lg font-bold uppercase tracking-luxe text-fg">Amenities &amp; Features</h4>
             <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
               {p.amenities.map(a => (
                 <div key={a} className="flex items-center gap-2.5 py-1.5 text-fg">

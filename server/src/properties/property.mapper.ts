@@ -49,6 +49,7 @@ export function toProperty(p: PropertyWithAgent): SharedProperty {
     videoUrl: p.videoUrl,
     virtualTourUrl: p.virtualTourUrl,
     modelUrl: p.modelUrl,
+    brochureUrl: p.brochureUrl,
 
     ownerName: p.ownerName,
     ownerPhone: p.ownerPhone,

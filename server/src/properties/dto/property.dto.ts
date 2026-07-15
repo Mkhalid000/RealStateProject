@@ -96,6 +96,7 @@ export class CreatePropertyDto {
   @IsOptional() @IsString() videoUrl?: string;
   @IsOptional() @IsString() virtualTourUrl?: string;
   @IsOptional() @IsString() modelUrl?: string;
+  @IsOptional() @IsString() brochureUrl?: string;
 
   // ---- Step 6: owner / agent ----
   @IsOptional() @IsString() ownerName?: string;
