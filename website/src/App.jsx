@@ -1,5 +1,5 @@
 import {Routes, Route, Outlet, useLocation} from 'react-router-dom';
-import {useEffect} from 'react';
+import {lazy, Suspense, useCallback, useEffect, useState} from 'react';
 
 // Public website
 import {Navbar} from './site/components/Navbar';
@@ -11,6 +11,7 @@ import {ScrollProgress} from './site/components/ScrollProgress';
 import {Loader} from './site/components/Loader';
 import {PageTransition} from './site/components/PageTransition';
 import {PostPropertyBanner} from './site/components/PostPropertyBanner';
+import {MapFab} from './site/components/MapFab';
 import Home from './site/pages/Home';
 import Properties from './site/pages/Properties';
 import PropertyDetail from './site/pages/PropertyDetail';
@@ -18,6 +19,9 @@ import PostProperty from './site/pages/PostProperty';
 import ReelsFeed from './site/pages/Reels';
 import About from './site/pages/About';
 import Contact from './site/pages/Contact';
+
+// Google Maps + its React bindings are heavy — keep them out of the main bundle.
+const MapExplore = lazy(() => import('./site/pages/MapExplore'));
 
 // Dashboard (admin)
 import {ProtectedRoute} from './dashboard/components/ProtectedRoute';
@@ -54,6 +58,11 @@ function ScrollToTop() {
 
 /** Persistent public layout — mounts smooth scroll, cursor, loader once. */
 function PublicLayout() {
+  // The bottom-right corner holds one widget at a time: the post-property
+  // advert has first claim, and the map button takes over once it's gone.
+  const [cornerTaken, setCornerTaken] = useState(true);
+  const claimCorner = useCallback(taken => setCornerTaken(taken), []);
+
   return (
     <>
       <Loader />
@@ -67,7 +76,8 @@ function PublicLayout() {
         <Outlet />
       </main>
       <Footer />
-      <PostPropertyBanner />
+      <PostPropertyBanner onOccupyChange={claimCorner} />
+      {!cornerTaken && <MapFab />}
     </>
   );
 }
@@ -90,6 +100,16 @@ export default function App() {
         {/* Immersive public reels feed (its own full-screen chrome) */}
         <Route path="/reels" element={<ReelsFeed />} />
         <Route path="/reels/:id" element={<ReelsFeed />} />
+
+        {/* Full-screen map explorer (own chrome, like the reels feed) */}
+        <Route
+          path="/map"
+          element={
+            <Suspense fallback={<div className="fixed inset-0 bg-bg" />}>
+              <MapExplore />
+            </Suspense>
+          }
+        />
 
         {/* Auth */}
         <Route path="/login" element={<Login />} />

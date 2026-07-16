@@ -17,17 +17,30 @@ const ICON = {
   arrow: <path d="M5 12h14M12 5l7 7-7 7" />,
 };
 
-/** Floating bottom-right advert linking to the free-listing page. */
-export function PostPropertyBanner() {
+/**
+ * Floating bottom-right advert linking to the free-listing page.
+ *
+ * `onOccupyChange` reports whether this owns the bottom-right corner, so the
+ * caller can put something else there when it doesn't (see MapFab). It is
+ * reported up-front rather than when the card animates in — otherwise the other
+ * widget would flash for the SHOW_DELAY seconds before being pushed out.
+ */
+export function PostPropertyBanner({onOccupyChange}) {
   const {pathname} = useLocation();
+  const [dismissed, setDismissed] = useState(() => !!sessionStorage.getItem(DISMISS_KEY));
   const [visible, setVisible] = useState(false);
   const card = useRef(null);
 
   // Already on the posting page? The advert would be redundant.
   const suppressed = pathname === '/post-property';
+  const occupies = !dismissed && !suppressed;
 
   useEffect(() => {
-    if (suppressed || sessionStorage.getItem(DISMISS_KEY)) return;
+    onOccupyChange?.(occupies);
+  }, [occupies, onOccupyChange]);
+
+  useEffect(() => {
+    if (!occupies) return;
     let cancelled = false;
     const show = () => !cancelled && setVisible(true);
     const t = setTimeout(() => {
@@ -41,7 +54,7 @@ export function PostPropertyBanner() {
       cancelled = true;
       clearTimeout(t);
     };
-  }, [suppressed]);
+  }, [occupies]);
 
   useEffect(() => {
     if (!visible || !card.current) return;
@@ -67,7 +80,12 @@ export function PostPropertyBanner() {
       scale: 0.9,
       duration: 0.35,
       ease: 'power3.in',
-      onComplete: () => setVisible(false),
+      // Only release the corner once the card has actually animated out,
+      // so the map button doesn't appear underneath it mid-flight.
+      onComplete: () => {
+        setVisible(false);
+        setDismissed(true);
+      },
     });
   }
 
@@ -87,7 +105,7 @@ export function PostPropertyBanner() {
   const onLeave = () =>
     gsap.to(card.current, {rotateX: 0, rotateY: 0, y: 0, duration: 0.6, ease: 'power3.out'});
 
-  if (!visible || suppressed) return null;
+  if (!visible || !occupies) return null;
 
   return (
     <div className="fixed bottom-5 right-5 z-[70] w-[min(21rem,calc(100vw-2.5rem))]">
