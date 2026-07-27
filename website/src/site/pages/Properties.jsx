@@ -1,6 +1,7 @@
 import {lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {Link, useSearchParams} from 'react-router-dom';
 import {apiFetch} from '../../lib/api';
+import {useNavHidden} from '../../lib/useNavHidden';
 import {Reveal} from '../components/Reveal';
 import {PropertyCard} from '../components/PropertyCard';
 
@@ -62,6 +63,7 @@ const I = {
   sliders: <><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h10M18 18h2" /><circle cx="16" cy="6" r="2" /><circle cx="10" cy="12" r="2" /><circle cx="16" cy="18" r="2" /></>,
   close: <path d="M18 6 6 18M6 6l12 12" />,
   chevron: <path d="m6 9 6 6 6-6" />,
+  back: <path d="M19 12H5m0 0 7 7m-7-7 7-7" />,
 };
 const Svg = ({d, size = 15}) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">{d}</svg>
@@ -213,15 +215,30 @@ export default function Properties() {
   const [drawer, setDrawer] = useState(false);
   const gridTop = useRef(null);
 
-  // freeze the page (and Lenis) behind the mobile filter drawer
+  // The navbar slides away on scroll-down — reclaim that space for the filters.
+  const navHidden = useNavHidden();
+
+  /* The mobile filter screen behaves like its own page: it freezes the list
+     behind it and pushes a history entry, so the hardware/browser back button
+     closes it instead of leaving the property listing entirely. */
+  const poppedRef = useRef(false);
   useEffect(() => {
     if (!drawer) return;
     window.__lenis?.stop();
-    const prev = document.body.style.overflow;
+    const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
+
+    poppedRef.current = false;
+    window.history.pushState({filtersOpen: true}, '');
+    const onPop = () => { poppedRef.current = true; setDrawer(false); };
+    window.addEventListener('popstate', onPop);
+
     return () => {
+      window.removeEventListener('popstate', onPop);
+      // closed via a button rather than "back" — consume the entry we pushed
+      if (!poppedRef.current) window.history.back();
       window.__lenis?.start();
-      document.body.style.overflow = prev;
+      document.body.style.overflow = prevOverflow;
     };
   }, [drawer]);
 
@@ -533,7 +550,9 @@ export default function Properties() {
           {/* ── sticky filter sidebar (desktop) ──
               Opaque surface on purpose: a backdrop-blur panel this tall has to
               re-blur the animated canvas behind it on every scroll frame. */}
-          <aside className="hidden lg:sticky lg:top-24 lg:block">
+          <aside
+            style={{top: navHidden ? '1.5rem' : '6rem'}}
+            className="hidden transition-[top] duration-500 ease-out lg:sticky lg:block">
             <div className="overflow-hidden rounded-2xl border border-line bg-surface shadow-card">
               <div className="flex items-center justify-between gap-2 border-b border-line px-5 py-4">
                 <span className="inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-fg">
@@ -550,7 +569,8 @@ export default function Properties() {
                   and scrolls the page instead of this list. */}
               <div
                 data-lenis-prevent
-                className="filter-scroll max-h-[calc(100vh-11rem)] overflow-y-auto overscroll-contain px-5 py-4">
+                style={{maxHeight: navHidden ? 'calc(100vh - 6.5rem)' : 'calc(100vh - 11rem)'}}
+                className="filter-scroll overflow-y-auto overscroll-contain px-5 py-4 transition-[max-height] duration-500 ease-out">
                 {panel}
               </div>
             </div>
@@ -661,29 +681,59 @@ export default function Properties() {
         </div>
       </div>
 
-      {/* ── mobile filter drawer ── */}
+      {/* ── mobile: filters get their own full-screen page ── */}
       {drawer && (
-        <div className="fixed inset-0 z-50 lg:hidden">
-          <div className="absolute inset-0 bg-ink/70 backdrop-blur-sm" onClick={() => setDrawer(false)} />
-          <div className="absolute inset-y-0 left-0 flex w-[86%] max-w-sm flex-col border-r border-line bg-bg shadow-soft">
-            <div className="flex items-center justify-between border-b border-line px-5 py-4">
-              <span className="inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-fg">
-                <span className="text-gold"><Svg d={I.sliders} size={16} /></span>
-                Filters
-              </span>
-              <button onClick={() => setDrawer(false)} aria-label="Close filters" className="text-muted hover:text-fg">
-                <Svg d={I.close} size={20} />
-              </button>
+        <div className="filter-page fixed inset-0 z-[75] flex flex-col bg-bg lg:hidden">
+          {/* page header */}
+          <div className="flex items-center gap-3 border-b border-line px-4 py-4 pt-[max(1rem,env(safe-area-inset-top))]">
+            <button
+              onClick={() => setDrawer(false)}
+              aria-label="Back to results"
+              className="-ml-1 grid h-9 w-9 place-items-center rounded-full text-fg transition-colors hover:bg-surface2">
+              <Svg d={I.back} size={20} />
+            </button>
+            <div className="flex-1">
+              <h2 className="font-serif text-xl leading-none text-fg">Filters</h2>
+              <p className="mt-1 text-[11px] text-muted">
+                {activeChips.length > 0
+                  ? `${activeChips.length} applied · ${total} ${total === 1 ? 'residence' : 'residences'}`
+                  : `${total} ${total === 1 ? 'residence' : 'residences'}`}
+              </p>
             </div>
-            <div data-lenis-prevent className="filter-scroll flex-1 overflow-y-auto overscroll-contain px-5 py-4">{panel}</div>
-            <div className="flex items-center gap-3 border-t border-line px-5 py-4">
-              <button onClick={clearAll} className="flex-1 rounded-full border border-line py-3 text-xs uppercase tracking-[0.14em] text-muted hover:text-fg">
-                Clear all
+            {activeChips.length > 0 && (
+              <button onClick={clearAll} className="text-[11px] uppercase tracking-[0.14em] text-gold underline-offset-4 hover:underline">
+                Reset
               </button>
-              <button onClick={() => setDrawer(false)} className="flex-1 rounded-full bg-gold py-3 text-xs font-semibold uppercase tracking-[0.14em] text-ink hover:bg-gold-light">
-                Show {total}
-              </button>
+            )}
+          </div>
+
+          {/* active chips, so the current selection is visible while refining */}
+          {activeChips.length > 0 && (
+            <div className="flex gap-2 overflow-x-auto border-b border-line px-4 py-3">
+              {activeChips.map(c => (
+                <button
+                  key={`m:${c.key}:${c.value || ''}`}
+                  onClick={() => dropChip(c)}
+                  className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-gold/40 bg-gold/10 px-3 py-1 text-xs text-gold">
+                  {c.label}
+                  <Svg d={I.close} size={12} />
+                </button>
+              ))}
             </div>
+          )}
+
+          {/* page body */}
+          <div data-lenis-prevent className="filter-scroll flex-1 overflow-y-auto overscroll-contain px-4 py-4">
+            {panel}
+          </div>
+
+          {/* page footer */}
+          <div className="border-t border-line bg-bg px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+            <button
+              onClick={() => setDrawer(false)}
+              className="w-full rounded-full bg-gold py-3.5 text-xs font-semibold uppercase tracking-[0.16em] text-ink transition-colors hover:bg-gold-light">
+              {loading ? 'Searching…' : `Show ${total} ${total === 1 ? 'residence' : 'residences'}`}
+            </button>
           </div>
         </div>
       )}

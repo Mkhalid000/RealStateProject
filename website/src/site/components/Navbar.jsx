@@ -3,6 +3,7 @@ import {NavLink, Link, useLocation, useNavigate} from 'react-router-dom';
 import {MagneticButton} from './MagneticButton';
 import {ThemeToggle} from './ThemeToggle';
 import {useAuth} from '../../context/AuthContext';
+import {useNavHidden} from '../../lib/useNavHidden';
 import logo from '../../assets/logo.png';
 
 const DASH_FOR = {admin: '/admin', agent: '/agent'};
@@ -88,9 +89,8 @@ const links = [
 
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
-  const [hidden, setHidden] = useState(false);
+  const hidden = useNavHidden();
   const [open, setOpen] = useState(false);
-  const lastY = useRef(0);
   const {pathname} = useLocation();
   const {user, logout} = useAuth();
 
@@ -122,12 +122,7 @@ export function Navbar() {
   }, [activeIndex]);
 
   useEffect(() => {
-    const onScroll = () => {
-      const y = window.scrollY;
-      setScrolled(y > 40);
-      setHidden(y > 240 && y > lastY.current);
-      lastY.current = y;
-    };
+    const onScroll = () => setScrolled(window.scrollY > 40);
     window.addEventListener('scroll', onScroll, {passive: true});
     return () => window.removeEventListener('scroll', onScroll);
   }, []);

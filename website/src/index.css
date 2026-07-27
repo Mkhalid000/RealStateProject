@@ -113,6 +113,18 @@ html.lenis body {
   }
 }
 
+/* mobile filter screen — pushes in from the right like a native page */
+@keyframes filterPageIn {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(0); }
+}
+.filter-page {
+  animation: filterPageIn 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+@media (prefers-reduced-motion: reduce) {
+  .filter-page { animation: none; }
+}
+
 /* slim scrollbar for in-page scroll panels (e.g. the property filter rail) */
 .filter-scroll {
   scrollbar-width: thin;
