@@ -4,6 +4,7 @@ import {apiFetch} from '../../lib/api';
 import {Reveal} from '../components/Reveal';
 import {MagneticButton} from '../components/MagneticButton';
 import {ImageReveal} from '../components/ImageReveal';
+import {AdSlot} from '../components/AdSlot';
 
 const FALLBACK =
   'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1600&q=80';
@@ -275,8 +276,9 @@ export default function PropertyDetail() {
         </div>
 
         {/* ── RIGHT · sticky enquiry ── */}
-        <Reveal y={50}>
-          <div className="glass sticky top-28 rounded-2xl p-7 shadow-soft">
+        {/* the enquiry card and the ad beneath it stick to the viewport together */}
+        <Reveal y={50} className="sticky top-28">
+          <div className="glass rounded-2xl p-7 shadow-soft">
             {/* agent */}
             <div className="mb-5 flex items-center gap-3 border-b border-line pb-5">
               <span className="grid h-12 w-12 place-items-center rounded-full bg-gradient-to-br from-gold to-gold-dark font-serif text-lg font-bold text-ink">
@@ -353,6 +355,15 @@ export default function PropertyDetail() {
               </div>
             )}
           </div>
+
+          <AdSlot
+            slot="detail_sidebar"
+            variant="rail"
+            city={p.city}
+            type={p.type}
+            listingType={p.listingType}
+            className="mt-7"
+          />
         </Reveal>
       </div>
 
@@ -372,6 +383,15 @@ export default function PropertyDetail() {
           </div>
         </Reveal>
       )}
+
+      <AdSlot
+        slot="detail_inline"
+        variant="strip"
+        city={p.city}
+        type={p.type}
+        listingType={p.listingType}
+        className="mt-14"
+      />
 
       {/* ── full-width animated map ── */}
       {hasMap && (

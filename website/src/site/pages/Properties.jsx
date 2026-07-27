@@ -4,11 +4,18 @@ import {apiFetch} from '../../lib/api';
 import {useNavHidden} from '../../lib/useNavHidden';
 import {Reveal} from '../components/Reveal';
 import {PropertyCard} from '../components/PropertyCard';
+import {AdSlot} from '../components/AdSlot';
 
 // subtle interactive golden-dust backdrop (three.js) — its own lazy chunk
 const Hero3D = lazy(() => import('../components/Hero3D').then(m => ({default: m.Hero3D})));
 
 const PAGE = 12;
+/**
+ * Where the in-feed ad lands. Randomised per visit inside this window so the
+ * unit doesn't become furniture that regulars learn to scroll straight past.
+ */
+const IN_FEED_MIN = 3;
+const IN_FEED_MAX = 7;
 const TYPES = ['apartment', 'villa', 'plot', 'commercial', 'office', 'shop'];
 const BHKS = ['1', '2', '3', '4', '5'];
 const BATHS = ['1', '2', '3', '4'];
@@ -217,6 +224,14 @@ export default function Properties() {
 
   // The navbar slides away on scroll-down — reclaim that space for the filters.
   const navHidden = useNavHidden();
+  // targeting context shared by the ad slots on this page
+  const firstType = type.split(',').filter(Boolean)[0] || '';
+  const adTargeting = {city, type: firstType, listingType: listing};
+  // fixed for the lifetime of the page so results don't reshuffle while filtering
+  const inFeedAt = useMemo(
+    () => IN_FEED_MIN + Math.floor(Math.random() * (IN_FEED_MAX - IN_FEED_MIN + 1)),
+    [],
+  );
 
   /* The mobile filter screen behaves like its own page: it freezes the list
      behind it and pushes a history entry, so the hardware/browser back button
@@ -657,12 +672,30 @@ export default function Properties() {
                 </div>
               ) : view === 'list' ? (
                 <Reveal stagger={0.06} className="space-y-5">
-                  {items.map(p => <PropertyRow key={p.id} p={p} />)}
+                  {items.slice(0, inFeedAt).map(p => <PropertyRow key={p.id} p={p} />)}
+                  {items.length > inFeedAt && (
+                    <AdSlot slot="properties_infeed" variant="strip" {...adTargeting} />
+                  )}
+                  {items.slice(inFeedAt).map(p => <PropertyRow key={p.id} p={p} />)}
                 </Reveal>
               ) : (
                 <Reveal stagger={0.06} className="grid gap-7 sm:grid-cols-2">
-                  {items.map(p => <PropertyCard key={p.id} property={p} />)}
+                  {items.slice(0, inFeedAt).map(p => <PropertyCard key={p.id} property={p} />)}
+                  {items.length > inFeedAt && (
+                    <AdSlot slot="properties_infeed" variant="card" {...adTargeting} />
+                  )}
+                  {items.slice(inFeedAt).map(p => <PropertyCard key={p.id} property={p} />)}
                 </Reveal>
+              )}
+
+              {/* full-width promo below the results — the filter rail stays ads-free */}
+              {!loading && items.length > 0 && (
+                <AdSlot
+                  slot="properties_bottom_strip"
+                  variant="strip"
+                  {...adTargeting}
+                  className="mt-10"
+                />
               )}
 
               {/* load more */}

@@ -30,6 +30,11 @@ const LINKS = [
     label: 'Boosts',
     icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg>,
   },
+  {
+    to: '/admin/ads',
+    label: 'Advertising',
+    icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 11v2a1 1 0 0 0 1 1h3l5 4V6L7 10H4a1 1 0 0 0-1 1z"/><path d="M16 9a3 3 0 0 1 0 6M19 6a7 7 0 0 1 0 12"/></svg>,
+  },
 ];
 
 /* route → page title */
@@ -41,6 +46,9 @@ function pageTitle(pathname) {
   if (pathname.startsWith('/admin/properties')) return {title: 'Properties', sub: 'Manage all property listings'};
   if (pathname.startsWith('/admin/reels')) return {title: 'Reels', sub: 'Manage property video reels'};
   if (pathname.startsWith('/admin/boosts')) return {title: 'Boosts', sub: 'Track promotions and revenue'};
+  if (pathname.includes('/ads/new')) return {title: 'New Campaign', sub: 'Create a house ad or sponsored listing'};
+  if (pathname.includes('/ads/') && pathname.includes('/edit')) return {title: 'Edit Campaign', sub: 'Update an advertising campaign'};
+  if (pathname.startsWith('/admin/ads')) return {title: 'Advertising', sub: 'House ads and sponsored listings'};
   if (pathname.startsWith('/admin/leads')) return {title: 'Leads', sub: 'Enquiries from buyers and renters'};
   return {title: 'Dashboard', sub: ''};
 }

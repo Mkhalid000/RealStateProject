@@ -85,6 +85,21 @@ enum SubscriptionStatus {
   expired
 }
 
+/// house  = own promo creative (image + copy + CTA)
+/// sponsored = promotes an existing Property into an ad slot
+enum AdKind {
+  house
+  sponsored
+}
+
+/// Whether the campaign is eligible at all. "scheduled" and "expired" are not
+/// stored — they're derived from startsAt/endsAt so state can't go stale.
+enum AdStatus {
+  draft
+  active
+  paused
+}
+
 model User {
   id                 String             @id @default(uuid())
   email              String             @unique
@@ -209,9 +224,10 @@ model Property {
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
 
-  reels   Reel[]
-  savedBy SavedProperty[]
-  leads   Lead[]
+  reels       Reel[]
+  savedBy     SavedProperty[]
+  leads       Lead[]
+  adCampaigns AdCampaign[]
 
   @@index([agentId])
   @@index([type])
@@ -358,6 +374,94 @@ model Boost {
 
   @@index([agentId])
   @@index([status])
+}
+
+/// An admin-managed advertising campaign. Either a house promo (its own
+/// creative) or a sponsored listing (renders an existing Property as an ad).
+model AdCampaign {
+  id     String   @id @default(uuid())
+  name   String
+  kind   AdKind   @default(house)
+  status AdStatus @default(draft)
+
+  // ---- creative (house ads) ----
+  headline String?
+  body     String?
+  imageUrl String?
+  ctaLabel String?
+  ctaUrl   String?
+
+  // ---- sponsored listing ----
+  property   Property? @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  propertyId String?
+
+  // ---- placement ----
+  /// Slot keys this campaign may fill, e.g. ["properties_sidebar"].
+  slots    String[] @default([])
+  /// Higher wins. Ties are broken by weighted random using `weight`.
+  priority Int      @default(0)
+  weight   Int      @default(1)
+
+  // ---- schedule ----
+  startsAt DateTime?
+  endsAt   DateTime?
+
+  // ---- presentation ----
+  /// Hex accent the creative is tinted with. Null = the site's gold.
+  accent        String?
+  /// Show a live countdown to endsAt (only meaningful with an end date).
+  showCountdown Boolean @default(false)
+  /// Whether the viewer can close a modal/floating unit.
+  dismissible   Boolean @default(true)
+
+  // ---- how interrupting placements appear ----
+  /// immediate | delay | scroll | exit_intent
+  trigger      String @default("delay")
+  /// seconds for `delay`, scroll percent for `scroll`, ignored otherwise
+  triggerValue Int    @default(8)
+  /// always | session | daily — how often one viewer may see it again
+  frequency    String @default("session")
+
+  // ---- delivery caps ----
+  maxImpressions Int?
+  dailyCap       Int?
+
+  // ---- targeting (empty / null = no restriction) ----
+  targetCities      String[] @default([])
+  targetTypes       String[] @default([])
+  targetListingType String?
+  /// all | mobile | desktop
+  targetDevice      String?
+  /// all | guest | user | agent
+  targetAudience    String?
+
+  // ---- lifetime totals (per-day breakdown lives in AdDailyStat) ----
+  impressions Int @default(0)
+  clicks      Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  stats AdDailyStat[]
+
+  @@index([status])
+  @@index([propertyId])
+}
+
+/// Aggregated daily counters. Deliberately not one row per impression — this
+/// stays small enough for the free-tier database no matter the traffic.
+model AdDailyStat {
+  id         String     @id @default(uuid())
+  campaign   AdCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  campaignId String
+  date       DateTime   @db.Date
+  slot       String
+
+  impressions Int @default(0)
+  clicks      Int @default(0)
+
+  @@unique([campaignId, date, slot])
+  @@index([date])
 }
 
 model Subscription {

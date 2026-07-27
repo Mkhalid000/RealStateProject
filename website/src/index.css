@@ -113,6 +113,96 @@ html.lenis body {
   }
 }
 
+/* ── advertising units ──────────────────────────────────────────────
+   Every ad surface sets --ad-accent (the campaign's colour) and, where a
+   spotlight is used, --ad-x / --ad-y from the pointer. */
+
+/* cursor-following highlight; pointer-events stay off so clicks pass through */
+.ad-spotlight::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  background: radial-gradient(
+    22rem circle at var(--ad-x, 50%) var(--ad-y, 50%),
+    var(--ad-accent-soft, rgba(242, 166, 90, 0.15)),
+    transparent 65%
+  );
+}
+.ad-spotlight:hover::before {
+  opacity: 1;
+}
+
+/* soft accent bloom on hover — signals "this one is different" */
+.ad-glow {
+  transition: box-shadow 0.5s ease, transform 0.5s ease;
+}
+.ad-glow:hover {
+  box-shadow: 0 0 0 1px var(--ad-accent, #f2a65a), 0 24px 60px -20px var(--ad-accent, #f2a65a);
+}
+
+/* slowly travelling accent border on the modal */
+.ad-modal-border {
+  position: relative;
+}
+.ad-modal-border::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border-radius: inherit;
+  pointer-events: none;
+  padding: 1px;
+  background: linear-gradient(120deg, transparent 20%, var(--ad-accent, #f2a65a), transparent 80%);
+  background-size: 300% 100%;
+  animation: adBorderSweep 6s linear infinite;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+}
+
+@keyframes adBorderSweep {
+  0% { background-position: 0% 0; }
+  100% { background-position: 300% 0; }
+}
+
+@keyframes adFadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes adFadeOut { from { opacity: 1; } to { opacity: 0; } }
+@keyframes adModalIn {
+  from { opacity: 0; transform: translateY(22px) scale(0.965); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes adModalOut {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to   { opacity: 0; transform: translateY(12px) scale(0.98); }
+}
+@keyframes adSlideIn {
+  from { opacity: 0; transform: translateX(-120%); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes adSlideOut {
+  from { opacity: 1; transform: translateX(0); }
+  to   { opacity: 0; transform: translateX(-120%); }
+}
+
+.ad-fade-in   { animation: adFadeIn 0.25s ease both; }
+.ad-fade-out  { animation: adFadeOut 0.22s ease both; }
+.ad-modal-in  { animation: adModalIn 0.42s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.ad-modal-out { animation: adModalOut 0.22s ease both; }
+.ad-slide-in  { animation: adSlideIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.ad-slide-out { animation: adSlideOut 0.25s ease both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ad-modal-border::after { animation: none; }
+  .ad-modal-in, .ad-modal-out, .ad-slide-in, .ad-slide-out,
+  .ad-fade-in, .ad-fade-out { animation-duration: 0.01ms; }
+  .ad-glow:hover { transform: none; }
+}
+
 /* mobile filter screen — pushes in from the right like a native page */
 @keyframes filterPageIn {
   from { transform: translateX(100%); }

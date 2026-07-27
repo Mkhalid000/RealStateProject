@@ -12,6 +12,7 @@ import {Loader} from './site/components/Loader';
 import {PageTransition} from './site/components/PageTransition';
 import {PostPropertyBanner} from './site/components/PostPropertyBanner';
 import {MapFab} from './site/components/MapFab';
+import {AdFloating, AdModal} from './site/components/AdInterrupt';
 import Home from './site/pages/Home';
 import Properties from './site/pages/Properties';
 import PropertyDetail from './site/pages/PropertyDetail';
@@ -35,6 +36,8 @@ import PropertyDetails from './dashboard/properties/PropertyDetails';
 import Reels from './dashboard/reels/Reels';
 import Boosts from './dashboard/boosts/Boosts';
 import Leads from './dashboard/leads/Leads';
+import Ads from './dashboard/ads/Ads';
+import AdForm from './dashboard/ads/AdForm';
 
 // Agent portal
 import AgentLayout from './agent/pages/AgentLayout';
@@ -78,6 +81,9 @@ function PublicLayout() {
       <Footer />
       <PostPropertyBanner onOccupyChange={claimCorner} />
       {!cornerTaken && <MapFab />}
+      {/* interrupting ad placements — they decide for themselves when to appear */}
+      <AdFloating />
+      <AdModal />
     </>
   );
 }
@@ -131,6 +137,9 @@ export default function App() {
           <Route path="reels" element={<Reels />} />
           <Route path="reels/new" element={<ReelForm />} />
           <Route path="boosts" element={<Boosts />} />
+          <Route path="ads" element={<Ads />} />
+          <Route path="ads/new" element={<AdForm />} />
+          <Route path="ads/:id/edit" element={<AdForm />} />
           <Route path="leads/:source" element={<Leads />} />
         </Route>
 

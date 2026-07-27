@@ -58,6 +58,46 @@ export enum NotificationType {
   NEW_PROPERTY = 'new_property',
 }
 
+export enum AdKind {
+  HOUSE = 'house',
+  SPONSORED = 'sponsored',
+}
+
+export enum AdStatus {
+  DRAFT = 'draft',
+  ACTIVE = 'active',
+  PAUSED = 'paused',
+}
+
+/** Every placement an ad can be booked into. Keys are stored on the campaign. */
+export const AD_SLOTS = [
+  'home_after_featured',
+  'properties_infeed',
+  'properties_bottom_strip',
+  'detail_sidebar',
+  'detail_inline',
+  'global_floating',
+  'global_modal',
+] as const;
+
+export type AdSlotKey = (typeof AD_SLOTS)[number];
+
+/** Slots that interrupt the viewer, so they obey trigger + frequency rules. */
+export const INTERRUPTING_SLOTS: readonly string[] = ['global_modal', 'global_floating'];
+
+export enum AdTrigger {
+  IMMEDIATE = 'immediate',
+  DELAY = 'delay',
+  SCROLL = 'scroll',
+  EXIT_INTENT = 'exit_intent',
+}
+
+export enum AdFrequency {
+  ALWAYS = 'always',
+  SESSION = 'session',
+  DAILY = 'daily',
+}
+
 export enum SubscriptionPlan {
   FREE = 'free',
   PRO = 'pro',

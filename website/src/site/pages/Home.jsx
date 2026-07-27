@@ -7,6 +7,7 @@ import {Counter} from '../components/Counter';
 import {Marquee} from '../components/Marquee';
 import {MagneticButton} from '../components/MagneticButton';
 import {PropertyCard, PropertyCardSkeleton} from '../components/PropertyCard';
+import {AdSlot} from '../components/AdSlot';
 
 // three.js is heavy — load it only on the home page, as its own chunk.
 const Hero3D = lazy(() =>
@@ -269,6 +270,8 @@ export default function Home() {
             </Link>
           </div>
         )}
+
+        <AdSlot slot="home_after_featured" variant="strip" className="mt-16" />
       </section>
 
       {/* ===== HORIZONTAL SHOWCASE (pinned) ===== */}
