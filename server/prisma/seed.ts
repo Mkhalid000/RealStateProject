@@ -377,6 +377,535 @@ async function main() {
     verificationStatus: VerificationStatus.verified,
   });
 
+  await upsertProperty({
+    agentId: agent.id,
+    title: 'Sea-Facing 3BHK — Marine Drive, Mumbai',
+    slug: 'sea-facing-3bhk-marine-drive-mumbai',
+    type: PropertyType.apartment,
+    listingType: ListingType.rent,
+    description:
+      'A rare sea-facing 3-bedroom residence on the Queen\'s Necklace. Floor-to-ceiling windows frame the Arabian Sea from every principal room, with a 400 sq-ft living room, a refitted modular kitchen and a private servant quarter. Fully furnished and available on a long lease. Covered parking for two cars.',
+    price: 385000,
+    currency: 'USD',
+    priceNegotiable: true,
+    featured: true,
+
+    country: 'India',
+    state: 'Maharashtra',
+    city: 'Mumbai',
+    locality: 'Marine Drive',
+    address: '11th Floor, Sea Green Apartments, Netaji Subhash Road, Marine Drive',
+    landmark: 'Opposite Wankhede Stadium',
+    pincode: '400020',
+    latitude: 18.9432,
+    longitude: 72.8231,
+
+    bhk: 3,
+    bathrooms: 3,
+    balconies: 2,
+    superBuiltUpArea: 2200,
+    carpetArea: 1750,
+    floorNumber: 11,
+    totalFloors: 16,
+    propertyAge: '10+ years',
+    furnishing: Furnishing.furnished,
+    facing: Facing.west,
+
+    amenities: [
+      'Parking', 'Lift', 'CCTV', 'Security Guard', 'Power Backup',
+      '24x7 Water', 'High-Speed WiFi', 'Gym', 'Metro Nearby',
+    ],
+    imageUrls: [
+      'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1600&q=80',
+      'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1600&q=80',
+      'https://images.unsplash.com/photo-1600566753376-12c8ab8b9753?auto=format&fit=crop&w=1600&q=80',
+    ],
+
+    ownerName: 'Arjun Mehta',
+    ownerPhone: '+91 98765 43210',
+    ownerWhatsapp: '+91 98765 43210',
+    ownerEmail: 'agent@realreels.app',
+    agencyName: 'Aurevia Luxury Estates',
+
+    status: 'active',
+    isVerified: true,
+    verificationStatus: VerificationStatus.verified,
+  });
+
+  await upsertProperty({
+    agentId: agent.id,
+    title: 'Waterfront Duplex Villa — Alibaug',
+    slug: 'waterfront-duplex-villa-alibaug',
+    type: PropertyType.villa,
+    listingType: ListingType.buy,
+    description:
+      'A serene duplex villa a two-minute walk from Awas Beach, set on a half-acre plot with mature coconut palms. Double-height living area, an outdoor deck with a plunge pool, an open kitchen and four ensuite bedrooms. A 20-minute ferry from Gateway of India makes this an ideal weekend retreat or rental asset.',
+    price: 21500000,
+    currency: 'USD',
+    priceNegotiable: true,
+    featured: false,
+
+    country: 'India',
+    state: 'Maharashtra',
+    city: 'Alibaug',
+    locality: 'Awas',
+    address: 'Villa 7, Beach Grove Estate, Awas Road, Alibaug',
+    landmark: 'Near Awas Beach',
+    pincode: '402201',
+    latitude: 18.6900,
+    longitude: 72.8700,
+
+    bhk: 4,
+    bathrooms: 4,
+    balconies: 3,
+    superBuiltUpArea: 3900,
+    carpetArea: 3100,
+    plotArea: 21780,
+    totalFloors: 2,
+    propertyAge: '1-5 years',
+    furnishing: Furnishing.furnished,
+    facing: Facing.west,
+
+    amenities: [
+      'Swimming Pool', 'Garden', 'Parking', 'CCTV', 'Security Guard',
+      'Terrace', 'BBQ Area', 'Power Backup', '24x7 Water',
+    ],
+    imageUrls: [
+      'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=1600&q=80',
+      'https://images.unsplash.com/photo-1580587771525-78b9dba3b914?auto=format&fit=crop&w=1600&q=80',
+      'https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=1600&q=80',
+    ],
+
+    ownerName: 'Arjun Mehta',
+    ownerPhone: '+91 98765 43210',
+    ownerWhatsapp: '+91 98765 43210',
+    ownerEmail: 'agent@realreels.app',
+    agencyName: 'Aurevia Luxury Estates',
+
+    status: 'active',
+    isVerified: true,
+    verificationStatus: VerificationStatus.verified,
+  });
+
+  await upsertProperty({
+    agentId: agent.id,
+    title: 'High-Street Retail Shop — Colaba Causeway, Mumbai',
+    slug: 'high-street-retail-shop-colaba-causeway-mumbai',
+    type: PropertyType.shop,
+    listingType: ListingType.rent,
+    description:
+      'A ground-floor retail unit on the busiest stretch of Colaba Causeway, with a 22-foot glass frontage and a mezzanine for stock. Continuous footfall from tourists and residents, with neighbouring international apparel and cafe brands. Ready for fit-out; suitable for fashion, F&B or specialty retail.',
+    price: 425000,
+    currency: 'USD',
+    priceNegotiable: true,
+    featured: false,
+
+    country: 'India',
+    state: 'Maharashtra',
+    city: 'Mumbai',
+    locality: 'Colaba',
+    address: 'Shop No. 4, Ground Floor, Mandlik Road, Colaba Causeway',
+    landmark: 'Near Regal Cinema',
+    pincode: '400001',
+    latitude: 18.9220,
+    longitude: 72.8320,
+
+    bathrooms: 1,
+    superBuiltUpArea: 950,
+    carpetArea: 720,
+    floorNumber: 0,
+    totalFloors: 5,
+    propertyAge: '10+ years',
+    furnishing: Furnishing.unfurnished,
+    facing: Facing.east,
+
+    amenities: [
+      'CCTV', 'Security Guard', 'Power Backup', '24x7 Water', 'Lift', 'Metro Nearby',
+    ],
+    imageUrls: [
+      'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=1600&q=80',
+      'https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=1600&q=80',
+    ],
+
+    ownerName: 'Arjun Mehta',
+    ownerPhone: '+91 98765 43210',
+    ownerEmail: 'agent@realreels.app',
+    agencyName: 'Aurevia Commercial',
+
+    status: 'active',
+    isVerified: true,
+    verificationStatus: VerificationStatus.verified,
+  });
+
+  await upsertProperty({
+    agentId: admin.id,
+    title: 'Corner Showroom — Koregaon Park, Pune',
+    slug: 'corner-showroom-koregaon-park-pune',
+    type: PropertyType.commercial,
+    listingType: ListingType.buy,
+    description:
+      'A double-height corner showroom on North Main Road, Koregaon Park — Pune\'s premier lifestyle and dining district. Two street frontages, 16-foot ceilings, a dedicated loading bay and 8 reserved parking bays in the basement. Currently leased to an automotive brand; vacant possession available on request.',
+    price: 16500000,
+    currency: 'USD',
+    priceNegotiable: false,
+    featured: false,
+
+    country: 'India',
+    state: 'Maharashtra',
+    city: 'Pune',
+    locality: 'Koregaon Park',
+    address: 'Unit 1 & 2, Ground Floor, North Main Road, Koregaon Park, Pune',
+    landmark: 'Near Lane 5 Junction',
+    pincode: '411001',
+    latitude: 18.5362,
+    longitude: 73.8939,
+
+    bathrooms: 2,
+    superBuiltUpArea: 3400,
+    carpetArea: 2800,
+    floorNumber: 0,
+    totalFloors: 4,
+    propertyAge: '5-10 years',
+    furnishing: Furnishing.semi_furnished,
+    facing: Facing.north_west,
+
+    amenities: [
+      'Parking', 'Lift', 'CCTV', 'Security Guard', 'Power Backup',
+      '24x7 Water', 'High-Speed WiFi',
+    ],
+    imageUrls: [
+      'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1600&q=80',
+      'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1600&q=80',
+    ],
+
+    ownerName: 'Admin',
+    ownerEmail: 'admin@realreels.app',
+    agencyName: 'Aurevia Commercial',
+
+    status: 'active',
+    isVerified: true,
+    verificationStatus: VerificationStatus.verified,
+  });
+
+  await upsertProperty({
+    agentId: agent.id,
+    title: 'Furnished Studio — Koramangala, Bangalore',
+    slug: 'furnished-studio-koramangala-bangalore',
+    type: PropertyType.apartment,
+    listingType: ListingType.rent,
+    description:
+      'A compact, fully furnished studio in Koramangala 5th Block, built for founders and remote professionals. Includes a queen bed, a work desk with dual-monitor mount, a kitchenette with appliances, and 300 Mbps fibre. Cafes, co-working spaces and the Sony World junction are all within a five-minute walk.',
+    price: 42000,
+    currency: 'USD',
+    priceNegotiable: false,
+    featured: false,
+
+    country: 'India',
+    state: 'Karnataka',
+    city: 'Bangalore',
+    locality: 'Koramangala',
+    address: 'Flat 302, Ivy Residency, 80 Feet Road, 5th Block, Koramangala',
+    landmark: 'Near Sony World Signal',
+    pincode: '560095',
+    latitude: 12.9352,
+    longitude: 77.6245,
+
+    bhk: 1,
+    bathrooms: 1,
+    balconies: 1,
+    superBuiltUpArea: 620,
+    carpetArea: 480,
+    floorNumber: 3,
+    totalFloors: 5,
+    propertyAge: '1-5 years',
+    furnishing: Furnishing.furnished,
+    facing: Facing.south_east,
+
+    amenities: [
+      'Lift', 'CCTV', 'Security Guard', 'Power Backup', 'High-Speed WiFi',
+      'Parking', '24x7 Water',
+    ],
+    imageUrls: [
+      'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=1600&q=80',
+      'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1600&q=80',
+    ],
+
+    ownerName: 'Arjun Mehta',
+    ownerPhone: '+91 98765 43210',
+    ownerWhatsapp: '+91 98765 43210',
+    ownerEmail: 'agent@realreels.app',
+    agencyName: 'Aurevia Luxury Estates',
+
+    status: 'active',
+    isVerified: true,
+    verificationStatus: VerificationStatus.verified,
+  });
+
+  await upsertProperty({
+    agentId: agent.id,
+    title: 'Valley-View Cottage — Kasauli, Himachal',
+    slug: 'valley-view-cottage-kasauli-himachal',
+    type: PropertyType.villa,
+    listingType: ListingType.buy,
+    description:
+      'A stone-and-timber cottage perched on a south-facing ridge above Kasauli, with uninterrupted views across the Shivalik valley. Deodar-panelled interiors, two fireplaces, a sun-room and a terraced garden with an orchard of apricot and plum. Motorable road access up to the gate and a 90-minute drive from Chandigarh airport.',
+    price: 18700000,
+    currency: 'USD',
+    priceNegotiable: true,
+    featured: true,
+
+    country: 'India',
+    state: 'Himachal Pradesh',
+    city: 'Kasauli',
+    locality: 'Garkhal',
+    address: 'Pine Ridge Cottage, Garkhal Road, Kasauli',
+    landmark: 'Near Garkhal Chowk',
+    pincode: '173204',
+    latitude: 30.9010,
+    longitude: 76.9650,
+
+    bhk: 3,
+    bathrooms: 3,
+    balconies: 2,
+    superBuiltUpArea: 2600,
+    carpetArea: 2050,
+    plotArea: 13068,
+    totalFloors: 2,
+    propertyAge: '10+ years',
+    furnishing: Furnishing.semi_furnished,
+    facing: Facing.south,
+
+    amenities: [
+      'Garden', 'Parking', 'Terrace', 'Power Backup', '24x7 Water',
+      'CCTV', 'BBQ Area', 'High-Speed WiFi',
+    ],
+    imageUrls: [
+      'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1600&q=80',
+      'https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&w=1600&q=80',
+      'https://images.unsplash.com/photo-1600121848594-d8644e57abab?auto=format&fit=crop&w=1600&q=80',
+    ],
+
+    ownerName: 'Arjun Mehta',
+    ownerPhone: '+91 98765 43210',
+    ownerWhatsapp: '+91 98765 43210',
+    ownerEmail: 'agent@realreels.app',
+    agencyName: 'Aurevia Luxury Estates',
+
+    status: 'active',
+    isVerified: true,
+    verificationStatus: VerificationStatus.verified,
+  });
+
+  await upsertProperty({
+    agentId: admin.id,
+    title: 'Beachside Plot — East Coast Road, Chennai',
+    slug: 'beachside-plot-east-coast-road-chennai',
+    type: PropertyType.plot,
+    listingType: ListingType.buy,
+    description:
+      'A DTCP-approved residential plot 400 metres from the shoreline on East Coast Road, between Muttukadu and Kovalam. Level ground, clear title, and compound-walled on three sides. The surrounding stretch has seen steady villa development, making this well-suited to a private beach home or a rental villa project.',
+    price: 6900000,
+    currency: 'USD',
+    priceNegotiable: true,
+    featured: false,
+
+    country: 'India',
+    state: 'Tamil Nadu',
+    city: 'Chennai',
+    locality: 'Kovalam',
+    address: 'Plot 22, Ocean Breeze Layout, East Coast Road, Kovalam, Chennai',
+    landmark: 'Near Muttukadu Boat House',
+    pincode: '603112',
+    latitude: 12.7920,
+    longitude: 80.2470,
+
+    plotArea: 4800,
+    superBuiltUpArea: 0,
+    propertyAge: 'Under construction',
+    facing: Facing.east,
+
+    amenities: [
+      'Security Guard', 'CCTV', '24x7 Water', 'Power Backup',
+      'Garden', 'School Nearby', 'Hospital Nearby',
+    ],
+    imageUrls: [
+      'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1600&q=80',
+      'https://images.unsplash.com/photo-1583847268964-b28dc8f51f92?auto=format&fit=crop&w=1600&q=80',
+    ],
+
+    ownerName: 'Admin',
+    ownerEmail: 'admin@realreels.app',
+    agencyName: 'Aurevia Luxury Estates',
+
+    status: 'active',
+    isVerified: true,
+    verificationStatus: VerificationStatus.verified,
+  });
+
+  await upsertProperty({
+    agentId: agent.id,
+    title: 'Plug-and-Play Office — HITEC City, Hyderabad',
+    slug: 'plug-and-play-office-hitec-city-hyderabad',
+    type: PropertyType.office,
+    listingType: ListingType.rent,
+    description:
+      'A 120-seat plug-and-play office on the 8th floor of a LEED-certified tower in HITEC City. Handed over with workstations, four meeting rooms, two phone booths, a break-out lounge and a fully equipped pantry. Redundant power and internet, 24/7 building access and 20 reserved parking bays. Move-in ready.',
+    price: 780000,
+    currency: 'USD',
+    priceNegotiable: true,
+    featured: false,
+
+    country: 'India',
+    state: 'Telangana',
+    city: 'Hyderabad',
+    locality: 'HITEC City',
+    address: '8th Floor, Wing B, Cyber Pearl, HITEC City, Madhapur, Hyderabad',
+    landmark: 'Near Inorbit Mall',
+    pincode: '500081',
+    latitude: 17.4413,
+    longitude: 78.3800,
+
+    bathrooms: 6,
+    superBuiltUpArea: 11500,
+    carpetArea: 9200,
+    floorNumber: 8,
+    totalFloors: 15,
+    propertyAge: '5-10 years',
+    furnishing: Furnishing.furnished,
+    facing: Facing.north,
+
+    amenities: [
+      'Parking', 'Lift', 'CCTV', 'Security Guard', 'Power Backup',
+      'High-Speed WiFi', 'Smart Home', '24x7 Water', 'Metro Nearby', 'Gym',
+    ],
+    imageUrls: [
+      'https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=1600&q=80',
+      'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1600&q=80',
+      'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=1600&q=80',
+    ],
+
+    ownerName: 'Arjun Mehta',
+    ownerPhone: '+91 98765 43210',
+    ownerWhatsapp: '+91 98765 43210',
+    ownerEmail: 'agent@realreels.app',
+    agencyName: 'Aurevia Commercial',
+
+    status: 'active',
+    isVerified: true,
+    verificationStatus: VerificationStatus.verified,
+  });
+
+  await upsertProperty({
+    agentId: agent.id,
+    title: 'Lakefront 2BHK — New Town, Kolkata',
+    slug: 'lakefront-2bhk-new-town-kolkata',
+    type: PropertyType.apartment,
+    listingType: ListingType.buy,
+    description:
+      'A bright 2-bedroom apartment overlooking Eco Park\'s central lake in Action Area II, New Town. Vitrified flooring throughout, a wide living-dining space opening onto a lake-facing balcony, and a modular kitchen with a utility deck. The complex offers a clubhouse, lap pool and a landscaped jogging loop.',
+    price: 7400000,
+    currency: 'USD',
+    priceNegotiable: false,
+    featured: false,
+
+    country: 'India',
+    state: 'West Bengal',
+    city: 'Kolkata',
+    locality: 'New Town',
+    address: 'Flat 9C, Tower 3, Lakeview Heights, Action Area II, New Town',
+    landmark: 'Opposite Eco Park Gate 4',
+    pincode: '700161',
+    latitude: 22.5960,
+    longitude: 88.4790,
+
+    bhk: 2,
+    bathrooms: 2,
+    balconies: 2,
+    superBuiltUpArea: 1180,
+    carpetArea: 900,
+    floorNumber: 9,
+    totalFloors: 14,
+    propertyAge: '1-5 years',
+    furnishing: Furnishing.semi_furnished,
+    facing: Facing.south_west,
+
+    amenities: [
+      'Parking', 'Swimming Pool', 'Gym', 'Lift', 'CCTV', 'Security Guard',
+      'Club House', 'Kids Play Area', 'Jogging Track', 'Power Backup', 'Garden',
+    ],
+    imageUrls: [
+      'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1600&q=80',
+      'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=1600&q=80',
+      'https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=1600&q=80',
+    ],
+
+    ownerName: 'Arjun Mehta',
+    ownerPhone: '+91 98765 43210',
+    ownerWhatsapp: '+91 98765 43210',
+    ownerEmail: 'agent@realreels.app',
+    agencyName: 'Aurevia Luxury Estates',
+
+    status: 'active',
+    isVerified: true,
+    verificationStatus: VerificationStatus.verified,
+  });
+
+  await upsertProperty({
+    agentId: agent.id,
+    title: 'Backwater Heritage Villa — Kumarakom, Kerala',
+    slug: 'backwater-heritage-villa-kumarakom-kerala',
+    type: PropertyType.villa,
+    listingType: ListingType.buy,
+    description:
+      'A traditional Kerala nalukettu villa on 90 metres of private frontage along the Vembanad backwaters. Carved rosewood pillars, a central courtyard, sloping tiled roofs and wide verandahs on all sides. Includes a boat jetty, a caretaker cottage and a mature garden of mango and jackfruit. Runs successfully as a boutique homestay.',
+    price: 24500000,
+    currency: 'USD',
+    priceNegotiable: true,
+    featured: true,
+
+    country: 'India',
+    state: 'Kerala',
+    city: 'Kumarakom',
+    locality: 'Vembanad',
+    address: 'Thekkedath Villa, Kavanattinkara, Kumarakom, Kottayam',
+    landmark: 'Near Kumarakom Bird Sanctuary',
+    pincode: '686563',
+    latitude: 9.6180,
+    longitude: 76.4300,
+
+    bhk: 5,
+    bathrooms: 5,
+    balconies: 2,
+    superBuiltUpArea: 5100,
+    carpetArea: 4200,
+    plotArea: 34000,
+    totalFloors: 2,
+    propertyAge: '10+ years',
+    furnishing: Furnishing.furnished,
+    facing: Facing.north_west,
+
+    amenities: [
+      'Garden', 'Parking', 'Swimming Pool', 'CCTV', 'Security Guard',
+      'Terrace', 'BBQ Area', 'Power Backup', '24x7 Water', 'High-Speed WiFi',
+    ],
+    imageUrls: [
+      'https://images.unsplash.com/photo-1600566752355-35792bedcfea?auto=format&fit=crop&w=1600&q=80',
+      'https://images.unsplash.com/photo-1600573472592-401b489a3cdc?auto=format&fit=crop&w=1600&q=80',
+      'https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&w=1600&q=80',
+      'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=1600&q=80',
+    ],
+
+    ownerName: 'Arjun Mehta',
+    ownerPhone: '+91 98765 43210',
+    ownerWhatsapp: '+91 98765 43210',
+    ownerEmail: 'agent@realreels.app',
+    agencyName: 'Aurevia Luxury Estates',
+
+    status: 'active',
+    isVerified: true,
+    verificationStatus: VerificationStatus.verified,
+  });
+
   /* ── 5. Sample reels (Instagram-style feed) ── */
   const propSlugs = [
     'skyline-penthouse-bandra-west',
@@ -427,7 +956,7 @@ async function main() {
     console.log(`  ↳  Reel: ${r.caption.slice(0, 42)}…`);
   }
 
-  console.log('\n✅  Seed complete — 6 properties, 5 reels added.\n');
+  console.log('\n✅  Seed complete — 16 properties, 5 reels added.\n');
 }
 
 main()

@@ -4,7 +4,15 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import {Prisma} from '@prisma/client';
-import {NotificationType, SubscriptionPlan, UserRole, VerificationStatus} from '../shared';
+import {
+  Facing,
+  Furnishing,
+  NotificationType,
+  PropertyType,
+  SubscriptionPlan,
+  UserRole,
+  VerificationStatus,
+} from '../shared';
 import {PrismaService} from '../prisma/prisma.service';
 import {NotificationsService} from '../notifications/notifications.service';
 import {
@@ -15,6 +23,8 @@ import {
 import {toProperty} from './property.mapper';
 
 const FREE_PLAN_PROPERTY_LIMIT = 5;
+/** BHK filter values at or above this are treated as "and above". */
+const MAX_BHK_FILTER = 5;
 
 @Injectable()
 export class PropertiesService {
@@ -187,11 +197,44 @@ export class PropertiesService {
   }
 
   // ---------- helpers ----------
+  /** Split a comma-separated query value into a clean list. */
+  private csv(value?: string): string[] {
+    return (value ?? '')
+      .split(',')
+      .map(v => v.trim())
+      .filter(Boolean);
+  }
+
+  /** Same as csv(), but keeps only members of the given enum. */
+  private csvEnum(value: string | undefined, allowed: Record<string, string>): string[] {
+    const valid = new Set(Object.values(allowed));
+    return this.csv(value).filter(v => valid.has(v));
+  }
+
+  private bool(value?: string): boolean | undefined {
+    if (value == null || value === '') return undefined;
+    return value === 'true' || value === '1';
+  }
+
   private filters(query: QueryPropertiesDto): Prisma.PropertyWhereInput {
     const where: Prisma.PropertyWhereInput = {};
-    if (query.type) where.type = query.type as any;
+    // conditions that need their own OR go here, so they don't clash with `q`
+    const and: Prisma.PropertyWhereInput[] = [];
+
+    // ---- type / listing ----
+    const types = this.csvEnum(query.type, PropertyType as any);
+    if (types.length === 1) where.type = types[0] as any;
+    else if (types.length > 1) where.type = {in: types as any};
+
     if (query.listingType) where.listingType = query.listingType as any;
+
+    // ---- location ----
     if (query.city) where.city = {contains: query.city, mode: 'insensitive'};
+    if (query.state) where.state = {contains: query.state, mode: 'insensitive'};
+    if (query.locality) where.locality = {contains: query.locality, mode: 'insensitive'};
+    if (query.pincode) where.pincode = {contains: query.pincode.trim()};
+
+    // ---- agent ----
     if (query.agentId) where.agentId = query.agentId;
     if (query.agent) {
       where.agent = {
@@ -201,12 +244,61 @@ export class PropertiesService {
         ],
       };
     }
-    if (query.bhk != null) where.bhk = query.bhk;
+
+    // ---- configuration ----
+    // A BHK of 5 is treated as "5 or more".
+    const bhks = this.csv(query.bhk)
+      .map(v => Number(v))
+      .filter(n => Number.isInteger(n));
+    if (bhks.length) {
+      const exact = bhks.filter(n => n < MAX_BHK_FILTER);
+      const wantsPlus = bhks.some(n => n >= MAX_BHK_FILTER);
+      const clauses: Prisma.PropertyWhereInput[] = [];
+      if (exact.length) clauses.push({bhk: {in: exact}});
+      if (wantsPlus) clauses.push({bhk: {gte: MAX_BHK_FILTER}});
+      and.push(clauses.length === 1 ? clauses[0] : {OR: clauses});
+    }
+    if (query.minBathrooms != null) where.bathrooms = {gte: query.minBathrooms};
+    if (query.minBalconies != null) where.balconies = {gte: query.minBalconies};
+
+    const furnishings = this.csvEnum(query.furnishing, Furnishing as any);
+    if (furnishings.length) where.furnishing = {in: furnishings as any};
+
+    const facings = this.csvEnum(query.facing, Facing as any);
+    if (facings.length) where.facing = {in: facings as any};
+
+    const ages = this.csv(query.propertyAge);
+    if (ages.length) where.propertyAge = {in: ages};
+
+    // ---- price ----
     if (query.minPrice != null || query.maxPrice != null) {
       where.price = {};
       if (query.minPrice != null) (where.price as Prisma.DecimalFilter).gte = query.minPrice;
       if (query.maxPrice != null) (where.price as Prisma.DecimalFilter).lte = query.maxPrice;
     }
+    if (this.bool(query.negotiable)) where.priceNegotiable = true;
+
+    // ---- area: a listing matches if any of its area fields is in range ----
+    if (query.minArea != null || query.maxArea != null) {
+      const range: Prisma.FloatNullableFilter = {};
+      if (query.minArea != null) range.gte = query.minArea;
+      if (query.maxArea != null) range.lte = query.maxArea;
+      and.push({
+        OR: [
+          {carpetArea: range},
+          {superBuiltUpArea: range},
+          {plotArea: range},
+        ],
+      });
+    }
+
+    // ---- amenities: must have every selected one ----
+    const amenities = this.csv(query.amenities);
+    if (amenities.length) where.amenities = {hasEvery: amenities};
+
+    // ---- misc ----
+    if (this.bool(query.featured)) where.featured = true;
+
     if (query.q) {
       where.OR = [
         {title: {contains: query.q, mode: 'insensitive'}},
@@ -216,6 +308,8 @@ export class PropertiesService {
         {locationText: {contains: query.q, mode: 'insensitive'}},
       ];
     }
+
+    if (and.length) where.AND = and;
     return where;
   }
 

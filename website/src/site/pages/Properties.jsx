@@ -10,28 +10,128 @@ const Hero3D = lazy(() => import('../components/Hero3D').then(m => ({default: m.
 const PAGE = 12;
 const TYPES = ['apartment', 'villa', 'plot', 'commercial', 'office', 'shop'];
 const BHKS = ['1', '2', '3', '4', '5'];
+const BATHS = ['1', '2', '3', '4'];
+const FURNISHINGS = ['unfurnished', 'semi_furnished', 'furnished'];
+const FACINGS = ['north', 'south', 'east', 'west', 'north_east', 'north_west', 'south_east', 'south_west'];
+const AGES = ['Under construction', 'New (0-1 year)', '1-5 years', '5-10 years', '10+ years'];
+const AMENITIES = [
+  'Parking', 'Lift', 'CCTV', 'Security Guard', '24x7 Water', 'Power Backup',
+  'Swimming Pool', 'Gym', 'Club House', 'Kids Play Area', 'Jogging Track',
+  'Garden', 'Terrace', 'Rooftop Access', 'BBQ Area', 'Pet Zone',
+  'High-Speed WiFi', 'Smart Home', 'EV Charging', 'Solar Panels',
+  'Metro Nearby', 'School Nearby', 'Hospital Nearby', 'Shopping Centre Nearby',
+];
+const PRICE_STEPS = [
+  {label: 'Under $1M', min: '', max: '1000000'},
+  {label: '$1M – $10M', min: '1000000', max: '10000000'},
+  {label: '$10M – $25M', min: '10000000', max: '25000000'},
+  {label: '$25M+', min: '25000000', max: ''},
+];
 const SORTS = [
   {value: 'newest', label: 'Newest'},
   {value: 'price_asc', label: 'Price: Low → High'},
   {value: 'price_desc', label: 'Price: High → Low'},
+  {value: 'title_asc', label: 'Title: A → Z'},
+];
+
+/* every filter key the page owns — used by "clear all" and the active count */
+const FILTER_KEYS = [
+  'q', 'type', 'listing', 'bhk', 'baths', 'balconies', 'min', 'max',
+  'minArea', 'maxArea', 'furnishing', 'facing', 'age', 'amenities',
+  'city', 'state', 'locality', 'pincode', 'featured', 'negotiable',
 ];
 
 const cap = s => (s ? s[0].toUpperCase() + s.slice(1) : s);
+const fmt = s => s.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 const money = (p, c) =>
   new Intl.NumberFormat('en-US', {style: 'currency', currency: c || 'USD', maximumFractionDigits: 0}).format(Number(p) || 0);
+const compact = n =>
+  new Intl.NumberFormat('en-US', {notation: 'compact', maximumFractionDigits: 1}).format(Number(n) || 0);
 
 const field =
   'rounded-xl bg-transparent px-4 py-3 text-sm text-fg outline-none placeholder:text-muted [&>option]:text-ink';
+const sideField =
+  'w-full rounded-xl border border-line bg-surface2/40 px-3 py-2.5 text-sm text-fg outline-none transition-colors placeholder:text-muted focus:border-gold/60 [&>option]:text-ink';
 
 const I = {
   bed: <><path d="M2 4v16M2 8h18a2 2 0 0 1 2 2v10M2 17h20" /><path d="M6 8V6a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v2" /></>,
   bath: <><path d="M4 12V5a2 2 0 0 1 2-2 2 2 0 0 1 2 2M4 12h16a1 1 0 0 1 1 1v3a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4v-3a1 1 0 0 1 1-1zM7 20l-1 2M18 20l1 2" /></>,
   ruler: <path d="M21.3 8.7 8.7 21.3a1 1 0 0 1-1.4 0l-4.6-4.6a1 1 0 0 1 0-1.4L15.3 2.7a1 1 0 0 1 1.4 0l4.6 4.6a1 1 0 0 1 0 1.4z" />,
   pin: <><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z" /><circle cx="12" cy="10" r="3" /></>,
+  search: <><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></>,
+  sliders: <><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h10M18 18h2" /><circle cx="16" cy="6" r="2" /><circle cx="10" cy="12" r="2" /><circle cx="16" cy="18" r="2" /></>,
+  close: <path d="M18 6 6 18M6 6l12 12" />,
+  chevron: <path d="m6 9 6 6 6-6" />,
 };
 const Svg = ({d, size = 15}) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">{d}</svg>
 );
+
+/* ── small filter primitives ─────────────────────────────────────────── */
+
+/** Collapsible group inside the sidebar. */
+function Group({title, count, children, defaultOpen = true}) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className="border-b border-line/70 py-4 first:pt-0 last:border-b-0">
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        className="flex w-full items-center justify-between gap-2 text-left">
+        <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-fg/80">
+          {title}
+          {count > 0 && <span className="ml-2 rounded-full bg-gold/15 px-2 py-0.5 text-[10px] font-semibold text-gold">{count}</span>}
+        </span>
+        <span className={`text-muted transition-transform duration-300 ${open ? '' : '-rotate-90'}`}>
+          <Svg d={I.chevron} size={14} />
+        </span>
+      </button>
+      <div className={`grid transition-all duration-300 ${open ? 'mt-3 grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
+        <div className="overflow-hidden">{children}</div>
+      </div>
+    </div>
+  );
+}
+
+/** Toggleable pill — used for every multi-select filter. */
+function Pill({on, onClick, children, className = ''}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`rounded-full border px-3 py-1.5 text-xs transition-colors ${
+        on ? 'border-gold bg-gold/15 text-gold' : 'border-line text-muted hover:border-gold/40 hover:text-fg'
+      } ${className}`}>
+      {children}
+    </button>
+  );
+}
+
+/** Text/number input that only writes to the URL after the user pauses. */
+function DebouncedInput({value, onCommit, delay = 400, ...rest}) {
+  const [local, setLocal] = useState(value);
+  const committed = useRef(value);
+
+  // keep in sync when the URL changes from elsewhere (chips, clear all)
+  useEffect(() => {
+    if (value !== committed.current) {
+      committed.current = value;
+      setLocal(value);
+    }
+  }, [value]);
+
+  useEffect(() => {
+    if (local === committed.current) return;
+    const t = setTimeout(() => {
+      committed.current = local;
+      onCommit(local);
+    }, delay);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [local]);
+
+  return <input {...rest} value={local} onChange={e => setLocal(e.target.value)} />;
+}
 
 /* detailed row for the list view */
 function PropertyRow({p}) {
@@ -80,23 +180,50 @@ export default function Properties() {
   const [params, setParams] = useSearchParams();
 
   // URL is the source of truth for filters
-  const q = params.get('q') || '';
-  const type = params.get('type') || '';
-  const listing = params.get('listing') || '';
-  const bhk = params.get('bhk') || '';
-  const min = params.get('min') || '';
-  const max = params.get('max') || '';
+  const get = k => params.get(k) || '';
+  const q = get('q');
+  const type = get('type');
+  const listing = get('listing');
+  const bhk = get('bhk');
+  const baths = get('baths');
+  const balconies = get('balconies');
+  const min = get('min');
+  const max = get('max');
+  const minArea = get('minArea');
+  const maxArea = get('maxArea');
+  const furnishing = get('furnishing');
+  const facing = get('facing');
+  const age = get('age');
+  const amenities = get('amenities');
+  const city = get('city');
+  const state = get('state');
+  const locality = get('locality');
+  const pincode = get('pincode');
+  const featured = get('featured');
+  const negotiable = get('negotiable');
   const sort = params.get('sort') || 'newest';
   const view = params.get('view') === 'list' ? 'list' : 'grid';
 
-  const [qInput, setQInput] = useState(q);
   const [items, setItems] = useState([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [drawer, setDrawer] = useState(false);
   const gridTop = useRef(null);
+
+  // freeze the page (and Lenis) behind the mobile filter drawer
+  useEffect(() => {
+    if (!drawer) return;
+    window.__lenis?.stop();
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      window.__lenis?.start();
+      document.body.style.overflow = prev;
+    };
+  }, [drawer]);
 
   // mutate a single URL param (and drop empties)
   const setParam = useCallback((key, value) => {
@@ -108,24 +235,61 @@ export default function Properties() {
     }, {replace: true});
   }, [setParams]);
 
-  // debounce the search box → q param
-  useEffect(() => {
-    const t = setTimeout(() => { if (qInput !== q) setParam('q', qInput.trim()); }, 350);
-    return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [qInput]);
+  // add/remove one value inside a comma-separated param
+  const toggleIn = useCallback((key, value) => {
+    setParams(prev => {
+      const next = new URLSearchParams(prev);
+      const list = (next.get(key) || '').split(',').filter(Boolean);
+      const at = list.indexOf(value);
+      if (at === -1) list.push(value);
+      else list.splice(at, 1);
+      if (list.length) next.set(key, list.join(','));
+      else next.delete(key);
+      return next;
+    }, {replace: true});
+  }, [setParams]);
+
+  const has = (raw, value) => raw.split(',').filter(Boolean).includes(value);
+  const countOf = raw => raw.split(',').filter(Boolean).length;
+
+  // set min + max together (price shortcuts)
+  const setRange = useCallback((minKey, maxKey, lo, hi) => {
+    setParams(prev => {
+      const next = new URLSearchParams(prev);
+      if (lo) next.set(minKey, lo); else next.delete(minKey);
+      if (hi) next.set(maxKey, hi); else next.delete(maxKey);
+      return next;
+    }, {replace: true});
+  }, [setParams]);
 
   // build the query string for the API from current filters + a page
   const queryFor = useCallback((p) => {
     const sp = new URLSearchParams({page: String(p), limit: String(PAGE), sort});
-    if (q) sp.set('q', q);
-    if (type) sp.set('type', type);
-    if (listing) sp.set('listingType', listing);
-    if (bhk) sp.set('bhk', bhk);
-    if (min) sp.set('minPrice', min);
-    if (max) sp.set('maxPrice', max);
+    const put = (k, v) => { if (v) sp.set(k, v); };
+    put('q', q);
+    put('type', type);
+    put('listingType', listing);
+    put('bhk', bhk);
+    put('minBathrooms', baths);
+    put('minBalconies', balconies);
+    put('minPrice', min);
+    put('maxPrice', max);
+    put('minArea', minArea);
+    put('maxArea', maxArea);
+    put('furnishing', furnishing);
+    put('facing', facing);
+    put('propertyAge', age);
+    put('amenities', amenities);
+    put('city', city);
+    put('state', state);
+    put('locality', locality);
+    put('pincode', pincode);
+    put('featured', featured);
+    put('negotiable', negotiable);
     return sp.toString();
-  }, [q, type, listing, bhk, min, max, sort]);
+  }, [q, type, listing, bhk, baths, balconies, min, max, minArea, maxArea,
+      furnishing, facing, age, amenities, city, state, locality, pincode,
+      featured, negotiable, sort]);
 
   // (re)load page 1 whenever any filter/sort changes
   useEffect(() => {
@@ -150,21 +314,202 @@ export default function Properties() {
     }
   }
 
+  // one chip per active filter value (multi-selects get one chip each)
   const activeChips = useMemo(() => {
     const chips = [];
+    const each = (key, raw, label) =>
+      raw.split(',').filter(Boolean).forEach(v => chips.push({key, value: v, label: label(v)}));
+
     if (q) chips.push({key: 'q', label: `“${q}”`});
-    if (type) chips.push({key: 'type', label: cap(type)});
+    each('type', type, cap);
     if (listing) chips.push({key: 'listing', label: listing === 'rent' ? 'For Rent' : 'For Sale'});
-    if (bhk) chips.push({key: 'bhk', label: `${bhk} BHK`});
-    if (min) chips.push({key: 'min', label: `Min $${Number(min).toLocaleString()}`});
-    if (max) chips.push({key: 'max', label: `Max $${Number(max).toLocaleString()}`});
+    each('bhk', bhk, v => (v === '5' ? '5+ BHK' : `${v} BHK`));
+    if (baths) chips.push({key: 'baths', label: `${baths}+ Bath`});
+    if (balconies) chips.push({key: 'balconies', label: `${balconies}+ Balcony`});
+    if (min) chips.push({key: 'min', label: `Min $${compact(min)}`});
+    if (max) chips.push({key: 'max', label: `Max $${compact(max)}`});
+    if (minArea) chips.push({key: 'minArea', label: `Min ${compact(minArea)} sqft`});
+    if (maxArea) chips.push({key: 'maxArea', label: `Max ${compact(maxArea)} sqft`});
+    each('furnishing', furnishing, fmt);
+    each('facing', facing, fmt);
+    each('age', age, v => v);
+    each('amenities', amenities, v => v);
+    if (city) chips.push({key: 'city', label: city});
+    if (state) chips.push({key: 'state', label: state});
+    if (locality) chips.push({key: 'locality', label: locality});
+    if (pincode) chips.push({key: 'pincode', label: `PIN ${pincode}`});
+    if (featured) chips.push({key: 'featured', label: 'Featured'});
+    if (negotiable) chips.push({key: 'negotiable', label: 'Negotiable'});
     return chips;
-  }, [q, type, listing, bhk, min, max]);
+  }, [q, type, listing, bhk, baths, balconies, min, max, minArea, maxArea,
+      furnishing, facing, age, amenities, city, state, locality, pincode,
+      featured, negotiable]);
+
+  function dropChip(c) {
+    if (c.value) toggleIn(c.key, c.value);
+    else setParam(c.key, '');
+  }
 
   function clearAll() {
-    setQInput('');
-    setParams(view === 'list' ? {view: 'list'} : {}, {replace: true});
+    setParams(prev => {
+      const next = new URLSearchParams(prev);
+      FILTER_KEYS.forEach(k => next.delete(k));
+      return next;
+    }, {replace: true});
   }
+
+  /* ── the filter panel, shared by the sticky sidebar and the mobile drawer ── */
+  const panel = (
+    <>
+      {/* search */}
+      <div className="flex items-center gap-2 rounded-xl border border-line bg-surface2/40 px-3 focus-within:border-gold/60">
+        <span className="text-muted"><Svg d={I.search} size={16} /></span>
+        <DebouncedInput
+          className="w-full bg-transparent py-2.5 text-sm text-fg outline-none placeholder:text-muted"
+          placeholder="Search location or title"
+          value={q}
+          onCommit={v => setParam('q', v.trim())}
+        />
+      </div>
+
+      <div className="mt-4">
+        <Group title="Listing Type">
+          <div className="grid grid-cols-3 gap-1.5 rounded-xl border border-line p-1">
+            {[{v: '', l: 'All'}, {v: 'buy', l: 'Buy'}, {v: 'rent', l: 'Rent'}].map(o => (
+              <button
+                key={o.l}
+                type="button"
+                onClick={() => setParam('listing', o.v)}
+                className={`rounded-lg py-1.5 text-xs transition-colors ${
+                  listing === o.v ? 'bg-gold text-ink' : 'text-muted hover:text-fg'
+                }`}>
+                {o.l}
+              </button>
+            ))}
+          </div>
+        </Group>
+
+        <Group title="Property Type" count={countOf(type)}>
+          <div className="flex flex-wrap gap-1.5">
+            {TYPES.map(t => (
+              <Pill key={t} on={has(type, t)} onClick={() => toggleIn('type', t)}>{cap(t)}</Pill>
+            ))}
+          </div>
+        </Group>
+
+        <Group title="Budget" count={(min ? 1 : 0) + (max ? 1 : 0)}>
+          <div className="flex flex-wrap gap-1.5">
+            {PRICE_STEPS.map(s => (
+              <Pill
+                key={s.label}
+                on={min === s.min && max === s.max}
+                onClick={() => setRange('min', 'max', min === s.min && max === s.max ? '' : s.min, min === s.min && max === s.max ? '' : s.max)}>
+                {s.label}
+              </Pill>
+            ))}
+          </div>
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            <DebouncedInput className={sideField} type="number" min="0" placeholder="Min $" value={min} onCommit={v => setParam('min', v)} />
+            <DebouncedInput className={sideField} type="number" min="0" placeholder="Max $" value={max} onCommit={v => setParam('max', v)} />
+          </div>
+        </Group>
+
+        <Group title="Bedrooms" count={countOf(bhk)}>
+          <div className="flex flex-wrap gap-1.5">
+            {BHKS.map(b => (
+              <Pill key={b} on={has(bhk, b)} onClick={() => toggleIn('bhk', b)}>
+                {b === '5' ? '5+' : b} BHK
+              </Pill>
+            ))}
+          </div>
+        </Group>
+
+        <Group title="Bathrooms & Balconies" count={(baths ? 1 : 0) + (balconies ? 1 : 0)} defaultOpen={false}>
+          <p className="mb-1.5 text-[11px] text-muted">Bathrooms (minimum)</p>
+          <div className="flex flex-wrap gap-1.5">
+            {BATHS.map(b => (
+              <Pill key={b} on={baths === b} onClick={() => setParam('baths', baths === b ? '' : b)}>{b}+</Pill>
+            ))}
+          </div>
+          <p className="mb-1.5 mt-3 text-[11px] text-muted">Balconies (minimum)</p>
+          <div className="flex flex-wrap gap-1.5">
+            {BATHS.map(b => (
+              <Pill key={b} on={balconies === b} onClick={() => setParam('balconies', balconies === b ? '' : b)}>{b}+</Pill>
+            ))}
+          </div>
+        </Group>
+
+        <Group title="Area (sqft)" count={(minArea ? 1 : 0) + (maxArea ? 1 : 0)} defaultOpen={false}>
+          <div className="grid grid-cols-2 gap-2">
+            <DebouncedInput className={sideField} type="number" min="0" placeholder="Min" value={minArea} onCommit={v => setParam('minArea', v)} />
+            <DebouncedInput className={sideField} type="number" min="0" placeholder="Max" value={maxArea} onCommit={v => setParam('maxArea', v)} />
+          </div>
+        </Group>
+
+        <Group title="Furnishing" count={countOf(furnishing)} defaultOpen={false}>
+          <div className="flex flex-wrap gap-1.5">
+            {FURNISHINGS.map(f => (
+              <Pill key={f} on={has(furnishing, f)} onClick={() => toggleIn('furnishing', f)}>{fmt(f)}</Pill>
+            ))}
+          </div>
+        </Group>
+
+        <Group title="Facing" count={countOf(facing)} defaultOpen={false}>
+          <div className="flex flex-wrap gap-1.5">
+            {FACINGS.map(f => (
+              <Pill key={f} on={has(facing, f)} onClick={() => toggleIn('facing', f)}>{fmt(f)}</Pill>
+            ))}
+          </div>
+        </Group>
+
+        <Group title="Property Age" count={countOf(age)} defaultOpen={false}>
+          <div className="flex flex-wrap gap-1.5">
+            {AGES.map(a => (
+              <Pill key={a} on={has(age, a)} onClick={() => toggleIn('age', a)}>{a}</Pill>
+            ))}
+          </div>
+        </Group>
+
+        <Group title="Amenities" count={countOf(amenities)} defaultOpen={false}>
+          <div className="flex flex-wrap gap-1.5">
+            {AMENITIES.map(a => (
+              <Pill key={a} on={has(amenities, a)} onClick={() => toggleIn('amenities', a)}>{a}</Pill>
+            ))}
+          </div>
+        </Group>
+
+        <Group title="Location" count={[city, state, locality, pincode].filter(Boolean).length} defaultOpen={false}>
+          <div className="space-y-2">
+            <DebouncedInput className={sideField} placeholder="City" value={city} onCommit={v => setParam('city', v.trim())} />
+            <DebouncedInput className={sideField} placeholder="State" value={state} onCommit={v => setParam('state', v.trim())} />
+            <DebouncedInput className={sideField} placeholder="Locality" value={locality} onCommit={v => setParam('locality', v.trim())} />
+            <DebouncedInput className={sideField} placeholder="Pincode" value={pincode} onCommit={v => setParam('pincode', v.trim())} />
+          </div>
+        </Group>
+
+        <Group title="More" count={(featured ? 1 : 0) + (negotiable ? 1 : 0)} defaultOpen={false}>
+          <div className="space-y-2.5">
+            {[
+              {k: 'featured', v: featured, l: 'Featured listings only'},
+              {k: 'negotiable', v: negotiable, l: 'Price negotiable'},
+            ].map(o => (
+              <label key={o.k} className="flex cursor-pointer items-center justify-between gap-3 text-sm text-muted">
+                {o.l}
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={Boolean(o.v)}
+                  onClick={() => setParam(o.k, o.v ? '' : 'true')}
+                  className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${o.v ? 'bg-gold' : 'bg-surface2 ring-1 ring-line'}`}>
+                  <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-bg transition-all ${o.v ? 'left-[18px]' : 'left-0.5'}`} />
+                </button>
+              </label>
+            ))}
+          </div>
+        </Group>
+      </div>
+    </>
+  );
 
   return (
     <div className="relative">
@@ -175,7 +520,7 @@ export default function Properties() {
         </Suspense>
       </div>
 
-      <div className="relative z-10 mx-auto max-w-7xl px-6 pb-28 pt-32">
+      <div className="relative z-10 mx-auto max-w-[1400px] px-6 pb-28 pt-32">
         <Reveal>
           <p className="eyebrow mb-4">The Collection</p>
           <h1 className="font-serif text-5xl md:text-7xl">Properties</h1>
@@ -184,118 +529,164 @@ export default function Properties() {
           </p>
         </Reveal>
 
-        {/* filter bar */}
-        <div className="glass mt-10 flex flex-wrap items-center gap-2 rounded-2xl p-3 shadow-soft">
-          <div className="flex flex-1 items-center gap-2 rounded-xl bg-surface2/40 px-2">
-            <span className="pl-2 text-muted"><Svg d={<><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></>} size={16} /></span>
-            <input
-              className={`flex-1 ${field} px-2`}
-              placeholder="Search location or title"
-              value={qInput}
-              onChange={e => setQInput(e.target.value)}
-            />
-          </div>
-          <div className="hidden h-7 w-px bg-line lg:block" />
-          <select className={field} value={type} onChange={e => setParam('type', e.target.value)}>
-            <option value="">All Types</option>
-            {TYPES.map(t => <option key={t} value={t}>{cap(t)}</option>)}
-          </select>
-          <select className={field} value={listing} onChange={e => setParam('listing', e.target.value)}>
-            <option value="">Buy &amp; Rent</option>
-            <option value="buy">For Sale</option>
-            <option value="rent">For Rent</option>
-          </select>
-          <select className={field} value={bhk} onChange={e => setParam('bhk', e.target.value)}>
-            <option value="">Any BHK</option>
-            {BHKS.map(b => <option key={b} value={b}>{b} BHK</option>)}
-          </select>
-          <input className={`w-24 ${field}`} type="number" placeholder="Min $" value={min} onChange={e => setParam('min', e.target.value)} />
-          <input className={`w-24 ${field}`} type="number" placeholder="Max $" value={max} onChange={e => setParam('max', e.target.value)} />
-          <select className={field} value={sort} onChange={e => setParam('sort', e.target.value)}>
-            {SORTS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
-          </select>
-        </div>
-
-        {/* meta row: count + chips + view toggle */}
-        <div ref={gridTop} className="mt-6 flex flex-wrap items-center gap-3">
-          <span className="text-sm text-muted">
-            {loading ? 'Searching…' : `${total} ${total === 1 ? 'residence' : 'residences'}`}
-          </span>
-          {activeChips.map(c => (
-            <button
-              key={c.key}
-              onClick={() => { if (c.key === 'q') setQInput(''); setParam(c.key, ''); }}
-              className="inline-flex items-center gap-1.5 rounded-full border border-gold/40 bg-gold/10 px-3 py-1 text-xs text-gold transition-colors hover:bg-gold/20">
-              {c.label}
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><path d="M18 6 6 18M6 6l12 12" /></svg>
-            </button>
-          ))}
-          {activeChips.length > 0 && (
-            <button onClick={clearAll} className="text-xs uppercase tracking-[0.14em] text-muted underline-offset-4 hover:text-gold hover:underline">
-              Clear all
-            </button>
-          )}
-
-          {/* view toggle */}
-          <div className="ml-auto flex items-center gap-1 rounded-full border border-line p-1">
-            {[
-              {k: 'grid', d: <><rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" /></>},
-              {k: 'list', d: <><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" /></>},
-            ].map(v => (
-              <button
-                key={v.k}
-                onClick={() => setParam('view', v.k === 'grid' ? '' : 'list')}
-                aria-label={`${v.k} view`}
-                className={`grid h-8 w-8 place-items-center rounded-full transition ${view === v.k ? 'bg-gold text-ink' : 'text-muted hover:text-fg'}`}>
-                <Svg d={v.d} size={16} />
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* results */}
-        <div className="mt-8">
-          {loading ? (
-            <div className={view === 'list' ? 'space-y-5' : 'grid gap-7 sm:grid-cols-2 lg:grid-cols-3'}>
-              {Array.from({length: 6}).map((_, i) => (
-                <div key={i} className={`animate-pulse rounded-2xl border border-line bg-surface2/40 ${view === 'list' ? 'h-44' : 'h-80'}`} />
-              ))}
-            </div>
-          ) : items.length === 0 ? (
-            <div className="rounded-2xl border border-line bg-surface2/20 py-20 text-center">
-              <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-full bg-surface2 text-muted">
-                <Svg d={<><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></>} size={24} />
+        <div className="mt-10 lg:grid lg:grid-cols-[340px_minmax(0,1fr)] lg:items-start lg:gap-8 xl:grid-cols-[380px_minmax(0,1fr)]">
+          {/* ── sticky filter sidebar (desktop) ──
+              Opaque surface on purpose: a backdrop-blur panel this tall has to
+              re-blur the animated canvas behind it on every scroll frame. */}
+          <aside className="hidden lg:sticky lg:top-24 lg:block">
+            <div className="overflow-hidden rounded-2xl border border-line bg-surface shadow-card">
+              <div className="flex items-center justify-between gap-2 border-b border-line px-5 py-4">
+                <span className="inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-fg">
+                  <span className="text-gold"><Svg d={I.sliders} size={16} /></span>
+                  Filters
+                </span>
+                {activeChips.length > 0 && (
+                  <button onClick={clearAll} className="text-[11px] uppercase tracking-[0.14em] text-muted underline-offset-4 hover:text-gold hover:underline">
+                    Clear all
+                  </button>
+                )}
               </div>
-              <p className="text-muted">No residences match your filters.</p>
-              {activeChips.length > 0 && (
-                <button onClick={clearAll} className="mt-4 rounded-full bg-gold px-6 py-2.5 text-xs uppercase tracking-[0.16em] text-ink hover:bg-gold-light">
-                  Clear filters
+              {/* data-lenis-prevent: without it Lenis hijacks the wheel here
+                  and scrolls the page instead of this list. */}
+              <div
+                data-lenis-prevent
+                className="filter-scroll max-h-[calc(100vh-11rem)] overflow-y-auto overscroll-contain px-5 py-4">
+                {panel}
+              </div>
+            </div>
+          </aside>
+
+          {/* ── results column ── */}
+          <div>
+            {/* meta row: filters button + count + sort + view toggle */}
+            <div ref={gridTop} className="flex flex-wrap items-center gap-3">
+              <button
+                onClick={() => setDrawer(true)}
+                className="inline-flex items-center gap-2 rounded-full border border-gold/50 bg-gold/10 px-4 py-2 text-xs uppercase tracking-[0.14em] text-gold lg:hidden">
+                <Svg d={I.sliders} size={15} />
+                Filters
+                {activeChips.length > 0 && (
+                  <span className="grid h-5 min-w-5 place-items-center rounded-full bg-gold px-1 text-[10px] font-bold text-ink">
+                    {activeChips.length}
+                  </span>
+                )}
+              </button>
+
+              <span className="text-sm text-muted">
+                {loading ? 'Searching…' : `${total} ${total === 1 ? 'residence' : 'residences'}`}
+              </span>
+
+              <div className="ml-auto flex items-center gap-2">
+                <select className={`${field} border border-line`} value={sort} onChange={e => setParam('sort', e.target.value)}>
+                  {SORTS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+                </select>
+                <div className="flex items-center gap-1 rounded-full border border-line p-1">
+                  {[
+                    {k: 'grid', d: <><rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" /></>},
+                    {k: 'list', d: <><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" /></>},
+                  ].map(v => (
+                    <button
+                      key={v.k}
+                      onClick={() => setParam('view', v.k === 'grid' ? '' : 'list')}
+                      aria-label={`${v.k} view`}
+                      className={`grid h-8 w-8 place-items-center rounded-full transition ${view === v.k ? 'bg-gold text-ink' : 'text-muted hover:text-fg'}`}>
+                      <Svg d={v.d} size={16} />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* active filter chips */}
+            {activeChips.length > 0 && (
+              <div className="mt-4 flex flex-wrap items-center gap-2">
+                {activeChips.map(c => (
+                  <button
+                    key={`${c.key}:${c.value || ''}`}
+                    onClick={() => dropChip(c)}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-gold/40 bg-gold/10 px-3 py-1 text-xs text-gold transition-colors hover:bg-gold/20">
+                    {c.label}
+                    <Svg d={I.close} size={12} />
+                  </button>
+                ))}
+                <button onClick={clearAll} className="text-xs uppercase tracking-[0.14em] text-muted underline-offset-4 hover:text-gold hover:underline">
+                  Clear all
                 </button>
+              </div>
+            )}
+
+            {/* results */}
+            <div className="mt-8">
+              {loading ? (
+                <div className={view === 'list' ? 'space-y-5' : 'grid gap-7 sm:grid-cols-2'}>
+                  {Array.from({length: 6}).map((_, i) => (
+                    <div key={i} className={`animate-pulse rounded-2xl border border-line bg-surface2/40 ${view === 'list' ? 'h-44' : 'h-80'}`} />
+                  ))}
+                </div>
+              ) : items.length === 0 ? (
+                <div className="rounded-2xl border border-line bg-surface2/20 py-20 text-center">
+                  <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-full bg-surface2 text-muted">
+                    <Svg d={I.search} size={24} />
+                  </div>
+                  <p className="text-muted">No residences match your filters.</p>
+                  {activeChips.length > 0 && (
+                    <button onClick={clearAll} className="mt-4 rounded-full bg-gold px-6 py-2.5 text-xs uppercase tracking-[0.16em] text-ink hover:bg-gold-light">
+                      Clear filters
+                    </button>
+                  )}
+                </div>
+              ) : view === 'list' ? (
+                <Reveal stagger={0.06} className="space-y-5">
+                  {items.map(p => <PropertyRow key={p.id} p={p} />)}
+                </Reveal>
+              ) : (
+                <Reveal stagger={0.06} className="grid gap-7 sm:grid-cols-2">
+                  {items.map(p => <PropertyCard key={p.id} property={p} />)}
+                </Reveal>
+              )}
+
+              {/* load more */}
+              {!loading && hasMore && (
+                <div className="mt-12 flex justify-center">
+                  <button
+                    onClick={loadMore}
+                    disabled={loadingMore}
+                    className="rounded-full border border-gold/60 bg-gold/10 px-8 py-3 text-xs font-semibold uppercase tracking-[0.16em] text-gold transition-colors hover:bg-gold hover:text-ink disabled:opacity-60">
+                    {loadingMore ? 'Loading…' : 'Load more'}
+                  </button>
+                </div>
               )}
             </div>
-          ) : view === 'list' ? (
-            <Reveal stagger={0.06} className="space-y-5">
-              {items.map(p => <PropertyRow key={p.id} p={p} />)}
-            </Reveal>
-          ) : (
-            <Reveal stagger={0.06} className="grid gap-7 sm:grid-cols-2 lg:grid-cols-3">
-              {items.map(p => <PropertyCard key={p.id} property={p} />)}
-            </Reveal>
-          )}
-
-          {/* load more */}
-          {!loading && hasMore && (
-            <div className="mt-12 flex justify-center">
-              <button
-                onClick={loadMore}
-                disabled={loadingMore}
-                className="rounded-full border border-gold/60 bg-gold/10 px-8 py-3 text-xs font-semibold uppercase tracking-[0.16em] text-gold transition-colors hover:bg-gold hover:text-ink disabled:opacity-60">
-                {loadingMore ? 'Loading…' : 'Load more'}
-              </button>
-            </div>
-          )}
+          </div>
         </div>
       </div>
+
+      {/* ── mobile filter drawer ── */}
+      {drawer && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          <div className="absolute inset-0 bg-ink/70 backdrop-blur-sm" onClick={() => setDrawer(false)} />
+          <div className="absolute inset-y-0 left-0 flex w-[86%] max-w-sm flex-col border-r border-line bg-bg shadow-soft">
+            <div className="flex items-center justify-between border-b border-line px-5 py-4">
+              <span className="inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-fg">
+                <span className="text-gold"><Svg d={I.sliders} size={16} /></span>
+                Filters
+              </span>
+              <button onClick={() => setDrawer(false)} aria-label="Close filters" className="text-muted hover:text-fg">
+                <Svg d={I.close} size={20} />
+              </button>
+            </div>
+            <div data-lenis-prevent className="filter-scroll flex-1 overflow-y-auto overscroll-contain px-5 py-4">{panel}</div>
+            <div className="flex items-center gap-3 border-t border-line px-5 py-4">
+              <button onClick={clearAll} className="flex-1 rounded-full border border-line py-3 text-xs uppercase tracking-[0.14em] text-muted hover:text-fg">
+                Clear all
+              </button>
+              <button onClick={() => setDrawer(false)} className="flex-1 rounded-full bg-gold py-3 text-xs font-semibold uppercase tracking-[0.14em] text-ink hover:bg-gold-light">
+                Show {total}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

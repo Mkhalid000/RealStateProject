@@ -120,16 +120,20 @@ export class VerifyPropertyDto {
 export class QueryPropertiesDto {
   @IsOptional() @IsString() q?: string;
 
-  @IsOptional()
-  @IsEnum(PropertyType)
-  type?: PropertyType;
+  /** One or more PropertyType values, comma-separated (e.g. `villa,apartment`). */
+  @IsOptional() @IsString() type?: string;
 
   @IsOptional()
   @IsEnum(ListingType)
   listingType?: ListingType;
 
+  // ---- location ----
   @IsOptional() @IsString() city?: string;
+  @IsOptional() @IsString() state?: string;
+  @IsOptional() @IsString() locality?: string;
+  @IsOptional() @IsString() pincode?: string;
 
+  // ---- price ----
   @IsOptional()
   @Type(() => Number)
   @IsNumber()
@@ -140,10 +144,48 @@ export class QueryPropertiesDto {
   @IsNumber()
   maxPrice?: number;
 
+  /** Only listings whose price is marked negotiable. */
+  @IsOptional() @IsString() negotiable?: string;
+
+  // ---- configuration ----
+  /** One or more BHK counts, comma-separated (e.g. `2,3,4`). `5` means 5+. */
+  @IsOptional() @IsString() bhk?: string;
+
   @IsOptional()
   @Type(() => Number)
   @IsInt()
-  bhk?: number;
+  minBathrooms?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  minBalconies?: number;
+
+  /** Comma-separated Furnishing values. */
+  @IsOptional() @IsString() furnishing?: string;
+
+  /** Comma-separated Facing values. */
+  @IsOptional() @IsString() facing?: string;
+
+  /** Comma-separated propertyAge labels. */
+  @IsOptional() @IsString() propertyAge?: string;
+
+  // ---- area (matches carpet / super built-up / plot area) ----
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  minArea?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  maxArea?: number;
+
+  // ---- amenities: comma-separated; a listing must have all of them ----
+  @IsOptional() @IsString() amenities?: string;
+
+  // ---- misc ----
+  @IsOptional() @IsString() featured?: string;
 
   @IsOptional() @IsString() agentId?: string;
 
