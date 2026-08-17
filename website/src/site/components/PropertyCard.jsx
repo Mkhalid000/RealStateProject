@@ -1,6 +1,7 @@
 import {useRef, useState} from 'react';
 import {Link} from 'react-router-dom';
 import {gsap} from '../../lib/gsap';
+import {SmartImage} from '../../components/SmartImage';
 
 const FALLBACK =
   'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=900&q=70';
@@ -58,6 +59,9 @@ export function PropertyCardSkeleton() {
 export function PropertyCard({property}) {
   const [fav, setFav] = useState(false);
   const [idx, setIdx] = useState(0);
+  // The extra photos are only reachable by hovering the image, so they are not
+  // downloaded until then — a grid of cards otherwise pulled 100+ files.
+  const [wantsAll, setWantsAll] = useState(false);
   const cardRef = useRef(null);
   const images = property.imageUrls?.length ? property.imageUrls : [FALLBACK];
   const area = property.carpetArea ?? property.superBuiltUpArea;
@@ -78,6 +82,7 @@ export function PropertyCard({property}) {
       transformOrigin: 'center',
     });
   };
+  const onEnter = () => setWantsAll(true);
   const onLeave = () => {
     setIdx(0);
     gsap.to(cardRef.current, {rotateX: 0, rotateY: 0, y: 0, duration: 0.6, ease: 'power3.out'});
@@ -96,17 +101,21 @@ export function PropertyCard({property}) {
       ref={cardRef}
       to={`/properties/${property.id}/${property.slug}`}
       onMouseMove={onMove}
+      onMouseEnter={onEnter}
       onMouseLeave={onLeave}
       className="group relative block overflow-hidden rounded-2xl border border-line bg-surface shadow-card transition-[border-color,box-shadow] duration-500 hover:border-gold/50 hover:shadow-glow [transform-style:preserve-3d] will-change-transform">
       <div className="relative aspect-[4/3] overflow-hidden" onMouseMove={onImgMove}>
-        {/* crossfading photos */}
-        {images.map((src, i) => (
-          <img
+        {/* crossfading photos — only the cover is fetched up front */}
+        {(wantsAll ? images : images.slice(0, 1)).map((src, i) => (
+          <SmartImage
             key={i}
             src={src}
             alt={property.title}
-            loading={i === 0 ? 'eager' : 'lazy'}
-            className={`absolute inset-0 h-full w-full object-cover transition-[opacity,transform] duration-700 ease-out group-hover:scale-[1.08] ${i === idx ? 'opacity-100' : 'opacity-0'}`}
+            w={480}
+            sizes="(max-width: 640px) 92vw, (max-width: 1024px) 45vw, 380px"
+            eager={i === 0}
+            className={`absolute inset-0 h-full w-full transition-opacity duration-700 ${i === idx ? 'opacity-100' : 'opacity-0'}`}
+            imgClassName="transition-transform duration-700 ease-out group-hover:scale-[1.08]"
           />
         ))}
         <div className="absolute inset-0 bg-gradient-to-t from-ink/90 via-ink/15 to-transparent" />
