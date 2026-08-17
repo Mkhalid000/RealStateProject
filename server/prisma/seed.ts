@@ -1,5 +1,6 @@
 import {PrismaClient, UserRole, PropertyType, ListingType, Furnishing, Facing, VerificationStatus} from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
+import {BHOPAL_PROPERTIES} from './properties.bhopal';
 
 const prisma = new PrismaClient();
 
@@ -906,6 +907,12 @@ async function main() {
     verificationStatus: VerificationStatus.verified,
   });
 
+  /* ── 4b. Bhopal listings (their own module, also runnable on their own
+         via `npm run db:seed:bhopal`) ── */
+  for (const property of BHOPAL_PROPERTIES) {
+    await upsertProperty({agentId: agent.id, ...property});
+  }
+
   /* ── 5. Sample reels (Instagram-style feed) ── */
   const propSlugs = [
     'skyline-penthouse-bandra-west',
@@ -956,7 +963,9 @@ async function main() {
     console.log(`  ↳  Reel: ${r.caption.slice(0, 42)}…`);
   }
 
-  console.log('\n✅  Seed complete — 16 properties, 5 reels added.\n');
+  console.log(
+    `\n✅  Seed complete — ${16 + BHOPAL_PROPERTIES.length} properties, 5 reels added.\n`,
+  );
 }
 
 main()

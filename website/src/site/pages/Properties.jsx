@@ -2,6 +2,7 @@ import {lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState} from 
 import {Link, useSearchParams} from 'react-router-dom';
 import {apiFetch} from '../../lib/api';
 import {useNavHidden} from '../../lib/useNavHidden';
+import {useNearbyCity} from '../../lib/useNearbyCity';
 import {Reveal} from '../components/Reveal';
 import {PropertyCard} from '../components/PropertyCard';
 import {AdSlot} from '../components/AdSlot';
@@ -294,6 +295,66 @@ export default function Properties() {
     }, {replace: true});
   }, [setParams]);
 
+  /* ── location-aware default ──
+     With permission the listing opens on the visitor's own city; without it
+     (denied, unavailable, or nothing listed there yet) it falls back to the
+     full collection. An explicit `city` in the URL always wins. */
+  const geo = useNearbyCity();
+  const autoApplied = useRef(false);
+  const [noneNearby, setNoneNearby] = useState('');
+  const nearby = Boolean(geo.city) && city.toLowerCase() === geo.city.toLowerCase();
+
+  useEffect(() => {
+    if (!geo.city || autoApplied.current) return;
+    // Arrived with a search or a place already in the URL (e.g. the home-page
+    // search box)? That's what they asked for — don't box it into one city.
+    if (city || q || state || locality || pincode) {
+      autoApplied.current = true;
+      return;
+    }
+    autoApplied.current = true;
+    setNoneNearby('');
+    setParam('city', geo.city);
+  }, [geo.city, city, q, state, locality, pincode, setParam]);
+
+  /** Drop the detected city and go back to the whole collection. */
+  const showEverywhere = useCallback(
+    (remember = true) => {
+      autoApplied.current = true; // and don't re-apply it on the next render
+      geo.clear(remember);
+      setParam('city', '');
+    },
+    [geo, setParam],
+  );
+
+  /* Searching for a place ("mumbai") while the detected city is still applied
+     would return nothing, so a search lifts the automatic city filter. A city
+     the visitor picked themselves is left alone. */
+  const [searchWidened, setSearchWidened] = useState(false);
+
+  const commitSearch = useCallback(
+    value => {
+      const term = value.trim();
+      const lift = Boolean(term) && nearby;
+      setParams(prev => {
+        const next = new URLSearchParams(prev);
+        if (term) next.set('q', term);
+        else next.delete('q');
+        if (lift) next.delete('city');
+        return next;
+      }, {replace: true});
+      if (lift) autoApplied.current = true; // don't let the effect re-apply it
+      setSearchWidened(term ? w => w || lift : false);
+    },
+    [nearby, setParams],
+  );
+
+  /** Put the detected city back after a search widened the results. */
+  const backToNearby = useCallback(() => {
+    setSearchWidened(false);
+    setParam('city', geo.city);
+  }, [geo.city, setParam]);
+
   // build the query string for the API from current filters + a page
   const queryFor = useCallback((p) => {
     const sp = new URLSearchParams({page: String(p), limit: String(PAGE), sort});
@@ -377,12 +438,26 @@ export default function Properties() {
       furnishing, facing, age, amenities, city, state, locality, pincode,
       featured, negotiable]);
 
+  /* Nothing listed in the detected city yet? Quietly widen to everything
+     rather than showing an empty page the visitor didn't ask for. */
+  useEffect(() => {
+    if (loading || !nearby || total > 0) return;
+    if (activeChips.length !== 1) return; // other filters are the likelier cause
+    setNoneNearby(geo.city);
+    showEverywhere(false); // not remembered — the city may get listings later
+  }, [loading, nearby, total, activeChips.length, geo.city, showEverywhere]);
+
   function dropChip(c) {
+    // clearing the city by hand means "show me everywhere", so stop re-applying
+    if (c.key === 'city') showEverywhere(true);
     if (c.value) toggleIn(c.key, c.value);
     else setParam(c.key, '');
   }
 
   function clearAll() {
+    showEverywhere(true);
+    setNoneNearby('');
+    setSearchWidened(false);
     setParams(prev => {
       const next = new URLSearchParams(prev);
       FILTER_KEYS.forEach(k => next.delete(k));
@@ -400,7 +475,7 @@ export default function Properties() {
           className="w-full bg-transparent py-2.5 text-sm text-fg outline-none placeholder:text-muted"
           placeholder="Search location or title"
           value={q}
-          onCommit={v => setParam('q', v.trim())}
+          onCommit={commitSearch}
         />
       </div>
 
@@ -631,6 +706,69 @@ export default function Properties() {
                 </div>
               </div>
             </div>
+
+            {/* ── location notice ── */}
+            {geo.status === 'locating' && (
+              <div className="mt-4 inline-flex items-center gap-2.5 rounded-full border border-line bg-surface2/40 px-4 py-2 text-xs text-muted">
+                <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-line border-t-gold" />
+                Finding residences near you…
+              </div>
+            )}
+
+            {nearby && (
+              <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-2xl border border-gold/40 bg-gold/10 px-4 py-3">
+                <span className="text-gold"><Svg d={I.pin} size={15} /></span>
+                <p className="text-sm text-fg">
+                  Showing residences in <span className="font-semibold">{geo.city}</span> — your current city.
+                </p>
+                <button
+                  onClick={() => showEverywhere(true)}
+                  className="ml-auto rounded-full border border-gold/50 px-3.5 py-1.5 text-[11px] uppercase tracking-[0.14em] text-gold transition-colors hover:bg-gold hover:text-ink">
+                  Show all
+                </button>
+              </div>
+            )}
+
+            {searchWidened && !nearby && (
+              <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-2xl border border-line bg-surface2/30 px-4 py-3">
+                <span className="text-muted"><Svg d={I.search} size={15} /></span>
+                <p className="text-sm text-muted">
+                  Searching every city for <span className="font-semibold text-fg">“{q}”</span>.
+                </p>
+                {geo.city && (
+                  <button
+                    onClick={backToNearby}
+                    className="ml-auto rounded-full border border-line px-3.5 py-1.5 text-[11px] uppercase tracking-[0.14em] text-muted transition-colors hover:border-gold/50 hover:text-gold">
+                    Back to {geo.city}
+                  </button>
+                )}
+              </div>
+            )}
+
+            {noneNearby && !nearby && (
+              <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-2xl border border-line bg-surface2/30 px-4 py-3">
+                <span className="text-muted"><Svg d={I.pin} size={15} /></span>
+                <p className="text-sm text-muted">
+                  Nothing listed in <span className="font-semibold text-fg">{noneNearby}</span> yet — showing the full collection.
+                </p>
+                <button
+                  onClick={() => setNoneNearby('')}
+                  aria-label="Dismiss"
+                  className="ml-auto text-muted transition-colors hover:text-fg">
+                  <Svg d={I.close} size={14} />
+                </button>
+              </div>
+            )}
+
+            {!city && !noneNearby && ['denied', 'unavailable', 'off'].includes(geo.status) && (
+              <button
+                onClick={() => geo.request({fresh: true})}
+                title={geo.status === 'denied' ? 'Location is blocked for this site — allow it in your browser settings first' : undefined}
+                className="mt-4 inline-flex items-center gap-2 rounded-full border border-line px-4 py-2 text-xs text-muted transition-colors hover:border-gold/50 hover:text-gold">
+                <Svg d={I.pin} size={14} />
+                Show properties near me
+              </button>
+            )}
 
             {/* active filter chips */}
             {activeChips.length > 0 && (

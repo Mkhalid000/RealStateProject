@@ -138,7 +138,13 @@ export function Footer() {
 
         <div className="mt-16 flex flex-col items-center justify-between gap-3 border-t border-line pt-7 text-sm text-muted md:flex-row">
           <span>© {new Date().getFullYear()} Aurevia Estates. All rights reserved.</span>
-          <span>Privacy · Terms · Cookies</span>
+          <span className="flex items-center gap-2">
+            <Link to="/privacy" className="transition-colors hover:text-gold">Privacy</Link>
+            <span aria-hidden>·</span>
+            <span>Terms</span>
+            <span aria-hidden>·</span>
+            <Link to="/privacy#cookies" className="transition-colors hover:text-gold">Cookies</Link>
+          </span>
         </div>
       </div>
 

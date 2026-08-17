@@ -11,6 +11,7 @@ import {ScrollProgress} from './site/components/ScrollProgress';
 import {Loader} from './site/components/Loader';
 import {PageTransition} from './site/components/PageTransition';
 import {PostPropertyBanner} from './site/components/PostPropertyBanner';
+import {CookieNotice} from './site/components/CookieNotice';
 import {MapFab} from './site/components/MapFab';
 import {AdFloating, AdModal} from './site/components/AdInterrupt';
 import Home from './site/pages/Home';
@@ -20,6 +21,7 @@ import PostProperty from './site/pages/PostProperty';
 import ReelsFeed from './site/pages/Reels';
 import About from './site/pages/About';
 import Contact from './site/pages/Contact';
+import Privacy from './site/pages/Privacy';
 
 // Google Maps + its React bindings are heavy — keep them out of the main bundle.
 const MapExplore = lazy(() => import('./site/pages/MapExplore'));
@@ -84,6 +86,7 @@ function PublicLayout() {
       {/* interrupting ad placements — they decide for themselves when to appear */}
       <AdFloating />
       <AdModal />
+      <CookieNotice />
     </>
   );
 }
@@ -101,6 +104,7 @@ export default function App() {
           <Route path="/post-property" element={<PostProperty />} />
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
+          <Route path="/privacy" element={<Privacy />} />
         </Route>
 
         {/* Immersive public reels feed (its own full-screen chrome) */}
