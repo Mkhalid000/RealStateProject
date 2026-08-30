@@ -5,6 +5,8 @@ import {ThemeToggle} from './ThemeToggle';
 import {useAuth} from '../../context/AuthContext';
 import {useNavHidden} from '../../lib/useNavHidden';
 import {apiFetch} from '../../lib/api';
+import {useSaved} from '../../context/SavedContext';
+import {openCommandPalette} from './CommandPalette';
 import {CompanyPanel, JournalPanel, PropertiesPanel} from './MegaMenu';
 import logo from '../../assets/logo.png';
 
@@ -120,6 +122,7 @@ export function Navbar() {
   const [mobileSection, setMobileSection] = useState(null);
   const {pathname} = useLocation();
   const {user, logout} = useAuth();
+  const {count: savedCount} = useSaved();
 
   // journal panel data, fetched the first time that panel is opened
   const [categories, setCategories] = useState([]);
@@ -294,6 +297,38 @@ export function Navbar() {
               FREE
             </span>
           </Link>
+          {/* search — the palette is also on Cmd/Ctrl-K */}
+          <button
+            onClick={openCommandPalette}
+            aria-label="Search"
+            title="Search (Ctrl K)"
+            className={`grid h-10 w-10 place-items-center rounded-full ring-1 transition ${
+              scrolled ? 'bg-ink/5 text-fg ring-ink/15 hover:bg-ink/10' : 'bg-white/10 text-white ring-white/20 hover:bg-white/20'
+            }`}>
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+              <circle cx="11" cy="11" r="7" />
+              <path d="m21 21-4.3-4.3" />
+            </svg>
+          </button>
+
+          {/* shortlist */}
+          <Link
+            to="/saved"
+            aria-label={`Shortlist${savedCount ? ` — ${savedCount} saved` : ''}`}
+            title="Saved & alerts"
+            className={`relative grid h-10 w-10 place-items-center rounded-full ring-1 transition ${
+              scrolled ? 'bg-ink/5 text-fg ring-ink/15 hover:bg-ink/10' : 'bg-white/10 text-white ring-white/20 hover:bg-white/20'
+            }`}>
+            <svg width="17" height="17" viewBox="0 0 24 24" fill={savedCount ? '#F2A65A' : 'none'} stroke={savedCount ? '#F2A65A' : 'currentColor'} strokeWidth="1.8">
+              <path d="M12 21s-7-4.5-9.5-9A5 5 0 0 1 12 5a5 5 0 0 1 9.5 7c-2.5 4.5-9.5 9-9.5 9z" />
+            </svg>
+            {savedCount > 0 && (
+              <span className="absolute -right-0.5 -top-0.5 grid h-4 min-w-[16px] place-items-center rounded-full bg-gold px-1 text-[9px] font-bold text-ink">
+                {savedCount > 9 ? '9+' : savedCount}
+              </span>
+            )}
+          </Link>
+
           <ThemeToggle />
           {user ? (
             <ProfileMenu user={user} onLogout={logout} dark={!scrolled} />
@@ -385,6 +420,21 @@ export function Navbar() {
             onNavigate={() => setOpen(false)}
           />
 
+          <button
+            onClick={() => { setOpen(false); openCommandPalette(); }}
+            className="flex items-center gap-2 border-b border-line/40 py-3 text-left text-sm uppercase tracking-[0.14em] text-fg/80">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg>
+            Search
+          </button>
+          <Link
+            to="/saved"
+            onClick={() => setOpen(false)}
+            className="flex items-center gap-2 border-b border-line/40 py-3 text-sm uppercase tracking-[0.14em] text-fg/80">
+            Saved &amp; alerts
+            {savedCount > 0 && (
+              <span className="rounded-full bg-gold px-1.5 py-0.5 text-[9px] font-bold text-ink">{savedCount}</span>
+            )}
+          </Link>
           <Link
             to="/post-property"
             onClick={() => setOpen(false)}

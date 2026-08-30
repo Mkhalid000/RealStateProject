@@ -2,6 +2,7 @@ import {lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState} from 
 import {Link, useSearchParams} from 'react-router-dom';
 import {apiFetch} from '../../lib/api';
 import {useNavHidden} from '../../lib/useNavHidden';
+import {useAuth} from '../../context/AuthContext';
 import {useNearbyCity} from '../../lib/useNearbyCity';
 import {Reveal} from '../components/Reveal';
 import {PropertyCard} from '../components/PropertyCard';
@@ -188,6 +189,7 @@ function PropertyRow({p}) {
 
 export default function Properties() {
   const [params, setParams] = useSearchParams();
+  const {user} = useAuth();
 
   // URL is the source of truth for filters
   const get = k => params.get(k) || '';
@@ -349,12 +351,6 @@ export default function Properties() {
     [nearby, setParams],
   );
 
-  /** Put the detected city back after a search widened the results. */
-  const backToNearby = useCallback(() => {
-    setSearchWidened(false);
-    setParam('city', geo.city);
-  }, [geo.city, setParam]);
-
   // build the query string for the API from current filters + a page
   const queryFor = useCallback((p) => {
     const sp = new URLSearchParams({page: String(p), limit: String(PAGE), sort});
@@ -383,6 +379,46 @@ export default function Properties() {
   }, [q, type, listing, bhk, baths, balconies, min, max, minArea, maxArea,
       furnishing, facing, age, amenities, city, state, locality, pincode,
       featured, negotiable, sort]);
+
+  /* ── save this search ──────────────────────────────────────────────
+     The saved query is the API query (same names the alert matcher reads),
+     minus paging — so running it later reproduces exactly these results. */
+  const [savingSearch, setSavingSearch] = useState('');
+
+  const saveSearch = useCallback(async () => {
+    if (!user) {
+      window.location.href = '/login';
+      return;
+    }
+    const sp = new URLSearchParams(queryFor(1));
+    ['page', 'limit', 'sort'].forEach(k => sp.delete(k));
+    const suggested =
+      [city || locality, bhk && `${bhk} BHK`, type.split(',')[0], listing === 'rent' ? 'to rent' : '']
+        .filter(Boolean)
+        .join(' ') || 'My search';
+    const name = window.prompt('Name this search — we will alert you when something new matches.', suggested);
+    if (!name) return;
+
+    setSavingSearch('saving');
+    try {
+      await apiFetch('/searches', {
+        method: 'POST',
+        body: JSON.stringify({name: name.trim().slice(0, 80), query: sp.toString()}),
+      });
+      setSavingSearch('saved');
+      setTimeout(() => setSavingSearch(''), 2600);
+    } catch (e) {
+      setSavingSearch(e.message);
+      setTimeout(() => setSavingSearch(''), 3200);
+    }
+  }, [user, queryFor, city, locality, bhk, type, listing]);
+
+  /** Put the detected city back after a search widened the results. */
+  const backToNearby = useCallback(() => {
+    setSearchWidened(false);
+    setParam('city', geo.city);
+  }, [geo.city, setParam]);
+
 
   // (re)load page 1 whenever any filter/sort changes
   useEffect(() => {
@@ -785,7 +821,25 @@ export default function Properties() {
                 <button onClick={clearAll} className="text-xs uppercase tracking-[0.14em] text-muted underline-offset-4 hover:text-gold hover:underline">
                   Clear all
                 </button>
+
+                <button
+                  onClick={saveSearch}
+                  disabled={savingSearch === 'saving'}
+                  className="ml-auto inline-flex items-center gap-2 rounded-full border border-gold/60 bg-gold/10 px-4 py-1.5 text-xs font-semibold text-gold transition-colors hover:bg-gold hover:text-ink disabled:opacity-60">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
+                    <path d="M13.7 21a2 2 0 0 1-3.4 0" />
+                  </svg>
+                  {savingSearch === 'saving'
+                    ? 'Saving…'
+                    : savingSearch === 'saved'
+                      ? 'Saved — alerts on'
+                      : 'Save this search'}
+                </button>
               </div>
+            )}
+            {savingSearch && savingSearch !== 'saving' && savingSearch !== 'saved' && (
+              <p className="mt-2 text-xs text-danger">{savingSearch}</p>
             )}
 
             {/* results */}

@@ -12,6 +12,7 @@ import {Loader} from './site/components/Loader';
 import {PageTransition} from './site/components/PageTransition';
 import {PostPropertyBanner} from './site/components/PostPropertyBanner';
 import {CookieNotice} from './site/components/CookieNotice';
+import {CommandPalette} from './site/components/CommandPalette';
 import {MapFab} from './site/components/MapFab';
 import {AdFloating, AdModal} from './site/components/AdInterrupt';
 import Home from './site/pages/Home';
@@ -24,6 +25,7 @@ import Contact from './site/pages/Contact';
 import Blog from './site/pages/Blog';
 import BlogPost from './site/pages/BlogPost';
 import Privacy from './site/pages/Privacy';
+import Saved from './site/pages/Saved';
 
 // Google Maps + its React bindings are heavy — keep them out of the main bundle.
 const MapExplore = lazy(() => import('./site/pages/MapExplore'));
@@ -93,6 +95,7 @@ function PublicLayout() {
       <AdFloating />
       <AdModal />
       <CookieNotice />
+      <CommandPalette />
     </>
   );
 }
@@ -110,6 +113,7 @@ export default function App() {
           <Route path="/post-property" element={<PostProperty />} />
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
+          <Route path="/saved" element={<Saved />} />
           <Route path="/blog" element={<Blog />} />
           <Route path="/blog/:slug" element={<BlogPost />} />
           <Route path="/privacy" element={<Privacy />} />

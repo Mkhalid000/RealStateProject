@@ -1,6 +1,7 @@
 import {useRef, useState} from 'react';
-import {Link} from 'react-router-dom';
+import {Link, useNavigate} from 'react-router-dom';
 import {gsap} from '../../lib/gsap';
+import {useSaved} from '../../context/SavedContext';
 import {SmartImage} from '../../components/SmartImage';
 
 const FALLBACK =
@@ -57,7 +58,9 @@ export function PropertyCardSkeleton() {
 }
 
 export function PropertyCard({property}) {
-  const [fav, setFav] = useState(false);
+  const {isSaved, toggleSave} = useSaved();
+  const navigate = useNavigate();
+  const fav = isSaved(property.id);
   const [idx, setIdx] = useState(0);
   // The extra photos are only reachable by hovering the image, so they are not
   // downloaded until then — a grid of cards otherwise pulled 100+ files.
@@ -139,8 +142,14 @@ export function PropertyCard({property}) {
         {/* favorite */}
         <button
           type="button"
-          aria-label={fav ? 'Saved' : 'Save'}
-          onClick={e => { e.preventDefault(); setFav(f => !f); }}
+          aria-label={fav ? 'Remove from shortlist' : 'Save to shortlist'}
+          title={fav ? 'Saved' : 'Save'}
+          onClick={async e => {
+            e.preventDefault();
+            // Signed-out visitors get sent to log in rather than a silent no-op.
+            const ok = await toggleSave(property.id);
+            if (!ok) navigate('/login');
+          }}
           style={{transform: 'translateZ(40px)'}}
           className="absolute right-4 top-4 grid h-9 w-9 place-items-center rounded-full border border-white/15 bg-ink/50 backdrop-blur-md transition-all duration-300 hover:scale-110 hover:border-gold active:scale-90">
           <svg width="17" height="17" viewBox="0 0 24 24" fill={fav ? '#f2a65a' : 'none'} stroke={fav ? '#f2a65a' : 'currentColor'} strokeWidth="1.8" className={`transition-colors ${fav ? '' : 'text-white/85'}`}>

@@ -120,6 +120,7 @@ function buildNavData(
   switch (type) {
     case NotificationType.PROPERTY_STATUS:
     case NotificationType.NEW_PROPERTY:
+    case NotificationType.SAVED_SEARCH_MATCH:
       if (payload.propertyId) {
         base.screen = 'PropertyDetail';
         base.id = String(payload.propertyId);
@@ -166,6 +167,11 @@ function buildMessage(
       return {
         title: 'New property listed',
         body: `${(p.actorName as string) || 'An agent'} just listed “${title}”.`,
+      };
+    case NotificationType.SAVED_SEARCH_MATCH:
+      return {
+        title: `New match: ${(p.searchName as string) || 'your saved search'}`,
+        body: `“${title}” matches a search you asked us to watch.`,
       };
     case NotificationType.NEW_REEL:
       if (p.self) {

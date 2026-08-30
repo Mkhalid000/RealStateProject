@@ -50,6 +50,13 @@ export class PropertiesController {
     return this.properties.listSaved(userId);
   }
 
+  /** Distinct cities/localities for the city switcher and command palette. */
+  @Public()
+  @Get('places')
+  places() {
+    return this.properties.places();
+  }
+
   @Public()
   @Get(':idOrSlug')
   getOne(@Param('idOrSlug') idOrSlug: string) {

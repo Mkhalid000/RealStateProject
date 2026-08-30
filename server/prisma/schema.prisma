@@ -65,6 +65,7 @@ enum NotificationType {
   new_reel
   property_status
   new_property
+  saved_search_match
 }
 
 enum SubscriptionPlan {
@@ -134,6 +135,7 @@ model User {
   blogPosts     BlogPost[]
   blogComments  BlogComment[]
   blogLikes     BlogLike[]
+  savedSearches SavedSearch[]
 
   @@index([role])
 }
@@ -656,4 +658,28 @@ model BlogDailyStat {
 
   @@unique([postId, date])
   @@index([date])
+}
+
+/// A filter set a visitor asked us to remember. `query` is the same query
+/// string the listings page uses, so running one is just a redirect.
+model SavedSearch {
+  id     String @id @default(uuid())
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  name  String
+  /// e.g. "city=Bhopal&type=villa&maxPrice=9000000"
+  query String
+
+  /// Alert the user when a new listing matches.
+  alertsEnabled Boolean   @default(true)
+  lastAlertAt   DateTime?
+  /// How many matches have been announced since the search was created.
+  matchCount    Int       @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([alertsEnabled])
 }

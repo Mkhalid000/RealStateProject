@@ -56,6 +56,7 @@ export enum NotificationType {
   NEW_REEL = 'new_reel',
   PROPERTY_STATUS = 'property_status',
   NEW_PROPERTY = 'new_property',
+  SAVED_SEARCH_MATCH = 'saved_search_match',
 }
 
 export enum AdKind {

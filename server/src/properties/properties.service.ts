@@ -15,6 +15,7 @@ import {
 } from '../shared';
 import {PrismaService} from '../prisma/prisma.service';
 import {NotificationsService} from '../notifications/notifications.service';
+import {SearchesService} from '../searches/searches.service';
 import {
   CreatePropertyDto,
   QueryPropertiesDto,
@@ -31,6 +32,7 @@ export class PropertiesService {
   constructor(
     private prisma: PrismaService,
     private notifications: NotificationsService,
+    private searches: SearchesService,
   ) {}
 
   async create(userId: string, role: string, dto: CreatePropertyDto) {
@@ -69,6 +71,8 @@ export class PropertiesService {
           actorName: property.agent?.fullName,
         })
         .catch(() => {});
+      // ...and tell anyone whose saved search this listing answers.
+      this.searches.notifyMatches(property).catch(() => {});
     }
     return toProperty(property);
   }
@@ -166,8 +170,43 @@ export class PropertiesService {
           actorName: property.agent?.fullName,
         })
         .catch(() => {});
+      this.searches.notifyMatches(property).catch(() => {});
     }
     return toProperty(property);
+  }
+
+  /**
+   * Distinct cities and localities across live listings. Powers the navbar city
+   * switcher and lets the command palette resolve "in kolar" to a real place.
+   */
+  async places() {
+    const rows = await this.prisma.property.findMany({
+      where: {isVerified: true, status: 'active'},
+      select: {city: true, state: true, locality: true},
+    });
+    const cities = new Map<string, {city: string; state: string | null; count: number}>();
+    const localities = new Map<string, {locality: string; city: string | null; count: number}>();
+
+    for (const r of rows) {
+      if (r.city) {
+        const key = r.city.toLowerCase();
+        const hit = cities.get(key);
+        if (hit) hit.count++;
+        else cities.set(key, {city: r.city, state: r.state, count: 1});
+      }
+      if (r.locality) {
+        const key = r.locality.toLowerCase();
+        const hit = localities.get(key);
+        if (hit) hit.count++;
+        else localities.set(key, {locality: r.locality, city: r.city, count: 1});
+      }
+    }
+
+    const bySize = (a: {count: number}, b: {count: number}) => b.count - a.count;
+    return {
+      cities: [...cities.values()].sort(bySize),
+      localities: [...localities.values()].sort(bySize).slice(0, 60),
+    };
   }
 
   // ---------- saved ----------
