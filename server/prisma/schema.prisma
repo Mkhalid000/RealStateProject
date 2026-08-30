@@ -131,6 +131,9 @@ model User {
   convsAsUser   Conversation[]  @relation("convUser")
   convsAsAgent  Conversation[]  @relation("convAgent")
   messages      Message[]
+  blogPosts     BlogPost[]
+  blogComments  BlogComment[]
+  blogLikes     BlogLike[]
 
   @@index([role])
 }
@@ -228,6 +231,7 @@ model Property {
   savedBy     SavedProperty[]
   leads       Lead[]
   adCampaigns AdCampaign[]
+  blogPosts   BlogPostProperty[]
 
   @@index([agentId])
   @@index([type])
@@ -427,13 +431,17 @@ model AdCampaign {
   dailyCap       Int?
 
   // ---- targeting (empty / null = no restriction) ----
-  targetCities      String[] @default([])
-  targetTypes       String[] @default([])
-  targetListingType String?
+  targetCities         String[] @default([])
+  targetTypes          String[] @default([])
+  targetListingType    String?
+  /// Blog category slugs the campaign is restricted to.
+  targetBlogCategories String[] @default([])
+  /// Blog tags the campaign is restricted to.
+  targetTags           String[] @default([])
   /// all | mobile | desktop
-  targetDevice      String?
+  targetDevice         String?
   /// all | guest | user | agent
-  targetAudience    String?
+  targetAudience       String?
 
   // ---- lifetime totals (per-day breakdown lives in AdDailyStat) ----
   impressions Int @default(0)
@@ -473,4 +481,179 @@ model Subscription {
   currentPeriodEnd DateTime?
   createdAt        DateTime           @default(now())
   updatedAt        DateTime           @updatedAt
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  Blog
+// ══════════════════════════════════════════════════════════════════
+
+enum BlogStatus {
+  draft
+  scheduled
+  published
+  archived
+}
+
+/// Editorial categories. A table rather than an enum so the admin can add one
+/// without a migration.
+model BlogCategory {
+  id            String  @id @default(uuid())
+  name          String
+  slug          String  @unique
+  description   String?
+  coverImageUrl String?
+  /// Manual ordering in the category rail; lower shows first.
+  position      Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  posts BlogPost[]
+}
+
+model BlogPost {
+  id       String @id @default(uuid())
+  author   User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId String
+
+  // ---- content ----
+  title          String
+  slug           String   @unique
+  excerpt        String?
+  /// Markdown. Rendered on the site; the admin editor writes it.
+  content        String   @default("")
+  coverImageUrl  String?
+  imageUrls      String[] @default([])
+  videoUrl       String?
+  /// Estimated from the word count on save.
+  readingMinutes Int      @default(1)
+
+  // ---- taxonomy ----
+  category   BlogCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  categoryId String?
+  tags       String[]      @default([])
+
+  /// Bylines for writers who don't have an account.
+  guestAuthorName   String?
+  guestAuthorAvatar String?
+
+  // ---- publishing / moderation ----
+  status             BlogStatus         @default(draft)
+  publishedAt        DateTime?
+  scheduledFor       DateTime?
+  featured           Boolean            @default(false)
+  pinned             Boolean            @default(false)
+  /// Agent-written posts wait for an admin, exactly like listings do.
+  isVerified         Boolean            @default(false)
+  verificationStatus VerificationStatus @default(pending)
+
+  // ---- SEO ----
+  metaTitle       String?
+  metaDescription String?
+  ogImageUrl      String?
+  canonicalUrl    String?
+  noIndex         Boolean @default(false)
+
+  // ---- real-estate context (drives "articles for your city") ----
+  country       String?
+  state         String?
+  city          String?
+  locality      String?
+  propertyTypes String[] @default([])
+
+  // ---- advertising ----
+  /// Advertorial: the whole post is paid for, and says so.
+  isSponsored            Boolean   @default(false)
+  sponsorName            String?
+  sponsorLogoUrl         String?
+  sponsorUrl             String?
+  sponsorDisclosure      String?
+  /// Let the normal ad slots run inside this post.
+  adsEnabled             Boolean   @default(true)
+  /// Where the first inline unit lands, and how many may appear.
+  inlineAdAfterParagraph Int       @default(4)
+  maxInlineAds           Int       @default(2)
+  /// End-of-article call to action.
+  ctaLabel               String?
+  ctaUrl                 String?
+  /// Paid top placement in the index, same shape as a boosted reel.
+  isPromoted             Boolean   @default(false)
+  promotedUntil          DateTime?
+
+  // ---- engagement ----
+  allowComments Boolean @default(true)
+  viewCount     Int     @default(0)
+  likeCount     Int     @default(0)
+  commentCount  Int     @default(0)
+  shareCount    Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  comments          BlogComment[]
+  likes             BlogLike[]
+  stats             BlogDailyStat[]
+  relatedProperties BlogPostProperty[]
+
+  @@index([status, publishedAt])
+  @@index([categoryId])
+  @@index([authorId])
+  @@index([city])
+}
+
+/// Explicit join table so the pairing can carry its own ordering.
+model BlogPostProperty {
+  post       BlogPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId     String
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  propertyId String
+  position   Int      @default(0)
+
+  @@id([postId, propertyId])
+  @@index([propertyId])
+}
+
+model BlogComment {
+  id         String        @id @default(uuid())
+  post       BlogPost      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId     String
+  user       User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     String
+  text       String
+  /// Replies are one level deep — a thread under a top-level comment.
+  parent     BlogComment?  @relation("BlogCommentThread", fields: [parentId], references: [id], onDelete: Cascade)
+  parentId   String?
+  replies    BlogComment[] @relation("BlogCommentThread")
+  /// Comments are held until an admin approves them.
+  isApproved Boolean       @default(false)
+  createdAt  DateTime      @default(now())
+
+  @@index([postId, createdAt])
+  @@index([isApproved])
+}
+
+model BlogLike {
+  post      BlogPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  createdAt DateTime @default(now())
+
+  @@id([postId, userId])
+}
+
+/// Same aggregate-by-day approach as AdDailyStat — one row per post per day.
+model BlogDailyStat {
+  id     String   @id @default(uuid())
+  post   BlogPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId String
+  date   DateTime @db.Date
+
+  views  Int @default(0)
+  reads  Int @default(0)
+  likes  Int @default(0)
+  shares Int @default(0)
+
+  @@unique([postId, date])
+  @@index([date])
 }

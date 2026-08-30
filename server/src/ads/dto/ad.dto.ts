@@ -66,6 +66,8 @@ export class CreateAdCampaignDto {
   // ---- targeting ----
   @IsOptional() @IsArray() @IsString({each: true}) targetCities?: string[];
   @IsOptional() @IsArray() @IsString({each: true}) targetTypes?: string[];
+  @IsOptional() @IsArray() @IsString({each: true}) targetBlogCategories?: string[];
+  @IsOptional() @IsArray() @IsString({each: true}) targetTags?: string[];
   @IsOptional() @IsString() targetListingType?: string;
   @IsOptional() @IsString() targetDevice?: string;
   @IsOptional() @IsString() targetAudience?: string;
@@ -85,6 +87,10 @@ export class ServeAdDto {
   @IsOptional() @IsString() city?: string;
   @IsOptional() @IsString() type?: string;
   @IsOptional() @IsString() listingType?: string;
+  /** Blog category slug, when the slot sits on the blog. */
+  @IsOptional() @IsString() blogCategory?: string;
+  /** Comma-separated article tags. */
+  @IsOptional() @IsString() tags?: string;
   /** mobile | desktop */
   @IsOptional() @IsString() device?: string;
 

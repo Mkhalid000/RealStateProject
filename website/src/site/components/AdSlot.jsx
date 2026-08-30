@@ -26,12 +26,14 @@ export function AdSlot({
   city,
   type,
   listingType,
+  blogCategory,
+  tags,
   limit = 1,
   className = '',
   onLoaded,
 }) {
   const ref = useRef(null);
-  const ads = useAds({slot, city, type, listingType, limit, onLoaded});
+  const ads = useAds({slot, city, type, listingType, blogCategory, tags, limit, onLoaded});
   useImpression(ref, ads, slot);
 
   const onClick = useCallback(id => beacon(id, slot, 'click'), [slot]);

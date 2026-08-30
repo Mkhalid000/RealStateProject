@@ -281,6 +281,8 @@ export class AdsService {
 
       targetCities: dto.targetCities ?? [],
       targetTypes: dto.targetTypes ?? [],
+      targetBlogCategories: dto.targetBlogCategories ?? [],
+      targetTags: dto.targetTags ?? [],
       targetListingType: dto.targetListingType || null,
       targetDevice: dto.targetDevice || null,
       targetAudience: dto.targetAudience || null,
@@ -308,6 +310,17 @@ export class AdsService {
       return false;
     }
     if (c.targetListingType && !eq(c.targetListingType, dto.listingType)) return false;
+    // Blog placements target the article's category and tags.
+    if (
+      c.targetBlogCategories.length &&
+      !c.targetBlogCategories.some(cat => eq(cat, dto.blogCategory))
+    ) {
+      return false;
+    }
+    if (c.targetTags.length) {
+      const tags = (dto.tags ?? '').split(',').map(t => t.trim()).filter(Boolean);
+      if (!c.targetTags.some(t => tags.some(v => eq(t, v)))) return false;
+    }
     if (c.targetDevice && c.targetDevice !== 'all' && !eq(c.targetDevice, dto.device)) {
       return false;
     }
@@ -426,6 +439,8 @@ export class AdsService {
 
       targetCities: c.targetCities,
       targetTypes: c.targetTypes,
+      targetBlogCategories: c.targetBlogCategories,
+      targetTags: c.targetTags,
       targetListingType: c.targetListingType,
       targetDevice: c.targetDevice,
       targetAudience: c.targetAudience,
@@ -457,6 +472,12 @@ const SLOT_LABELS: Record<string, string> = {
   properties_bottom_strip: 'Properties — below the results',
   detail_sidebar: 'Property detail — below enquiry card',
   detail_inline: 'Property detail — after the amenities',
+  blog_list_top: 'Blog — above the article grid',
+  blog_list_infeed: 'Blog — inside the article grid',
+  blog_list_sidebar: 'Blog — index sidebar',
+  blog_post_inline: 'Article — between paragraphs',
+  blog_post_sidebar: 'Article — sticky sidebar',
+  blog_post_bottom: 'Article — below the story',
   global_floating: 'Every page — floating corner card',
   global_modal: 'Every page — centre modal',
 };
@@ -468,6 +489,12 @@ const SLOT_GROUPS: Record<string, string> = {
   properties_bottom_strip: 'In-page',
   detail_sidebar: 'In-page',
   detail_inline: 'In-page',
+  blog_list_top: 'Blog',
+  blog_list_infeed: 'Blog',
+  blog_list_sidebar: 'Blog',
+  blog_post_inline: 'Blog',
+  blog_post_sidebar: 'Blog',
+  blog_post_bottom: 'Blog',
   global_floating: 'Attention-grabbing',
   global_modal: 'Attention-grabbing',
 };

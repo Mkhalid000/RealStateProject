@@ -21,6 +21,8 @@ import PostProperty from './site/pages/PostProperty';
 import ReelsFeed from './site/pages/Reels';
 import About from './site/pages/About';
 import Contact from './site/pages/Contact';
+import Blog from './site/pages/Blog';
+import BlogPost from './site/pages/BlogPost';
 import Privacy from './site/pages/Privacy';
 
 // Google Maps + its React bindings are heavy — keep them out of the main bundle.
@@ -39,6 +41,10 @@ import Reels from './dashboard/reels/Reels';
 import Boosts from './dashboard/boosts/Boosts';
 import Leads from './dashboard/leads/Leads';
 import Ads from './dashboard/ads/Ads';
+import AdminBlog from './dashboard/blog/Blog';
+import BlogForm from './dashboard/blog/BlogForm';
+import BlogCategories from './dashboard/blog/BlogCategories';
+import BlogComments from './dashboard/blog/BlogComments';
 import AdForm from './dashboard/ads/AdForm';
 
 // Agent portal
@@ -104,6 +110,8 @@ export default function App() {
           <Route path="/post-property" element={<PostProperty />} />
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
+          <Route path="/blog" element={<Blog />} />
+          <Route path="/blog/:slug" element={<BlogPost />} />
           <Route path="/privacy" element={<Privacy />} />
         </Route>
 
@@ -144,6 +152,11 @@ export default function App() {
           <Route path="ads" element={<Ads />} />
           <Route path="ads/new" element={<AdForm />} />
           <Route path="ads/:id/edit" element={<AdForm />} />
+          <Route path="blog" element={<AdminBlog />} />
+          <Route path="blog/new" element={<BlogForm />} />
+          <Route path="blog/categories" element={<BlogCategories />} />
+          <Route path="blog/comments" element={<BlogComments />} />
+          <Route path="blog/:id/edit" element={<BlogForm />} />
           <Route path="leads/:source" element={<Leads />} />
         </Route>
 

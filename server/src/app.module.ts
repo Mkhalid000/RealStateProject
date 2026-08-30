@@ -15,6 +15,7 @@ import {UploadsModule} from './uploads/uploads.module';
 import {AdminModule} from './admin/admin.module';
 import {LeadsModule} from './leads/leads.module';
 import {AdsModule} from './ads/ads.module';
+import {BlogModule} from './blog/blog.module';
 import {JwtAuthGuard} from './common/guards/jwt-auth.guard';
 import {RolesGuard} from './common/guards/roles.guard';
 
@@ -35,6 +36,7 @@ import {RolesGuard} from './common/guards/roles.guard';
     AdminModule,
     LeadsModule,
     AdsModule,
+    BlogModule,
   ],
   providers: [
     // Auth on every route by default; @Public() opts out.

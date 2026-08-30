@@ -1,4 +1,5 @@
 import {
+  BlogStatus,
   Facing,
   Furnishing,
   ListingType,
@@ -172,4 +173,100 @@ export interface AuthTokens {
 export interface AuthResponse {
   user: PublicProfile & {email: string};
   tokens: AuthTokens;
+}
+
+export interface BlogCategory {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  coverImageUrl: string | null;
+  position: number;
+  postCount?: number;
+}
+
+export interface BlogPost {
+  id: string;
+  authorId: string;
+  author?: PublicProfile;
+
+  title: string;
+  slug: string;
+  excerpt: string | null;
+  content: string;
+  coverImageUrl: string | null;
+  imageUrls: string[];
+  videoUrl: string | null;
+  readingMinutes: number;
+
+  categoryId: string | null;
+  category?: BlogCategory | null;
+  tags: string[];
+  guestAuthorName: string | null;
+  guestAuthorAvatar: string | null;
+
+  status: BlogStatus;
+  publishedAt: string | null;
+  scheduledFor: string | null;
+  featured: boolean;
+  pinned: boolean;
+  isVerified: boolean;
+  verificationStatus: VerificationStatus;
+
+  metaTitle: string | null;
+  metaDescription: string | null;
+  ogImageUrl: string | null;
+  canonicalUrl: string | null;
+  noIndex: boolean;
+
+  country: string | null;
+  state: string | null;
+  city: string | null;
+  locality: string | null;
+  propertyTypes: string[];
+
+  isSponsored: boolean;
+  sponsorName: string | null;
+  sponsorLogoUrl: string | null;
+  sponsorUrl: string | null;
+  sponsorDisclosure: string | null;
+  adsEnabled: boolean;
+  inlineAdAfterParagraph: number;
+  maxInlineAds: number;
+  ctaLabel: string | null;
+  ctaUrl: string | null;
+  isPromoted: boolean;
+  promotedUntil: string | null;
+
+  allowComments: boolean;
+  viewCount: number;
+  likeCount: number;
+  commentCount: number;
+  shareCount: number;
+  likedByMe?: boolean;
+
+  relatedProperties?: Property[];
+
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BlogComment {
+  id: string;
+  postId: string;
+  userId: string;
+  user?: PublicProfile;
+  text: string;
+  parentId: string | null;
+  isApproved: boolean;
+  replies?: BlogComment[];
+  createdAt: string;
+}
+
+export interface BlogDailyStat {
+  date: string;
+  views: number;
+  reads: number;
+  likes: number;
+  shares: number;
 }

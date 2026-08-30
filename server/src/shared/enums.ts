@@ -69,6 +69,13 @@ export enum AdStatus {
   PAUSED = 'paused',
 }
 
+export enum BlogStatus {
+  DRAFT = 'draft',
+  SCHEDULED = 'scheduled',
+  PUBLISHED = 'published',
+  ARCHIVED = 'archived',
+}
+
 /** Every placement an ad can be booked into. Keys are stored on the campaign. */
 export const AD_SLOTS = [
   'home_after_featured',
@@ -76,6 +83,12 @@ export const AD_SLOTS = [
   'properties_bottom_strip',
   'detail_sidebar',
   'detail_inline',
+  'blog_list_top',
+  'blog_list_infeed',
+  'blog_list_sidebar',
+  'blog_post_inline',
+  'blog_post_sidebar',
+  'blog_post_bottom',
   'global_floating',
   'global_modal',
 ] as const;

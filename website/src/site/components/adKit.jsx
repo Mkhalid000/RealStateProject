@@ -20,7 +20,17 @@ export function beacon(id, slot, kind) {
 }
 
 /** Fetch the ad(s) booked into a slot. Returns [] until they arrive. */
-export function useAds({slot, city, type, listingType, limit = 1, enabled = true, onLoaded}) {
+export function useAds({
+  slot,
+  city,
+  type,
+  listingType,
+  blogCategory,
+  tags,
+  limit = 1,
+  enabled = true,
+  onLoaded,
+}) {
   const [ads, setAds] = useState([]);
 
   useEffect(() => {
@@ -30,6 +40,8 @@ export function useAds({slot, city, type, listingType, limit = 1, enabled = true
     if (city) sp.set('city', city);
     if (type) sp.set('type', type);
     if (listingType) sp.set('listingType', listingType);
+    if (blogCategory) sp.set('blogCategory', blogCategory);
+    if (tags) sp.set('tags', tags);
 
     const settle = items => {
       if (!alive) return;
@@ -43,7 +55,7 @@ export function useAds({slot, city, type, listingType, limit = 1, enabled = true
     return () => { alive = false; };
     // onLoaded is intentionally excluded — callers pass inline callbacks
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [slot, city, type, listingType, limit, enabled]);
+  }, [slot, city, type, listingType, blogCategory, tags, limit, enabled]);
 
   return ads;
 }

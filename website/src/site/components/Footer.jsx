@@ -80,6 +80,7 @@ export function Footer() {
             <h4 className="mb-5 text-xs uppercase tracking-luxe text-muted">Explore</h4>
             {[
               {to: '/properties', label: 'Properties'},
+              {to: '/blog', label: 'Journal'},
               {to: '/about', label: 'About'},
               {to: '/contact', label: 'Contact'},
               {to: '/login', label: 'Login'},

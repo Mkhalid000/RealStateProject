@@ -1,6 +1,7 @@
-import {PrismaClient, UserRole, PropertyType, ListingType, Furnishing, Facing, VerificationStatus} from '@prisma/client';
+import {PrismaClient, UserRole, PropertyType, ListingType, Furnishing, Facing, VerificationStatus, BlogStatus} from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 import {BHOPAL_PROPERTIES} from './properties.bhopal';
+import {BLOG_CATEGORIES, BLOG_POSTS} from './blog.seed-data';
 
 const prisma = new PrismaClient();
 
@@ -963,8 +964,111 @@ async function main() {
     console.log(`  ↳  Reel: ${r.caption.slice(0, 42)}…`);
   }
 
+  /* -- 6. Blog: categories, articles, comments -- */
+  for (const c of BLOG_CATEGORIES) {
+    await prisma.blogCategory.upsert({where: {slug: c.slug}, update: c, create: c});
+  }
+  console.log(`  |-  Blog categories: ${BLOG_CATEGORIES.length}`);
+
+  const categoryIdBySlug = Object.fromEntries(
+    (await prisma.blogCategory.findMany({select: {id: true, slug: true}})).map(c => [c.slug, c.id]),
+  );
+
+  for (const post of BLOG_POSTS) {
+    const {category, properties: relatedSlugs = [], daysAgo, views, likes, ...rest} = post;
+    const data = {
+      ...rest,
+      authorId: post.isSponsored ? admin.id : agent.id,
+      categoryId: categoryIdBySlug[category] ?? null,
+      status: BlogStatus.published,
+      publishedAt: new Date(Date.now() - daysAgo * 86400000),
+      isVerified: true,
+      verificationStatus: VerificationStatus.verified,
+      readingMinutes: Math.max(1, Math.round(post.content.split(/\s+/).length / 200)),
+      viewCount: views,
+      likeCount: likes,
+      promotedUntil: post.isPromoted ? new Date(Date.now() + 14 * 86400000) : null,
+    };
+
+    const saved = await prisma.blogPost.upsert({
+      where: {slug: post.slug},
+      update: data,
+      create: data,
+    });
+
+    // related listings -- replaced wholesale so re-seeding stays idempotent
+    await prisma.blogPostProperty.deleteMany({where: {postId: saved.id}});
+    if (relatedSlugs.length) {
+      const related = await prisma.property.findMany({
+        where: {slug: {in: relatedSlugs}},
+        select: {id: true, slug: true},
+      });
+      await prisma.blogPostProperty.createMany({
+        data: related.map(r => ({
+          postId: saved.id,
+          propertyId: r.id,
+          position: relatedSlugs.indexOf(r.slug),
+        })),
+        skipDuplicates: true,
+      });
+    }
+
+    // a week of traffic history so the analytics panel isn't empty
+    const today = new Date();
+    for (let d = 0; d < 7; d++) {
+      const date = new Date(
+        Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate() - d),
+      );
+      const dayViews = Math.max(4, Math.round((views / 12) * (1 - d * 0.1)));
+      const stat = {
+        views: dayViews,
+        reads: Math.round(dayViews * 0.55),
+        likes: Math.round(dayViews / 20),
+        shares: Math.round(dayViews / 40),
+      };
+      await prisma.blogDailyStat.upsert({
+        where: {postId_date: {postId: saved.id, date}},
+        update: stat,
+        create: {postId: saved.id, date, ...stat},
+      });
+    }
+
+    console.log(`  |-  Post: ${post.title.slice(0, 46)}`);
+  }
+
+  // one comment thread, one pending -- so moderation has something to show
+  const firstPost = await prisma.blogPost.findUnique({
+    where: {slug: BLOG_POSTS[0].slug},
+    select: {id: true},
+  });
+  if (firstPost) {
+    const seedComments = [
+      {
+        id: 'seed-blog-comment-1',
+        text: 'Finally a locality guide that admits Katara Hills is a long hold. Thank you.',
+        isApproved: true,
+      },
+      {
+        id: 'seed-blog-comment-2',
+        text: 'Would love the same comparison for rental yields across these areas.',
+        isApproved: false,
+      },
+    ];
+    for (const c of seedComments) {
+      await prisma.blogComment.upsert({
+        where: {id: c.id},
+        update: {text: c.text, isApproved: c.isApproved},
+        create: {postId: firstPost.id, userId: agent.id, ...c},
+      });
+    }
+    await prisma.blogPost.update({
+      where: {id: firstPost.id},
+      data: {commentCount: seedComments.filter(c => c.isApproved).length},
+    });
+  }
+
   console.log(
-    `\n✅  Seed complete — ${16 + BHOPAL_PROPERTIES.length} properties, 5 reels added.\n`,
+    `\n✅  Seed complete — ${16 + BHOPAL_PROPERTIES.length} properties, 5 reels, ${BLOG_POSTS.length} blog posts added.\n`,
   );
 }
 
