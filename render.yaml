@@ -1,0 +1,51 @@
+# Render blueprint for the API (free tier).
+#
+# Render → New → Blueprint → point it at this repo. Everything below is set up
+# automatically except the secrets marked `sync: false`, which Render will ask
+# for on first deploy.
+#
+# Free-plan behaviour: the service sleeps after 15 minutes without traffic and
+# takes ~1 minute to wake on the next request. The database (Neon) is separate
+# and stays on its own free plan.
+services:
+  - type: web
+    name: aurevia-api
+    runtime: node
+    plan: free
+    region: singapore # closest free region to India
+    rootDir: server
+    buildCommand: npm ci && npx prisma generate && npm run build
+    startCommand: npm run start:deploy # runs `prisma migrate deploy` first
+    healthCheckPath: /api/properties/places
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: PORT
+        value: 10000 # Render's expected port
+      # ---- secrets: pasted in the Render dashboard ----
+      - key: DATABASE_URL
+        sync: false # Neon connection string (use the pooled one)
+      - key: JWT_ACCESS_SECRET
+        sync: false
+      - key: JWT_REFRESH_SECRET
+        sync: false
+      - key: IMAGEKIT_PUBLIC_KEY
+        sync: false
+      - key: IMAGEKIT_PRIVATE_KEY
+        sync: false
+      - key: IMAGEKIT_URL_ENDPOINT
+        sync: false
+      # Raw or base64 JSON of the Firebase service account. Optional — without
+      # it the API simply runs with push notifications disabled.
+      - key: FIREBASE_SERVICE_ACCOUNT
+        sync: false
+      # ---- set these to the Vercel URL once the site is deployed ----
+      - key: CORS_ORIGINS
+        sync: false # e.g. https://aurevia.vercel.app
+      - key: SITE_URL
+        sync: false # same value — used for absolute URLs in the sitemap
+      - key: JWT_ACCESS_TTL
+        value: 15m
+      - key: JWT_REFRESH_TTL
+        value: 30d
