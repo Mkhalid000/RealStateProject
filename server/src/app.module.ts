@@ -17,6 +17,7 @@ import {LeadsModule} from './leads/leads.module';
 import {AdsModule} from './ads/ads.module';
 import {BlogModule} from './blog/blog.module';
 import {SearchesModule} from './searches/searches.module';
+import {SeoModule} from './seo/seo.module';
 import {JwtAuthGuard} from './common/guards/jwt-auth.guard';
 import {RolesGuard} from './common/guards/roles.guard';
 
@@ -39,6 +40,7 @@ import {RolesGuard} from './common/guards/roles.guard';
     AdsModule,
     BlogModule,
     SearchesModule,
+    SeoModule,
   ],
   providers: [
     // Auth on every route by default; @Public() opts out.

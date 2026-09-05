@@ -2,6 +2,7 @@ import {useState} from 'react';
 import {Link, useNavigate} from 'react-router-dom';
 import {useAuth} from '../../context/AuthContext';
 import {Reveal} from '../components/Reveal';
+import {Seo, breadcrumbs} from '../components/Seo';
 
 /* Default destination after sign-in for a buyer posting their own listing.
    Agents/admins are routed to their own dashboards in startPosting(). */
@@ -103,6 +104,11 @@ export default function PostProperty() {
 
   return (
     <div className="relative">
+      <Seo
+        title="Post your property free"
+        description="List your home, plot or commercial space at no cost. Verified within hours and seen by serious buyers across India."
+        jsonLd={breadcrumbs([{name: 'Home', path: '/'}, {name: 'Post a property', path: '/post-property'}])}
+      />
       <div className="mx-auto max-w-7xl px-6 pb-28 pt-32">
         {/* ── Hero ── */}
         <div className="grid items-start gap-10 lg:grid-cols-[1.05fr_0.95fr]">

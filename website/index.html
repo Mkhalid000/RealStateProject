@@ -8,8 +8,29 @@
       name="description"
       content="Discover the world's most exceptional homes. Aurevia — luxury real estate, reimagined."
     />
+    <meta name="theme-color" content="#211D1D" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+
+    <!-- Defaults for crawlers and link previews. Each page overwrites these
+         as it mounts (see src/site/components/Seo.jsx), and the prerender
+         function rewrites them server-side for bots that don't run JS. -->
+    <meta property="og:site_name" content="Aurevia" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Aurevia — Luxury Real Estate" />
+    <meta
+      property="og:description"
+      content="Discover the world's most exceptional homes. Aurevia — luxury real estate, reimagined."
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Aurevia — Luxury Real Estate" />
+    <meta
+      name="twitter:description"
+      content="Discover the world's most exceptional homes. Aurevia — luxury real estate, reimagined."
+    />
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://ik.imagekit.io" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap"
       rel="stylesheet"
@@ -17,6 +38,22 @@
   </head>
   <body>
     <div id="root"></div>
+    <!-- Visible only before the app boots; crawlers that render JS replace it. -->
+    <noscript>
+      <div style="max-width: 42rem; margin: 4rem auto; padding: 0 1.5rem; font-family: system-ui, sans-serif; line-height: 1.6">
+        <h1>Aurevia — Luxury Real Estate</h1>
+        <p>
+          Aurevia lists verified homes, plots and commercial property across India,
+          with photos, prices and direct owner contact. This site needs JavaScript
+          to browse listings.
+        </p>
+        <p>
+          <a href="/properties">Browse properties</a> ·
+          <a href="/blog">Read the journal</a> ·
+          <a href="/contact">Contact an advisor</a>
+        </p>
+      </div>
+    </noscript>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

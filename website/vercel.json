@@ -1,3 +1,12 @@
 {
-  "rewrites": [{"source": "/(.*)", "destination": "/index.html"}]
+  "rewrites": [
+    {
+      "source": "/sitemap.xml",
+      "destination": "https://api.aurevia.com/api/sitemap.xml"
+    },
+    {
+      "source": "/((?!api/|assets/|index\\.html|robots\\.txt|favicon\\.svg|.*\\.[a-zA-Z0-9]+$).*)",
+      "destination": "/api/prerender"
+    }
+  ]
 }

@@ -5,6 +5,7 @@ import {Reveal} from '../components/Reveal';
 import {MagneticButton} from '../components/MagneticButton';
 import {ImageReveal} from '../components/ImageReveal';
 import {AdSlot} from '../components/AdSlot';
+import {Seo, breadcrumbs, propertyJsonLd} from '../components/Seo';
 
 const FALLBACK =
   'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1600&q=80';
@@ -166,8 +167,35 @@ export default function PropertyDetail() {
     ? `${p.brochureUrl}${p.brochureUrl.includes('?') ? '&' : '?'}ik-attachment=true`
     : null;
 
+  const seoWhere = [p.locality, p.city, p.state].filter(Boolean).join(', ');
+  const seoSpecs = [
+    p.bhk ? `${p.bhk} BHK` : null,
+    p.bathrooms ? `${p.bathrooms} bath` : null,
+    area ? `${area} sqft` : null,
+  ]
+    .filter(Boolean)
+    .join(' · ');
+
   return (
     <div className="relative mx-auto max-w-7xl px-6 pb-28 pt-28">
+      <Seo
+        title={`${p.title}${seoWhere ? ` — ${seoWhere}` : ''}`}
+        description={
+          (p.description || '').slice(0, 180).replace(/\s+/g, ' ').trim() ||
+          `${seoSpecs || p.type} ${forLabel.toLowerCase()}${seoWhere ? ` in ${seoWhere}` : ''} at ${money(p.price, p.currency)}.`
+        }
+        image={p.imageUrls?.[0]}
+        type="article"
+        jsonLd={[
+          propertyJsonLd(p),
+          breadcrumbs([
+            {name: 'Home', path: '/'},
+            {name: 'Properties', path: '/properties'},
+            ...(p.city ? [{name: p.city, path: `/properties?city=${encodeURIComponent(p.city)}`}] : []),
+            {name: p.title, path: `/properties/${p.id}/${p.slug}`},
+          ]),
+        ]}
+      />
       {/* breadcrumb + brochure */}
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <Link to="/properties" className="inline-flex items-center gap-2 text-sm text-muted transition-colors hover:text-gold">

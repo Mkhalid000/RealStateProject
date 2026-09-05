@@ -94,6 +94,58 @@ function Toggle({on, onChange, title, hint}) {
   );
 }
 
+/**
+ * Shown while an existing article is being fetched. It mirrors the real
+ * layout — header, tab strip, editor column, sidebar — so the form doesn't
+ * jump around once the data lands.
+ */
+function FormSkeleton() {
+  const block = 'rounded-lg bg-surface2';
+  return (
+    <div className="relative overflow-hidden">
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-line pb-4">
+        <div>
+          <div className={`h-7 w-40 ${block}`} />
+          <div className={`mt-2 h-3 w-56 ${block} opacity-70`} />
+        </div>
+        <div className="flex gap-2">
+          {[64, 96, 88].map((w, i) => (
+            <div key={i} className={`h-10 ${block}`} style={{width: w}} />
+          ))}
+        </div>
+      </div>
+
+      <div className="mb-6 flex flex-wrap gap-2 border-b border-line pb-4">
+        {[72, 116, 92, 96, 118].map((w, i) => (
+          <div key={i} className="h-7 rounded-full bg-surface2" style={{width: w}} />
+        ))}
+      </div>
+
+      <div className="grid gap-5 lg:grid-cols-[1fr_320px]">
+        <div className="space-y-5">
+          {[0, 1, 2].map(i => (
+            <div key={i}>
+              <div className={`h-2.5 w-24 ${block} opacity-70`} />
+              <div className={`mt-2 h-11 w-full ${block}`} />
+            </div>
+          ))}
+          <div>
+            <div className={`h-2.5 w-32 ${block} opacity-70`} />
+            <div className={`mt-2 h-72 w-full ${block}`} />
+          </div>
+        </div>
+        <div className="space-y-5">
+          <div className={`h-40 w-full ${block}`} />
+          <div className={`h-24 w-full ${block}`} />
+          <div className={`h-11 w-full ${block}`} />
+        </div>
+      </div>
+
+      <span className="pointer-events-none absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-fg/[0.07] to-transparent" />
+    </div>
+  );
+}
+
 export default function BlogForm() {
   const {id} = useParams();
   const navigate = useNavigate();
@@ -104,6 +156,8 @@ export default function BlogForm() {
   const [categories, setCategories] = useState([]);
   const [tagInput, setTagInput] = useState('');
   const [saving, setSaving] = useState(false);
+  // An edit starts out waiting for the article; a new post has nothing to wait for.
+  const [loading, setLoading] = useState(Boolean(id));
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
   const [preview, setPreview] = useState(false);
@@ -138,7 +192,8 @@ export default function BlogForm() {
         });
         setPicked(p.relatedProperties || []);
       })
-      .catch(e => setError(e.message));
+      .catch(e => setError(e.message))
+      .finally(() => setLoading(false));
   }, [editing, id]);
 
   // property search for the "related listings" tab
@@ -239,6 +294,8 @@ export default function BlogForm() {
   }
 
   const blocks = parseMarkdown(form.content);
+
+  if (loading) return <FormSkeleton />;
 
   return (
     <form onSubmit={save}>

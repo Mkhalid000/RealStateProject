@@ -2,6 +2,7 @@ import {useEffect, useMemo, useRef, useState} from 'react';
 import {Link, useNavigate} from 'react-router-dom';
 import {APIProvider, Map, AdvancedMarker, useMap} from '@vis.gl/react-google-maps';
 import {apiFetch} from '../../lib/api';
+import {Seo} from '../components/Seo';
 
 const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 // AdvancedMarker (our custom price pins) only renders on a cloud-styled map,
@@ -56,6 +57,11 @@ export default function MapExplore() {
 
   return (
     <div className="fixed inset-0 z-50 bg-bg">
+      <Seo
+        title="Map explorer — search property by neighbourhood"
+        description="Explore every verified Aurevia listing on the map, by locality, type and price."
+      />
+      <h1 className="sr-only">Explore properties on the map</h1>
       <APIProvider apiKey={API_KEY}>
         <Map
           mapId={MAP_ID}

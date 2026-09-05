@@ -1,0 +1,15 @@
+# Aurevia Estates
+User-agent: *
+Allow: /
+
+# Private areas — nothing here is useful in search results
+Disallow: /admin
+Disallow: /agent
+Disallow: /account
+Disallow: /saved
+Disallow: /login
+
+# Filter permutations are near-duplicates of the listing pages
+Disallow: /properties?*&*&*
+
+Sitemap: https://aurevia.com/sitemap.xml

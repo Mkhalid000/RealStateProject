@@ -4,6 +4,7 @@ import {apiFetch} from '../../lib/api';
 import {Reveal} from '../components/Reveal';
 import {AdSlot} from '../components/AdSlot';
 import {BlogCard, BlogCardSkeleton, fmtDate} from '../components/BlogCard';
+import {Seo, breadcrumbs, itemListJsonLd, siteOrigin} from '../components/Seo';
 
 const PAGE = 9;
 /** Where the in-feed ad lands inside the grid. */
@@ -130,6 +131,23 @@ export default function Blog() {
 
   return (
     <div className="relative">
+      <Seo
+        title={
+          activeCategory
+            ? `${activeCategory.name} — property guides & insight`
+            : 'The Journal — property guides & market insight'
+        }
+        description={
+          activeCategory?.description ||
+          'Buying guides, market reading and design thinking from the Aurevia desk — written for people making a decision, not browsing.'
+        }
+        canonical={`${siteOrigin()}/blog${category ? `?category=${category}` : ''}`}
+        noindex={Boolean(q || tag)}
+        jsonLd={[
+          breadcrumbs([{name: 'Home', path: '/'}, {name: 'Journal', path: '/blog'}]),
+          items.length ? itemListJsonLd(items, p => `/blog/${p.slug}`) : null,
+        ].filter(Boolean)}
+      />
       <div className="mx-auto max-w-7xl px-6 pb-28 pt-32">
         {/* ── header ── */}
         <Reveal>

@@ -8,6 +8,7 @@ import {Marquee} from '../components/Marquee';
 import {MagneticButton} from '../components/MagneticButton';
 import {PropertyCard, PropertyCardSkeleton} from '../components/PropertyCard';
 import {AdSlot} from '../components/AdSlot';
+import {Seo, organizationJsonLd, websiteJsonLd} from '../components/Seo';
 
 // three.js is heavy — load it only on the home page, as its own chunk.
 const Hero3D = lazy(() =>
@@ -123,6 +124,11 @@ export default function Home() {
 
   return (
     <div ref={root}>
+      <Seo
+        title="Aurevia — Luxury Real Estate"
+        description="Discover the world's most exceptional homes. Verified listings, private viewings, and free property posting across India."
+        jsonLd={[organizationJsonLd(), websiteJsonLd()]}
+      />
       {/* ===== HERO ===== */}
       <section id="hero" className="relative flex min-h-screen items-center overflow-hidden">
         <div

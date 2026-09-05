@@ -5,6 +5,7 @@ import {useAuth} from '../../context/AuthContext';
 import {useSaved} from '../../context/SavedContext';
 import {Reveal} from '../components/Reveal';
 import {PropertyCard, PropertyCardSkeleton} from '../components/PropertyCard';
+import {Seo} from '../components/Seo';
 
 const Svg = ({d, size = 16}) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">{d}</svg>
@@ -136,6 +137,7 @@ export default function Saved() {
 
   return (
     <div className="relative">
+      <Seo title="Saved & alerts" description="Your shortlist and saved searches." noindex />
       <div className="mx-auto max-w-7xl px-6 pb-28 pt-32">
         <Reveal>
           <p className="eyebrow mb-4">Your account</p>

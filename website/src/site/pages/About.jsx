@@ -1,6 +1,7 @@
 import {Reveal} from '../components/Reveal';
 import {Counter} from '../components/Counter';
 import {ImageReveal} from '../components/ImageReveal';
+import {Seo, breadcrumbs} from '../components/Seo';
 
 const IMG =
   'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80';
@@ -14,6 +15,11 @@ const VALUES = [
 export default function About() {
   return (
     <div className="relative">
+      <Seo
+        title="About Aurevia — fifteen years of exceptional homes"
+        description="Aurevia represents landmark residences across the world's most coveted addresses — with discretion, curation and devotion."
+        jsonLd={breadcrumbs([{name: 'Home', path: '/'}, {name: 'About', path: '/about'}])}
+      />
       <div className="mx-auto max-w-7xl px-6 pb-28 pt-32">
         <Reveal>
           <p className="eyebrow mb-4">Our Story</p>

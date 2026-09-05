@@ -3,6 +3,7 @@ import {Link, useNavigate, useParams} from 'react-router-dom';
 import {apiFetch} from '../../lib/api';
 import {useAuth} from '../../context/AuthContext';
 import {parseVideo, embedSrc} from '../../lib/video';
+import {Seo} from '../components/Seo';
 
 const LIMIT = 6;
 
@@ -131,6 +132,11 @@ export default function Reels() {
 
   return (
     <div className="fixed inset-0 z-50 bg-black">
+      <Seo
+        title="Property reels — walk-throughs in sixty seconds"
+        description="Short video tours of the homes on Aurevia, straight from the agents who list them."
+      />
+      <h1 className="sr-only">Property reels — short video tours from Aurevia</h1>
       {/* top bar */}
       <div className="pointer-events-none absolute inset-x-0 top-0 z-20 flex items-center justify-between bg-gradient-to-b from-black/70 to-transparent px-5 py-4">
         <Link to="/" className="pointer-events-auto font-serif text-xl tracking-wide text-white">

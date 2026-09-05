@@ -2,6 +2,7 @@ import {useState} from 'react';
 import {Reveal} from '../components/Reveal';
 import {MagneticButton} from '../components/MagneticButton';
 import {ImageReveal} from '../components/ImageReveal';
+import {Seo, breadcrumbs} from '../components/Seo';
 
 export default function Contact() {
   const [sent, setSent] = useState(false);
@@ -10,6 +11,11 @@ export default function Contact() {
 
   return (
     <div className="relative">
+      <Seo
+        title="Contact Aurevia — speak with an advisor"
+        description="Buying, selling or simply exploring? Our advisors reply the same day, with complete discretion."
+        jsonLd={breadcrumbs([{name: 'Home', path: '/'}, {name: 'Contact', path: '/contact'}])}
+      />
       <div className="mx-auto max-w-7xl px-6 pb-28 pt-32">
         <Reveal>
           <p className="eyebrow mb-4">Get in Touch</p>

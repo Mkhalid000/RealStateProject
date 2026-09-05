@@ -7,6 +7,7 @@ import {Reveal} from '../components/Reveal';
 import {AdSlot} from '../components/AdSlot';
 import {PropertyCard} from '../components/PropertyCard';
 import {BlogCard, fmtDate} from '../components/BlogCard';
+import {Seo, articleJsonLd, breadcrumbs} from '../components/Seo';
 
 /** A visit counts as a "read" once the article has been open this long. */
 const READ_AFTER_MS = 30000;
@@ -273,6 +274,29 @@ export default function BlogPost() {
 
   return (
     <div className="relative">
+      <Seo
+        title={post.metaTitle || post.title}
+        description={
+          post.metaDescription ||
+          post.excerpt ||
+          (post.content || '').slice(0, 180).replace(/\s+/g, ' ').trim()
+        }
+        image={post.ogImageUrl || post.coverImageUrl}
+        canonical={post.canonicalUrl || undefined}
+        noindex={post.noIndex}
+        type="article"
+        jsonLd={[
+          articleJsonLd(post),
+          breadcrumbs([
+            {name: 'Home', path: '/'},
+            {name: 'Journal', path: '/blog'},
+            ...(post.category
+              ? [{name: post.category.name, path: `/blog?category=${post.category.slug}`}]
+              : []),
+            {name: post.title, path: `/blog/${post.slug}`},
+          ]),
+        ]}
+      />
       <div className="mx-auto max-w-7xl px-6 pb-28 pt-28">
         <Link to="/blog" className="inline-flex items-center gap-2 text-sm text-muted transition-colors hover:text-gold">
           <Svg d={I.back} size={15} />

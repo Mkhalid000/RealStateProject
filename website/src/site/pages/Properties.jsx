@@ -7,6 +7,7 @@ import {useNearbyCity} from '../../lib/useNearbyCity';
 import {Reveal} from '../components/Reveal';
 import {PropertyCard} from '../components/PropertyCard';
 import {AdSlot} from '../components/AdSlot';
+import {Seo, breadcrumbs, itemListJsonLd, siteOrigin} from '../components/Seo';
 
 // subtle interactive golden-dust backdrop (three.js) — its own lazy chunk
 const Hero3D = lazy(() => import('../components/Hero3D').then(m => ({default: m.Hero3D})));
@@ -654,8 +655,51 @@ export default function Properties() {
     </>
   );
 
+  /* ── SEO ──────────────────────────────────────────────────────────────
+     One or two broad filters (city / type / listing) make a genuine landing
+     page worth indexing; deeper combinations are near-duplicates of each
+     other, so they get noindex and point at the clean listing URL. */
+  const seoFilters = FILTER_KEYS.filter(k => params.get(k));
+  const broadOnly = seoFilters.every(k => ['city', 'type', 'listing'].includes(k));
+  const seoIndexable = seoFilters.length <= 2 && broadOnly;
+  const seoTitle =
+    [
+      type.split(',')[0] ? cap(type.split(',')[0]) + 's' : 'Properties',
+      listing === 'rent' ? 'for rent' : listing === 'buy' ? 'for sale' : null,
+      city ? `in ${city}` : locality ? `in ${locality}` : null,
+    ]
+      .filter(Boolean)
+      .join(' ') || 'Properties';
+  const seoCanonical = seoIndexable
+    ? `${siteOrigin()}/properties${
+        seoFilters.length
+          ? `?${new URLSearchParams(
+              seoFilters.map(k => [k, params.get(k)]),
+            ).toString()}`
+          : ''
+      }`
+    : `${siteOrigin()}/properties`;
+
   return (
     <div className="relative">
+      <Seo
+        title={seoTitle}
+        description={
+          city
+            ? `Browse verified ${type.split(',')[0] || 'properties'} ${
+                listing === 'rent' ? 'for rent' : 'for sale'
+              } in ${city} — photos, prices, floor plans and direct owner contact.`
+            : 'Browse verified homes, plots and commercial space across India — photos, prices and direct owner contact.'
+        }
+        canonical={seoCanonical}
+        noindex={seoFilters.length > 2 || !broadOnly}
+        jsonLd={[
+          breadcrumbs([{name: 'Home', path: '/'}, {name: 'Properties', path: '/properties'}]),
+          items.length
+            ? itemListJsonLd(items, p => `/properties/${p.id}/${p.slug}`)
+            : null,
+        ].filter(Boolean)}
+      />
       {/* subtle interactive three.js golden-dust backdrop */}
       <div className="pointer-events-none fixed inset-0 z-0 opacity-40">
         <Suspense fallback={null}>

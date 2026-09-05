@@ -1,6 +1,7 @@
 import {useEffect} from 'react';
 import {Link, useLocation} from 'react-router-dom';
 import {Reveal} from '../components/Reveal';
+import {Seo, breadcrumbs} from '../components/Seo';
 
 const UPDATED = 'August 2026';
 
@@ -53,6 +54,11 @@ export default function Privacy() {
 
   return (
     <div className="relative">
+      <Seo
+        title="Privacy & Cookie Policy"
+        description="How Aurevia collects, uses and protects your information — and exactly what we store in your browser."
+        jsonLd={breadcrumbs([{name: 'Home', path: '/'}, {name: 'Privacy', path: '/privacy'}])}
+      />
       <div className="mx-auto max-w-4xl px-6 pb-28 pt-32">
         <Reveal>
           <p className="eyebrow mb-4">Legal</p>
